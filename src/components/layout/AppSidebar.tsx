@@ -4,7 +4,6 @@ import {
   Shield,
   FileCheck,
   Server,
-  Scan,
   FileText,
   ClipboardCheck,
   Settings,
@@ -41,7 +40,6 @@ const mainNavItems = [
 const operationsItems = [
   { title: 'Autorisations', href: '/authorizations', icon: FileCheck },
   { title: 'Actifs', href: '/assets', icon: Server },
-  { title: 'Scans', href: '/scans', icon: Scan },
   { title: 'Documents', href: '/documents', icon: FileText },
   { title: 'Outils', href: '/tools', icon: Wrench },
   { title: 'Imports', href: '/runs', icon: Play },
