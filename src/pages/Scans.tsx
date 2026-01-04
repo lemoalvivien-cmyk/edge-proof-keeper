@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Scan as ScanIcon, Plus, Loader2, Play } from 'lucide-react';
+import { Scan as ScanIcon, Plus, Loader2, Play, ShieldAlert } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import { useAuthorization } from '@/hooks/useAuthorization';
 import { useEvidenceLog } from '@/hooks/useEvidenceLog';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthorizationGate } from '@/components/auth/AuthorizationGate';
+import { TrustBanner } from '@/components/ui/TrustBanner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -165,6 +166,22 @@ export default function Scans() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        {/* Trust Banner for authorization awareness */}
+        {!hasValidAuthorization && (
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-warning/30 bg-warning/10">
+            <ShieldAlert className="h-5 w-5 text-warning" />
+            <div className="flex-1">
+              <p className="font-medium text-foreground">Autorisation requise</p>
+              <p className="text-sm text-muted-foreground">
+                Vous devez créer une autorisation pour importer des scans.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => window.location.href = '/scopeguard'}>
+              Créer une autorisation
+            </Button>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Scans</h1>
