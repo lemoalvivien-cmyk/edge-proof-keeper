@@ -20,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -29,9 +30,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MoreHorizontal, Shield, AlertTriangle, Info, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { MoreHorizontal, Shield, AlertTriangle, Info, CheckCircle, XCircle, Eye, ListTodo } from 'lucide-react';
 import type { Finding, FindingStatus, RiskLevel } from '@/types/findings';
 import { useUpdateFindingStatus } from '@/hooks/useFindings';
+import { useTasksByFinding } from '@/hooks/useRemediation';
+import { CreateTaskDialog } from '@/components/remediation/CreateTaskDialog';
 import { toast } from 'sonner';
 
 interface FindingsTableProps {
@@ -76,6 +79,7 @@ export function FindingsTable({ findings, isLoading, showFilters = true, onFilte
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [selectedFinding, setSelectedFinding] = useState<Finding | null>(null);
+  const [createTaskFinding, setCreateTaskFinding] = useState<Finding | null>(null);
   
   const updateStatus = useUpdateFindingStatus();
 
@@ -243,6 +247,11 @@ export function FindingsTable({ findings, isLoading, showFilters = true, onFilte
                             <Shield className="mr-2 h-4 w-4" />
                             Marquer trié
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setCreateTaskFinding(finding)}>
+                            <ListTodo className="mr-2 h-4 w-4" />
+                            Créer une tâche
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -342,6 +351,15 @@ export function FindingsTable({ findings, isLoading, showFilters = true, onFilte
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Create Task Dialog */}
+      <CreateTaskDialog
+        open={!!createTaskFinding}
+        onOpenChange={(open) => !open && setCreateTaskFinding(null)}
+        defaultFindingId={createTaskFinding?.id}
+        defaultTitle={createTaskFinding ? `Remédier: ${createTaskFinding.title.substring(0, 50)}...` : undefined}
+        defaultPriority={createTaskFinding?.severity}
+      />
     </div>
   );
 }

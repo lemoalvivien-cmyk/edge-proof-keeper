@@ -265,6 +265,32 @@ export type Database = {
           },
         ]
       }
+      evidence_chain_state: {
+        Row: {
+          last_hash: string
+          last_seq: number
+          organization_id: string
+        }
+        Insert: {
+          last_hash?: string
+          last_seq?: number
+          organization_id: string
+        }
+        Update: {
+          last_hash?: string
+          last_seq?: number
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_chain_state_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evidence_log: {
         Row: {
           action: string
@@ -273,9 +299,13 @@ export type Database = {
           details: Json | null
           entity_id: string | null
           entity_type: string
+          entry_hash: string | null
           id: string
           ip_address: string | null
           organization_id: string
+          prev_hash: string | null
+          seq: number | null
+          source: string
           user_id: string | null
         }
         Insert: {
@@ -285,9 +315,13 @@ export type Database = {
           details?: Json | null
           entity_id?: string | null
           entity_type: string
+          entry_hash?: string | null
           id?: string
           ip_address?: string | null
           organization_id: string
+          prev_hash?: string | null
+          seq?: number | null
+          source?: string
           user_id?: string | null
         }
         Update: {
@@ -297,9 +331,13 @@ export type Database = {
           details?: Json | null
           entity_id?: string | null
           entity_type?: string
+          entry_hash?: string | null
           id?: string
           ip_address?: string | null
           organization_id?: string
+          prev_hash?: string | null
+          seq?: number | null
+          source?: string
           user_id?: string | null
         }
         Relationships: [
@@ -483,6 +521,69 @@ export type Database = {
           },
         ]
       }
+      remediation_tasks: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string | null
+          finding_id: string | null
+          id: string
+          organization_id: string
+          owner_id: string | null
+          priority: Database["public"]["Enums"]["risk_level"]
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date?: string | null
+          finding_id?: string | null
+          id?: string
+          organization_id: string
+          owner_id?: string | null
+          priority?: Database["public"]["Enums"]["risk_level"]
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          finding_id?: string | null
+          id?: string
+          organization_id?: string
+          owner_id?: string | null
+          priority?: Database["public"]["Enums"]["risk_level"]
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remediation_tasks_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "findings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remediation_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reports: {
         Row: {
           created_at: string
@@ -653,6 +754,48 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          organization_id: string
+          task_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          task_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "remediation_tasks"
             referencedColumns: ["id"]
           },
         ]

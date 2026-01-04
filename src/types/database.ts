@@ -106,6 +106,11 @@ export interface EvidenceLog {
   ip_address: string | null;
   artifact_hash: string | null;
   created_at: string;
+  // Hash chain fields
+  source: 'server' | 'client';
+  seq: number | null;
+  prev_hash: string | null;
+  entry_hash: string | null;
 }
 
 export interface ComplianceControl {

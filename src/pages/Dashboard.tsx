@@ -6,8 +6,8 @@ import {
   TrendingUp,
   FileCheck,
   Server,
-  Scan as ScanIcon,
   ArrowRight,
+  ListTodo,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -17,7 +17,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/useAuthorization';
 import { useFindingCounts, useTopPriorityFindings } from '@/hooks/useFindings';
+import { useTaskCounts } from '@/hooks/useRemediation';
 import { useQuery } from '@tanstack/react-query';
+
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Dashboard() {
@@ -26,6 +28,7 @@ export default function Dashboard() {
   const { hasValidAuthorization } = useAuthorization();
   const { data: findingCounts } = useFindingCounts();
   const { data: topFindings = [] } = useTopPriorityFindings(5);
+  const { data: taskCounts } = useTaskCounts();
 
   // Fetch compliance stats
   const { data: complianceStats } = useQuery({
@@ -230,6 +233,47 @@ export default function Dashboard() {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Task KPIs */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ListTodo className="h-5 w-5" />
+              Tâches de Remédiation
+            </CardTitle>
+            <CardDescription>
+              Suivi des actions correctives
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500" />
+                <span className="font-bold">{taskCounts?.open ?? 0}</span>
+                <span className="text-muted-foreground">ouvertes</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <span className="font-bold">{taskCounts?.in_progress ?? 0}</span>
+                <span className="text-muted-foreground">en cours</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-destructive" />
+                <span className="font-bold text-destructive">{taskCounts?.overdue ?? 0}</span>
+                <span className="text-muted-foreground">en retard</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="font-bold">{taskCounts?.done ?? 0}</span>
+                <span className="text-muted-foreground">terminées</span>
+              </div>
+            </div>
+            <Button variant="outline" className="mt-4" onClick={() => navigate('/tasks')}>
+              Voir toutes les tâches
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </CardContent>
         </Card>
 

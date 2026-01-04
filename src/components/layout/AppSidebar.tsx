@@ -13,6 +13,7 @@ import {
   Wrench,
   Play,
   FileBarChart,
+  ListTodo,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -42,6 +43,7 @@ const operationsItems = [
   { title: 'Documents', href: '/documents', icon: FileText },
   { title: 'Outils', href: '/tools', icon: Wrench },
   { title: 'Imports', href: '/runs', icon: Play },
+  { title: 'Remédiation', href: '/tasks', icon: ListTodo },
 ];
 
 const auditItems = [

@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.normalize-tool-run]
 verify_jwt = false
+
+[functions.log-evidence]
+verify_jwt = false
