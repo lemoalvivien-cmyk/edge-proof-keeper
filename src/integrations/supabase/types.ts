@@ -312,6 +312,118 @@ export type Database = {
           },
         ]
       }
+      finding_control_links: {
+        Row: {
+          control_id: string
+          created_at: string
+          finding_id: string
+          framework: Database["public"]["Enums"]["compliance_framework"]
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          control_id: string
+          created_at?: string
+          finding_id: string
+          framework: Database["public"]["Enums"]["compliance_framework"]
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          control_id?: string
+          created_at?: string
+          finding_id?: string
+          framework?: Database["public"]["Enums"]["compliance_framework"]
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finding_control_links_control_id_fkey"
+            columns: ["control_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_controls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finding_control_links_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "findings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      findings: {
+        Row: {
+          asset_id: string | null
+          confidence: string
+          evidence: Json | null
+          finding_type: string
+          first_seen: string
+          id: string
+          organization_id: string
+          references: string[] | null
+          severity: Database["public"]["Enums"]["risk_level"]
+          status: string
+          title: string
+          tool_run_id: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          confidence?: string
+          evidence?: Json | null
+          finding_type?: string
+          first_seen?: string
+          id?: string
+          organization_id: string
+          references?: string[] | null
+          severity?: Database["public"]["Enums"]["risk_level"]
+          status?: string
+          title: string
+          tool_run_id: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          confidence?: string
+          evidence?: Json | null
+          finding_type?: string
+          first_seen?: string
+          id?: string
+          organization_id?: string
+          references?: string[] | null
+          severity?: Database["public"]["Enums"]["risk_level"]
+          status?: string
+          title?: string
+          tool_run_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "findings_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "findings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "findings_tool_run_id_fkey"
+            columns: ["tool_run_id"]
+            isOneToOne: false
+            referencedRelation: "tool_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string

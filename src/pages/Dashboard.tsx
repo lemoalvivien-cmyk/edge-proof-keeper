@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { 
   Shield, 
   AlertTriangle, 
@@ -7,18 +7,25 @@ import {
   FileCheck,
   Server,
   Scan as ScanIcon,
+  ArrowRight,
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/useAuthorization';
+import { useFindingCounts, useTopPriorityFindings } from '@/hooks/useFindings';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { organization, profile } = useAuth();
   const { hasValidAuthorization } = useAuthorization();
+  const { data: findingCounts } = useFindingCounts();
+  const { data: topFindings = [] } = useTopPriorityFindings(5);
 
   // Fetch compliance stats
   const { data: complianceStats } = useQuery({
@@ -62,28 +69,8 @@ export default function Dashboard() {
     enabled: !!organization?.id,
   });
 
-  // Fetch scan stats
-  const { data: scanStats } = useQuery({
-    queryKey: ['scan-stats', organization?.id],
-    queryFn: async () => {
-      if (!organization?.id) return { total: 0, critical: 0, high: 0 };
-      const { data } = await supabase
-        .from('scans')
-        .select('critical_count, high_count')
-        .eq('organization_id', organization.id);
-      
-      return {
-        total: data?.length ?? 0,
-        critical: data?.reduce((sum, s) => sum + (s.critical_count ?? 0), 0) ?? 0,
-        high: data?.reduce((sum, s) => sum + (s.high_count ?? 0), 0) ?? 0,
-      };
-    },
-    enabled: !!organization?.id,
-  });
-
-  const riskScore = scanStats 
-    ? Math.max(0, 100 - (scanStats.critical * 10 + scanStats.high * 5))
-    : 100;
+  const criticalHighCount = (findingCounts?.critical ?? 0) + (findingCounts?.high ?? 0);
+  const riskScore = Math.max(0, 100 - (criticalHighCount * 5));
 
   const getRiskColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -99,15 +86,26 @@ export default function Dashboard() {
     return 'Critique';
   };
 
+  const severityColors: Record<string, string> = {
+    critical: 'bg-destructive text-destructive-foreground',
+    high: 'bg-orange-500 text-white',
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vue Direction</h1>
-          <p className="text-muted-foreground">
-            Bienvenue, {profile?.full_name ?? 'Utilisateur'}. Voici l'état de votre posture cyber.
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Vue Direction</h1>
+            <p className="text-muted-foreground">
+              Bienvenue, {profile?.full_name ?? 'Utilisateur'}. Voici l'état de votre posture cyber.
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => navigate('/dashboard/technical')}>
+            Vue Technique
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
 
         {/* Authorization Warning */}
@@ -146,6 +144,25 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
+          {/* Findings Count */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Findings Ouverts</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{findingCounts?.total ?? 0}</div>
+              <div className="flex gap-2 mt-2">
+                {(findingCounts?.critical ?? 0) > 0 && (
+                  <Badge variant="destructive">{findingCounts?.critical} critiques</Badge>
+                )}
+                {(findingCounts?.high ?? 0) > 0 && (
+                  <Badge className="bg-orange-500">{findingCounts?.high} élevés</Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Compliance */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -174,23 +191,47 @@ export default function Dashboard() {
               </p>
             </CardContent>
           </Card>
-
-          {/* Scans */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Scans Effectués</CardTitle>
-              <ScanIcon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{scanStats?.total ?? 0}</div>
-              {(scanStats?.critical ?? 0) > 0 && (
-                <Badge variant="destructive" className="mt-2">
-                  {scanStats?.critical} critiques
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
         </div>
+
+        {/* Top Priority Findings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Top 5 Priorités
+            </CardTitle>
+            <CardDescription>
+              Findings critiques et élevés nécessitant une action immédiate
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {topFindings.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
+                <p>Aucun finding critique ou élevé à traiter</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {topFindings.map((finding, i) => (
+                  <div key={finding.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-muted-foreground">{i + 1}</span>
+                      <div>
+                        <p className="font-medium truncate max-w-md">{finding.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {finding.tool_runs?.tools_catalog?.name ?? 'Import'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className={severityColors[finding.severity]}>
+                      {finding.severity === 'critical' ? 'Critique' : 'Élevé'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Status Summary */}
         <div className="grid gap-4 md:grid-cols-2">
@@ -243,19 +284,22 @@ export default function Dashboard() {
               <div className="flex items-start gap-2">
                 <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
                 <p className="text-sm">
-                  Votre conformité globale est à {complianceStats?.percentage ?? 0}% pour GDPR et NIS2
+                  {criticalHighCount > 0 
+                    ? `${criticalHighCount} finding(s) critique(s)/élevé(s) à traiter en priorité`
+                    : 'Aucun finding critique ou élevé'
+                  }
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                <p className="text-sm">
+                  Conformité globale à {complianceStats?.percentage ?? 0}% pour GDPR/NIS2
                 </p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
                 <p className="text-sm">
                   {assetCount ?? 0} actif(s) sous surveillance active
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                <p className="text-sm">
-                  {(complianceStats?.inProgress ?? 0)} contrôle(s) en cours d'implémentation
                 </p>
               </div>
             </CardContent>
