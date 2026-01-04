@@ -1,75 +1,94 @@
-import { AlertTriangle, Clock, Euro, Scale } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { useInView } from "framer-motion";
+import { useRef } from "react";
+import { AlertTriangle, Scale, Shield, FileWarning } from "lucide-react";
 
 const painPoints = [
   {
-    icon: Scale,
-    title: "Vous êtes exposé sans le savoir",
-    description: "RGPD, NIS2, amendes jusqu'à 4% du CA... La conformité n'est plus optionnelle.",
-  },
-  {
-    icon: Clock,
-    title: "Vous manquez de temps",
-    description: "Entre la direction de votre entreprise et la cybersécurité, impossible de tout maîtriser.",
-  },
-  {
-    icon: Euro,
-    title: "Les consultants coûtent cher",
-    description: "10 000€+ pour un audit ponctuel qui sera obsolète dans 6 mois.",
-  },
-  {
     icon: AlertTriangle,
-    title: "Vous ne savez pas par où commencer",
-    description: "Jargon technique, matrices de risques, preuves à fournir... C'est un labyrinthe.",
+    title: "Responsabilité personnelle du dirigeant",
+    description: "NIS2 et RGPD peuvent engager votre responsabilité personnelle. Une cyberattaque mal gérée = risque pénal.",
+    color: "text-destructive",
+  },
+  {
+    icon: Scale,
+    title: "Amendes jusqu'à 4% du CA",
+    description: "Les régulateurs européens n'hésitent plus. Sans preuves de diligence, vous êtes exposé.",
+    color: "text-warning",
+  },
+  {
+    icon: Shield,
+    title: "Assurance cyber refusée",
+    description: "Les assureurs exigent des preuves de maturité cyber. Sans elles, pas de couverture en cas d'incident.",
+    color: "text-warning",
+  },
+  {
+    icon: FileWarning,
+    title: "Jargon technique incompréhensible",
+    description: "Vos équipes IT parlent vulnérabilités CVE et patches. Vous avez besoin de risques business et plans d'action.",
+    color: "text-muted-foreground",
   },
 ];
 
 export function PainSection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+
   return (
-    <section className="relative py-24 overflow-hidden">
+    <section ref={ref} className="relative py-24 overflow-hidden">
       <div className="container px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Section header */}
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Vous êtes <span className="text-destructive">vulnérable</span>
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-16"
+          >
+            <span className="inline-block px-3 py-1 text-xs font-medium text-destructive bg-destructive/10 rounded-full mb-4">
+              Le problème
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Dirigeant d'entreprise en 2025 :<br />
+              <span className="text-destructive">vous êtes personnellement exposé</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              En tant que dirigeant, vous êtes personnellement responsable de la sécurité 
-              des données de votre entreprise. Et les régulateurs le savent.
+              Cyberattaques, réglementations, assurances... Le risque cyber est devenu un risque métier majeur.
             </p>
-          </div>
+          </motion.div>
 
-          {/* Pain points grid */}
-          <div className="grid md:grid-cols-2 gap-6 stagger-children">
-            {painPoints.map((pain, index) => (
-              <Card 
-                key={index} 
-                className="glass-card hover:border-destructive/50 transition-colors group"
+          <div className="grid md:grid-cols-2 gap-6">
+            {painPoints.map((point, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group relative p-6 rounded-xl glass-card hover:bg-secondary/30 transition-colors"
               >
-                <CardContent className="p-6">
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center group-hover:bg-destructive/20 transition-colors">
-                        <pain.icon className="w-6 h-6 text-destructive" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-foreground">
-                        {pain.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {pain.description}
-                      </p>
-                    </div>
+                <div className="flex items-start gap-4">
+                  <div className={`p-3 rounded-lg bg-secondary/50 ${point.color}`}>
+                    <point.icon className="w-6 h-6" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {point.title}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {point.description}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
             ))}
           </div>
 
           {/* Stat highlight */}
-          <div className="mt-16 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-16 text-center"
+          >
             <div className="inline-flex items-center gap-4 px-8 py-4 rounded-xl bg-destructive/10 border border-destructive/30">
               <span className="text-4xl font-bold text-destructive">60%</span>
               <span className="text-left text-sm text-muted-foreground">
@@ -77,7 +96,7 @@ export function PainSection() {
                 font faillite dans les 6 mois
               </span>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

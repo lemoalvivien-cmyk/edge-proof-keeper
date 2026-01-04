@@ -15,16 +15,16 @@ export function FooterSection() {
               </div>
               <p className="text-sm text-muted-foreground max-w-xs">
                 Votre armure de gouvernance cyber. Pilotez votre conformité RGPD & NIS2 
-                sans jargon technique.
+                sans jargon technique. <span className="text-primary font-semibold">490€ TTC/an</span>.
               </p>
               <div className="flex gap-4">
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors" aria-label="LinkedIn">
                   <Linkedin className="w-5 h-5" />
                 </a>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Twitter">
                   <Twitter className="w-5 h-5" />
                 </a>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="mailto:contact@sentineledge.fr" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Email">
                   <Mail className="w-5 h-5" />
                 </a>
               </div>
@@ -36,18 +36,18 @@ export function FooterSection() {
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
-                    Tarifs
+                    Tarifs — 490€ TTC/an
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/scopeguard" className="text-muted-foreground hover:text-primary transition-colors">
+                    Rapport choc gratuit
                   </Link>
                 </li>
                 <li>
                   <Link to="/auth" className="text-muted-foreground hover:text-primary transition-colors">
                     Connexion
                   </Link>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    Documentation
-                  </a>
                 </li>
               </ul>
             </div>
@@ -77,7 +77,7 @@ export function FooterSection() {
 
           {/* Bottom bar */}
           <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>© 2024 SENTINEL EDGE. Tous droits réservés.</p>
+            <p>© 2025 SENTINEL EDGE. Tous droits réservés.</p>
             <p>Hébergé en France 🇫🇷 • 100% conforme RGPD</p>
           </div>
         </div>

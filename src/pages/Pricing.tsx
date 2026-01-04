@@ -1,9 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Shield, Check, ArrowRight, ArrowLeft, Zap, Lock, BarChart3, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { FooterSection } from "@/components/landing/FooterSection";
+import { LeadDialog } from "@/components/landing/LeadDialog";
 
 const features = [
   {
@@ -23,7 +25,7 @@ const features = [
   },
   {
     icon: Lock,
-    title: "Coffre-fort de preuves",
+    title: "Evidence Vault",
     description: "Journal immuable et certifié de toutes vos actions pour les audits.",
   },
 ];
@@ -32,39 +34,44 @@ const included = [
   "Diagnostic cyber complet",
   "Double tableau de bord (Direction + Technique)",
   "Suivi conformité RGPD & NIS2",
-  "Coffre-fort de preuves immuable",
+  "Evidence Vault (coffre-fort de preuves immuable)",
   "Rapports d'audit exportables PDF",
   "Inventaire des actifs",
   "Gestion des autorisations légales",
   "Import de documents (politiques, audits...)",
   "Mises à jour continues de la plateforme",
   "Support par email prioritaire",
-  "Hébergement sécurisé en France",
+  "Hébergement sécurisé en France 🇫🇷",
   "Chiffrement de bout en bout",
 ];
 
 const Pricing = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-background">
       <LandingNav />
       
-      <main className="pt-24 pb-16">
+      <main className="pt-32 pb-16">
         <div className="container px-4">
           {/* Back link */}
           <Button
             variant="ghost"
             className="mb-8 text-muted-foreground hover:text-foreground"
-            onClick={() => navigate("/")}
+            asChild
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour à l'accueil
+            <Link to="/">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour à l'accueil
+            </Link>
           </Button>
 
           <div className="max-w-5xl mx-auto">
             {/* Header */}
-            <div className="text-center space-y-4 mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center space-y-4 mb-16"
+            >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card border-glow mb-4">
                 <Shield className="w-4 h-4 text-primary" />
                 <span className="text-sm text-muted-foreground">Offre V1 — Lancement</span>
@@ -76,12 +83,17 @@ const Pricing = () => {
                 Tout ce dont vous avez besoin pour piloter votre cybersécurité 
                 et prouver votre conformité. Sans surprise.
               </p>
-            </div>
+            </motion.div>
 
             {/* Main pricing card */}
             <div className="grid lg:grid-cols-2 gap-12 mb-16">
               {/* Left: Features */}
-              <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="space-y-6"
+              >
                 <h2 className="text-2xl font-bold text-foreground">Fonctionnalités clés</h2>
                 <div className="grid gap-4">
                   {features.map((feature, index) => (
@@ -100,17 +112,21 @@ const Pricing = () => {
                     </Card>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Right: Pricing card */}
-              <div>
-                <Card className="glass-card border-glow sticky top-24">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <Card className="glass-card border-glow sticky top-32">
                   <CardHeader className="text-center pb-4">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4 neon-glow">
                       <Shield className="w-8 h-8 text-primary" />
                     </div>
                     <h3 className="text-2xl font-bold text-foreground">SENTINEL EDGE</h3>
-                    <p className="text-muted-foreground">Offre complète V1</p>
+                    <p className="text-muted-foreground">Gouvernance cyber complète</p>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">
                     {/* Price */}
@@ -126,21 +142,24 @@ const Pricing = () => {
 
                     {/* CTA */}
                     <div className="space-y-4">
-                      <Button 
-                        size="lg" 
-                        className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
-                        onClick={() => navigate("/auth")}
-                      >
-                        Demander activation
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </Button>
+                      <LeadDialog
+                        trigger={
+                          <Button 
+                            size="lg" 
+                            className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
+                          >
+                            Demander activation
+                            <ArrowRight className="w-5 h-5 ml-2" />
+                          </Button>
+                        }
+                      />
                       
                       <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-center">
                         <p className="text-sm text-warning font-medium">
-                          🚀 Paiement bientôt disponible
+                          🚀 Paiement bientôt disponible (Stripe Link externe)
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Créez votre compte maintenant pour être notifié
+                          Demandez votre activation maintenant
                         </p>
                       </div>
                     </div>
@@ -153,16 +172,21 @@ const Pricing = () => {
                       </span>
                       <span className="flex items-center gap-1">
                         <div className="w-2 h-2 rounded-full bg-success" />
-                        Données en France
+                        Données en France 🇫🇷
                       </span>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             </div>
 
             {/* Everything included */}
-            <div className="glass-card rounded-2xl p-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="glass-card rounded-2xl p-8"
+            >
               <h2 className="text-2xl font-bold text-foreground mb-8 text-center">
                 Tout est <span className="text-gradient">inclus</span>
               </h2>
@@ -176,7 +200,7 @@ const Pricing = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </main>

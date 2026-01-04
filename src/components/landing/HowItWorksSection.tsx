@@ -1,98 +1,91 @@
-import { Scan, FileSignature, LayoutDashboard, Award } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+import { Globe, FileSignature, Scan, FileText } from "lucide-react";
 
 const steps = [
   {
     number: "01",
-    icon: FileSignature,
-    title: "Autorisez le diagnostic",
-    description: "Signez électroniquement votre consentement. Nous n'agissons jamais sans votre accord explicite.",
+    icon: Globe,
+    title: "Entrez votre domaine",
+    description: "Indiquez simplement le domaine de votre entreprise. C'est tout ce dont nous avons besoin pour commencer.",
   },
   {
     number: "02",
-    icon: Scan,
-    title: "Lancez l'analyse",
-    description: "Notre IA scanne vos actifs et identifie les failles de sécurité et écarts de conformité.",
+    icon: FileSignature,
+    title: "Preuve d'autorisation",
+    description: "Uploadez une preuve que vous êtes autorisé à scanner (attestation de propriété, mandat...). 100% légal.",
   },
   {
     number: "03",
-    icon: LayoutDashboard,
-    title: "Pilotez sans jargon",
-    description: "Tableau de bord double : vue dirigeant (synthèse) + vue technique (détails pour votre équipe IT).",
+    icon: Scan,
+    title: "Scan safe & légal",
+    description: "Notre scanner analyse votre exposition sans intrusion. Aucune donnée sensible n'est collectée.",
   },
   {
     number: "04",
-    icon: Award,
-    title: "Prouvez votre conformité",
-    description: "Générez des rapports opposables et un journal de preuves inaltérable pour les audits.",
+    icon: FileText,
+    title: "Double rapport + Evidence Vault",
+    description: "Recevez un rapport Direction (zéro jargon) + un rapport Technique. Toutes vos preuves dans l'Evidence Vault.",
   },
 ];
 
 export function HowItWorksSection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+
   return (
-    <section className="relative py-24 overflow-hidden">
+    <section ref={ref} id="how-it-works" className="relative py-24 overflow-hidden">
       <div className="container px-4">
         <div className="max-w-5xl mx-auto">
-          {/* Section header */}
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Comment ça <span className="text-gradient">fonctionne</span>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-16"
+          >
+            <span className="inline-block px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full mb-4">
+              Processus
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Comment ça marche ?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Quatre étapes simples pour passer de l'incertitude à la maîtrise totale.
+              4 étapes simples pour passer de l'incertitude à la maîtrise de votre risque cyber.
             </p>
-          </div>
+          </motion.div>
 
-          {/* Steps */}
           <div className="relative">
             {/* Connecting line */}
-            <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary/50 via-accent/50 to-primary/50" />
+            <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-y-1/2" />
 
-            <div className="space-y-12 lg:space-y-0">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {steps.map((step, index) => (
-                <div 
+                <motion.div
                   key={index}
-                  className={`relative lg:grid lg:grid-cols-2 lg:gap-12 items-center ${
-                    index % 2 === 1 ? "lg:text-right" : ""
-                  }`}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.5, delay: index * 0.15 }}
+                  className="relative group"
                 >
-                  {/* Content */}
-                  <div 
-                    className={`space-y-4 ${
-                      index % 2 === 1 ? "lg:order-2 lg:text-left" : "lg:order-1"
-                    }`}
-                  >
-                    <div className="glass-card p-6 rounded-xl hover:border-primary/50 transition-colors group">
-                      <div className={`flex items-start gap-4 ${
-                        index % 2 === 1 ? "lg:flex-row" : ""
-                      }`}>
-                        <div className="flex-shrink-0">
-                          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors neon-glow">
-                            <step.icon className="w-7 h-7 text-primary" />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-mono text-primary">{step.number}</span>
-                            <h3 className="text-xl font-semibold text-foreground">
-                              {step.title}
-                            </h3>
-                          </div>
-                          <p className="text-muted-foreground">
-                            {step.description}
-                          </p>
-                        </div>
+                  <div className="relative p-6 rounded-xl glass-card hover:bg-secondary/30 transition-all duration-300 h-full">
+                    {/* Step number */}
+                    <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold neon-glow">
+                      {step.number}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="w-14 h-14 rounded-xl bg-secondary/50 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <step.icon className="w-7 h-7" />
                       </div>
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {step.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {step.description}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Center dot */}
-                  <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                    <div className="w-4 h-4 rounded-full bg-primary neon-glow" />
-                  </div>
-
-                  {/* Empty column for layout */}
-                  <div className={index % 2 === 1 ? "lg:order-1" : "lg:order-2"} />
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
