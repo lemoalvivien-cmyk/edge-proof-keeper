@@ -1,9 +1,24 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Menu, X } from "lucide-react";
+import { Shield, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadDialog } from "./LeadDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const offresLinks = [
+  { href: "/offres/imports-hub", label: "Imports Hub" },
+  { href: "/offres/devsecops-pack", label: "DevSecOps Pack" },
+  { href: "/offres/audit-pack-cabinets", label: "Audit Pack Cabinets" },
+  { href: "/offres/remediation-patch-bridge", label: "Remediation Patch Bridge" },
+  { href: "/offres/continuous-governance", label: "Continuous Governance" },
+  { href: "/offres/easm-osint-signals", label: "EASM & OSINT Signals" },
+];
 
 export function LandingNav() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -73,12 +88,30 @@ export function LandingNav() {
               >
                 Comment ça marche
               </button>
-              <button
-                onClick={() => scrollToSection("pricing")}
+              
+              {/* Offres Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Offres
+                  <ChevronDown className="w-4 h-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-56">
+                  {offresLinks.map((link) => (
+                    <DropdownMenuItem key={link.href} asChild>
+                      <Link to={link.href} className="cursor-pointer">
+                        {link.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Link
+                to="/pricing"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Tarifs
-              </button>
+              </Link>
               <button
                 onClick={() => scrollToSection("faq")}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -125,12 +158,31 @@ export function LandingNav() {
               >
                 Comment ça marche
               </button>
-              <button
-                onClick={() => scrollToSection("pricing")}
-                className="block w-full text-left text-muted-foreground hover:text-foreground py-2"
+              
+              {/* Mobile Offres */}
+              <div className="py-2">
+                <p className="text-sm font-medium text-foreground mb-2">Offres</p>
+                <div className="pl-4 space-y-2">
+                  {offresLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      to={link.href}
+                      className="block text-sm text-muted-foreground hover:text-foreground py-1"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <Link
+                to="/pricing"
+                className="block text-muted-foreground hover:text-foreground py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Tarifs
-              </button>
+              </Link>
               <button
                 onClick={() => scrollToSection("faq")}
                 className="block w-full text-left text-muted-foreground hover:text-foreground py-2"

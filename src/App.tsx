@@ -36,6 +36,14 @@ import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
 import AuthorizedUse from "./pages/legal/AuthorizedUse";
 import Disclaimer from "./pages/legal/Disclaimer";
+// Offres pages
+import ImportsHub from "./pages/offres/ImportsHub";
+import DevsecOpsPack from "./pages/offres/DevsecOpsPack";
+import AuditPackCabinets from "./pages/offres/AuditPackCabinets";
+import RemediationPatchBridge from "./pages/offres/RemediationPatchBridge";
+import ContinuousGovernance from "./pages/offres/ContinuousGovernance";
+import EasmOsintSignals from "./pages/offres/EasmOsintSignals";
+import PlansAddons from "./pages/PlansAddons";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +72,14 @@ const App = () => (
             <Route path="/scopeguard" element={<ScopeGuard />} />
             <Route path="/auth" element={<Auth />} />
             
+            {/* Offres pages (public) */}
+            <Route path="/offres/imports-hub" element={<ImportsHub />} />
+            <Route path="/offres/devsecops-pack" element={<DevsecOpsPack />} />
+            <Route path="/offres/audit-pack-cabinets" element={<AuditPackCabinets />} />
+            <Route path="/offres/remediation-patch-bridge" element={<RemediationPatchBridge />} />
+            <Route path="/offres/continuous-governance" element={<ContinuousGovernance />} />
+            <Route path="/offres/easm-osint-signals" element={<EasmOsintSignals />} />
+            
             {/* Legal pages (public) */}
             <Route path="/legal/terms" element={<Terms />} />
             <Route path="/legal/privacy" element={<Privacy />} />
@@ -79,6 +95,7 @@ const App = () => (
             
             {/* Settings - protected, admin only, exempt from authorization gate */}
             <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><Settings /></ProtectedRoute>} />
+            <Route path="/plans" element={<ProtectedRoute requiredRoles={['admin']}><PlansAddons /></ProtectedRoute>} />
             
             {/* Protected app routes - require valid authorization */}
             <Route path="/dashboard" element={<ProtectedWithGate><Dashboard /></ProtectedWithGate>} />
