@@ -2,7 +2,9 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { PainSection } from "@/components/landing/PainSection";
 import { PromiseSection } from "@/components/landing/PromiseSection";
+import { AudienceSection } from "@/components/landing/AudienceSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { EvidenceSection } from "@/components/landing/EvidenceSection";
 import { SocialProofSection } from "@/components/landing/SocialProofSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { PricingSection } from "@/components/landing/PricingSection";
@@ -16,7 +18,9 @@ const Landing = () => {
         <HeroSection />
         <PainSection />
         <PromiseSection />
+        <AudienceSection />
         <HowItWorksSection />
+        <EvidenceSection />
         <SocialProofSection />
         <FAQSection />
         <PricingSection />

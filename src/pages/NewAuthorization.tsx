@@ -23,8 +23,11 @@ const authorizationSchema = z.object({
     .max(1000, 'La portée ne peut pas dépasser 1000 caractères')
     .refine(val => val.trim().length >= 10, 'La portée ne peut pas être vide ou contenir uniquement des espaces'),
   validUntil: z.string().optional(),
-  consent: z.boolean().refine(val => val === true, {
-    message: 'Vous devez accepter les conditions',
+  consentAuthorized: z.boolean().refine(val => val === true, {
+    message: 'Vous devez confirmer être autorisé à analyser ces actifs',
+  }),
+  consentLimits: z.boolean().refine(val => val === true, {
+    message: 'Vous devez confirmer comprendre les limites de l\'outil',
   }),
 });
 
@@ -39,9 +42,10 @@ export default function NewAuthorization() {
   const form = useForm<AuthorizationFormData>({
     resolver: zodResolver(authorizationSchema),
     defaultValues: {
-      scope: '',
+      scope: localStorage.getItem('sentinel_scope') || '',
       validUntil: '',
-      consent: false,
+      consentAuthorized: false,
+      consentLimits: false,
     },
   });
 
@@ -83,23 +87,48 @@ export default function NewAuthorization() {
       // Sanitize scope input
       const sanitizedScope = sanitizeTextInput(data.scope);
 
-      const { error } = await supabase
+      const { data: authData, error } = await supabase
         .from('authorizations')
         .insert([{
           organization_id: organization.id,
           created_by: user.id,
           document_url: data.fileUrl,
           document_hash: data.fileHash,
-          consent_checkbox: data.consent,
+          consent_checkbox: data.consentAuthorized && data.consentLimits,
           consent_ip: data.ip,
           scope: sanitizedScope,
           valid_until: data.validUntil || null,
           status: 'approved', // Auto-approve for V1
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
 
-      // Note: Evidence logging is now done server-side only via upload-authorization edge function
+      // Log consent to Evidence Vault via edge function
+      try {
+        await supabase.functions.invoke('log-evidence', {
+          body: {
+            organization_id: organization.id,
+            user_id: user.id,
+            action: 'consent',
+            entity_type: 'authorization',
+            entity_id: authData.id,
+            details: {
+              consent_authorized: data.consentAuthorized,
+              consent_limits: data.consentLimits,
+              scope: sanitizedScope,
+            },
+            ip_address: data.ip,
+          },
+        });
+      } catch (logError) {
+        console.error('Failed to log consent evidence:', logError);
+        // Don't fail the creation if evidence logging fails
+      }
+
+      // Clear stored scope
+      localStorage.removeItem('sentinel_scope');
     },
     onSuccess: () => {
       toast.success('Autorisation créée avec succès');
@@ -268,10 +297,10 @@ export default function NewAuthorization() {
                   )}
                 />
 
-                {/* Consent Checkbox */}
+                {/* Consent Checkbox 1: Authorized */}
                 <FormField
                   control={form.control}
-                  name="consent"
+                  name="consentAuthorized"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4">
                       <FormControl>
@@ -282,12 +311,42 @@ export default function NewAuthorization() {
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="text-sm font-medium">
-                          Je confirme avoir l'autorisation légale
+                          Je déclare être autorisé à analyser ces actifs
                         </FormLabel>
                         <FormDescription>
                           Je certifie que le document fourni m'autorise légalement à effectuer 
                           les opérations de sécurité décrites dans la portée ci-dessus. 
-                          Mon adresse IP et l'horodatage seront enregistrés.
+                          Mon adresse IP et l'horodatage seront enregistrés dans l'Evidence Vault.
+                        </FormDescription>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Consent Checkbox 2: Limits */}
+                <FormField
+                  control={form.control}
+                  name="consentLimits"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-medium">
+                          Je comprends les limites de l'outil
+                        </FormLabel>
+                        <FormDescription>
+                          Je comprends que SENTINEL EDGE est un outil d'aide à la décision 
+                          basé sur l'import de résultats d'outils tiers, et ne garantit pas 
+                          l'exhaustivité de la détection.{" "}
+                          <a href="/legal/disclaimer" target="_blank" className="text-primary hover:underline">
+                            En savoir plus
+                          </a>
                         </FormDescription>
                         <FormMessage />
                       </div>
