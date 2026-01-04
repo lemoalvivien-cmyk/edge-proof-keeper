@@ -1,19 +1,60 @@
-import { BookOpen, User, Shield, FileCheck, Server, Scan, Link, Hash } from 'lucide-react';
-import { useEvidenceLog } from '@/hooks/useEvidenceLog';
+import { useState, useMemo } from 'react';
+import { BookOpen, User, Shield, FileCheck, Server, Scan, Link, Hash, Loader2, Filter } from 'lucide-react';
+import { useEvidenceLogPaginated, type ExtendedEvidenceLog } from '@/hooks/useEvidenceLog';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const ACTION_OPTIONS = [
+  { value: 'all', label: 'Toutes les actions' },
+  { value: 'authorization_created', label: 'Autorisation créée' },
+  { value: 'asset_created', label: 'Actif ajouté' },
+  { value: 'tool_run_created', label: 'Run créé' },
+  { value: 'tool_run_imported', label: 'Run importé' },
+  { value: 'report_generated', label: 'Rapport généré' },
+  { value: 'proof_pack_exported', label: 'Proof pack exporté' },
+];
+
+const ENTITY_TYPE_OPTIONS = [
+  { value: 'all', label: 'Tous les types' },
+  { value: 'authorization', label: 'Autorisation' },
+  { value: 'asset', label: 'Actif' },
+  { value: 'tool_run', label: 'Tool Run' },
+  { value: 'report', label: 'Rapport' },
+  { value: 'proof_pack', label: 'Proof Pack' },
+];
 
 export default function Evidence() {
-  const { logs, isLoading } = useEvidenceLog();
+  const [actionFilter, setActionFilter] = useState<string>('all');
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string>('all');
+
+  // Build filters object
+  const filters = useMemo(() => ({
+    action: actionFilter !== 'all' ? actionFilter : undefined,
+    entity_type: entityTypeFilter !== 'all' ? entityTypeFilter : undefined,
+  }), [actionFilter, entityTypeFilter]);
+
+  const { 
+    data, 
+    isLoading, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage 
+  } = useEvidenceLogPaginated(filters);
+
+  // Flatten all pages
+  const logs = data?.pages.flatMap(page => page.data) ?? [];
+  const totalCount = logs.length;
 
   const getActionIcon = (action: string) => {
     if (action.includes('authorization')) return <FileCheck className="h-4 w-4" />;
     if (action.includes('asset')) return <Server className="h-4 w-4" />;
-    if (action.includes('scan')) return <Scan className="h-4 w-4" />;
+    if (action.includes('scan') || action.includes('tool_run')) return <Scan className="h-4 w-4" />;
     if (action.includes('login') || action.includes('user')) return <User className="h-4 w-4" />;
     return <Shield className="h-4 w-4" />;
   };
@@ -23,11 +64,23 @@ export default function Evidence() {
       case 'authorization_created': return 'Autorisation créée';
       case 'asset_created': return 'Actif ajouté';
       case 'scan_created': return 'Scan importé';
+      case 'tool_run_created': return 'Run créé';
+      case 'tool_run_imported': return 'Run importé';
+      case 'report_generated': return 'Rapport généré';
+      case 'proof_pack_exported': return 'Proof pack exporté';
+      case 'chain_verified': return 'Chaîne vérifiée';
       case 'login': return 'Connexion';
       case 'logout': return 'Déconnexion';
       default: return action.replace(/_/g, ' ');
     }
   };
+
+  const handleClearFilters = () => {
+    setActionFilter('all');
+    setEntityTypeFilter('all');
+  };
+
+  const hasActiveFilters = actionFilter !== 'all' || entityTypeFilter !== 'all';
 
   return (
     <AppLayout>
@@ -56,13 +109,52 @@ export default function Evidence() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Historique des événements
-            </CardTitle>
-            <CardDescription>
-              {logs.length} événement(s) enregistré(s)
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Historique des événements
+                </CardTitle>
+                <CardDescription>
+                  {totalCount} événement(s) chargé(s)
+                  {hasNextPage && " • Plus disponible"}
+                </CardDescription>
+              </div>
+              
+              {/* Filters */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={actionFilter} onValueChange={setActionFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Action" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ACTION_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ENTITY_TYPE_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+                    Réinitialiser
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -76,102 +168,127 @@ export default function Evidence() {
                 <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-lg font-medium">Aucun événement</p>
                 <p className="text-sm text-muted-foreground">
-                  Les actions seront enregistrées ici
+                  {hasActiveFilters 
+                    ? "Aucun événement ne correspond aux filtres sélectionnés"
+                    : "Les actions seront enregistrées ici"
+                  }
                 </p>
               </div>
             ) : (
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-4">
-                  {logs.map(log => (
-                    <div
-                      key={log.id}
-                      className="flex items-start gap-4 rounded-lg border p-4"
-                    >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                        {getActionIcon(log.action)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium">{getActionLabel(log.action)}</p>
-                          <Badge variant="outline" className="text-xs">
-                            {log.entity_type}
-                          </Badge>
+              <>
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-4">
+                    {logs.map((log: ExtendedEvidenceLog) => (
+                      <div
+                        key={log.id}
+                        className="flex items-start gap-4 rounded-lg border p-4"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                          {getActionIcon(log.action)}
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(log.created_at).toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                          })}
-                        </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
-                          {log.seq && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="font-mono bg-muted px-2 py-0.5 rounded cursor-help">
-                                  #{log.seq}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Numéro de séquence</TooltipContent>
-                            </Tooltip>
-                          )}
-                          {log.ip_address && (
-                            <span className="font-mono">IP: {log.ip_address}</span>
-                          )}
-                          {log.source && (
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-medium">{getActionLabel(log.action)}</p>
                             <Badge variant="outline" className="text-xs">
-                              {log.source}
+                              {log.entity_type}
                             </Badge>
-                          )}
-                        </div>
-                        {/* Hash chain info */}
-                        {log.entry_hash && (
-                          <div className="flex items-center gap-2 mt-2 text-xs">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1 font-mono text-muted-foreground bg-muted px-2 py-1 rounded cursor-help">
-                                  <Hash className="h-3 w-3" />
-                                  {log.entry_hash.slice(0, 16)}...
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-sm">
-                                <p className="font-mono text-xs break-all">{log.entry_hash}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            {log.prev_hash && log.prev_hash !== 'GENESIS' && (
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(log.created_at).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                            })}
+                          </p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
+                            {log.seq && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1 text-muted-foreground cursor-help">
-                                    <Link className="h-3 w-3" />
-                                    <span className="font-mono">{log.prev_hash.slice(0, 8)}...</span>
-                                  </div>
+                                  <span className="font-mono bg-muted px-2 py-0.5 rounded cursor-help">
+                                    #{log.seq}
+                                  </span>
                                 </TooltipTrigger>
-                                <TooltipContent>Hash entrée précédente</TooltipContent>
+                                <TooltipContent>Numéro de séquence</TooltipContent>
                               </Tooltip>
                             )}
-                            {log.prev_hash === 'GENESIS' && (
-                              <Badge variant="secondary" className="text-xs">GENESIS</Badge>
+                            {log.ip_address && (
+                              <span className="font-mono">IP: {log.ip_address}</span>
+                            )}
+                            {log.source && (
+                              <Badge variant="outline" className="text-xs">
+                                {log.source}
+                              </Badge>
                             )}
                           </div>
-                        )}
-                        {log.artifact_hash && (
-                          <div className="mt-2 text-xs font-mono text-muted-foreground truncate max-w-[300px]">
-                            Artefact: {log.artifact_hash.slice(0, 16)}...
-                          </div>
-                        )}
-                        {log.details && Object.keys(log.details).length > 0 && (
-                          <div className="mt-2 p-2 rounded bg-muted text-xs font-mono">
-                            {JSON.stringify(log.details, null, 2)}
-                          </div>
-                        )}
+                          {/* Hash chain info */}
+                          {log.entry_hash && (
+                            <div className="flex items-center gap-2 mt-2 text-xs">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-1 font-mono text-muted-foreground bg-muted px-2 py-1 rounded cursor-help">
+                                    <Hash className="h-3 w-3" />
+                                    {log.entry_hash.slice(0, 16)}...
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm">
+                                  <p className="font-mono text-xs break-all">{log.entry_hash}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              {log.prev_hash && log.prev_hash !== 'GENESIS' && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1 text-muted-foreground cursor-help">
+                                      <Link className="h-3 w-3" />
+                                      <span className="font-mono">{log.prev_hash.slice(0, 8)}...</span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Hash entrée précédente</TooltipContent>
+                                </Tooltip>
+                              )}
+                              {log.prev_hash === 'GENESIS' && (
+                                <Badge variant="secondary" className="text-xs">GENESIS</Badge>
+                              )}
+                            </div>
+                          )}
+                          {log.artifact_hash && (
+                            <div className="mt-2 text-xs font-mono text-muted-foreground truncate max-w-[300px]">
+                              Artefact: {log.artifact_hash.slice(0, 16)}...
+                            </div>
+                          )}
+                          {log.details && Object.keys(log.details).length > 0 && (
+                            <div className="mt-2 p-2 rounded bg-muted text-xs font-mono">
+                              {JSON.stringify(log.details, null, 2)}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+                    ))}
+                  </div>
+                </ScrollArea>
+
+                {/* Load More Button */}
+                {hasNextPage && (
+                  <div className="flex justify-center mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                    >
+                      {isFetchingNextPage ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Chargement...
+                        </>
+                      ) : (
+                        "Charger plus"
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
