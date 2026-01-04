@@ -127,14 +127,12 @@ export default function Assets() {
             </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <AuthorizationGate actionDescription="l'ajout d'actifs">
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouvel actif
-                </Button>
-              </DialogTrigger>
-            </AuthorizationGate>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvel actif
+              </Button>
+            </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Ajouter un actif</DialogTitle>
