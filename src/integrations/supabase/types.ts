@@ -488,6 +488,182 @@ export type Database = {
           },
         ]
       }
+      tool_presets: {
+        Row: {
+          created_at: string
+          default_params: Json | null
+          id: string
+          mode: string
+          name: string
+          requires_authorization: boolean
+          tool_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_params?: Json | null
+          id?: string
+          mode: string
+          name: string
+          requires_authorization?: boolean
+          tool_id: string
+        }
+        Update: {
+          created_at?: string
+          default_params?: Json | null
+          id?: string
+          mode?: string
+          name?: string
+          requires_authorization?: boolean
+          tool_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_presets_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tool_runs: {
+        Row: {
+          asset_id: string | null
+          authorization_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          input_artifact_hash: string | null
+          input_artifact_url: string | null
+          mode: string
+          normalized_output: Json | null
+          organization_id: string
+          preset_id: string | null
+          requested_at: string
+          requested_by: string
+          status: string
+          summary: Json | null
+          tool_id: string
+        }
+        Insert: {
+          asset_id?: string | null
+          authorization_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          input_artifact_hash?: string | null
+          input_artifact_url?: string | null
+          mode: string
+          normalized_output?: Json | null
+          organization_id: string
+          preset_id?: string | null
+          requested_at?: string
+          requested_by: string
+          status?: string
+          summary?: Json | null
+          tool_id: string
+        }
+        Update: {
+          asset_id?: string | null
+          authorization_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          input_artifact_hash?: string | null
+          input_artifact_url?: string | null
+          mode?: string
+          normalized_output?: Json | null
+          organization_id?: string
+          preset_id?: string | null
+          requested_at?: string
+          requested_by?: string
+          status?: string
+          summary?: Json | null
+          tool_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_runs_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_runs_authorization_id_fkey"
+            columns: ["authorization_id"]
+            isOneToOne: false
+            referencedRelation: "authorizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_runs_preset_id_fkey"
+            columns: ["preset_id"]
+            isOneToOne: false
+            referencedRelation: "tool_presets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_runs_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tools_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          docker_url: string | null
+          docs_url: string
+          id: string
+          name: string
+          official_site_url: string
+          repo_url: string
+          slug: string
+          status: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          docker_url?: string | null
+          docs_url: string
+          id?: string
+          name: string
+          official_site_url: string
+          repo_url: string
+          slug: string
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          docker_url?: string | null
+          docs_url?: string
+          id?: string
+          name?: string
+          official_site_url?: string
+          repo_url?: string
+          slug?: string
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

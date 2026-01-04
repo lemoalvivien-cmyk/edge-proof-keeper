@@ -19,6 +19,10 @@ import Documents from "./pages/Documents";
 import Compliance from "./pages/Compliance";
 import Evidence from "./pages/Evidence";
 import Settings from "./pages/Settings";
+import Tools from "./pages/Tools";
+import ToolDetail from "./pages/ToolDetail";
+import Runs from "./pages/Runs";
+import RunDetail from "./pages/RunDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +51,10 @@ const App = () => (
             <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
             <Route path="/compliance" element={<ProtectedRoute><Compliance /></ProtectedRoute>} />
             <Route path="/evidence" element={<ProtectedRoute><Evidence /></ProtectedRoute>} />
+            <Route path="/tools" element={<ProtectedRoute><Tools /></ProtectedRoute>} />
+            <Route path="/tools/:slug" element={<ProtectedRoute><ToolDetail /></ProtectedRoute>} />
+            <Route path="/runs" element={<ProtectedRoute><Runs /></ProtectedRoute>} />
+            <Route path="/runs/:id" element={<ProtectedRoute><RunDetail /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><Settings /></ProtectedRoute>} />
             
             <Route path="*" element={<NotFound />} />
