@@ -15,6 +15,7 @@ import {
   ListTodo,
   CheckSquare,
   Package,
+  CreditCard,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -54,6 +55,7 @@ const auditItems = [
 
 const adminItems = [
   { title: 'Paramètres', href: '/settings', icon: Settings },
+  { title: 'Plans & Add-ons', href: '/plans', icon: CreditCard },
   { title: 'GO/NO-GO', href: '/go-no-go', icon: CheckSquare },
 ];
 

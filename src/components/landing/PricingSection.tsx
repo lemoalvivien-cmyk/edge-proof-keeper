@@ -102,12 +102,12 @@ export function PricingSection() {
                     }
                   />
                   
-                  <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-center">
-                    <p className="text-sm text-warning font-medium">
-                      🚀 Paiement bientôt disponible (Stripe Link externe)
+                  <div className="p-4 rounded-xl bg-primary/10 border border-primary/30 text-center">
+                    <p className="text-sm text-foreground font-medium">
+                      💳 Paiement via lien Stripe externe (V1)
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Demandez votre activation maintenant
+                      Paiement intégré prévu V2 (feature flag)
                     </p>
                   </div>
                 </div>

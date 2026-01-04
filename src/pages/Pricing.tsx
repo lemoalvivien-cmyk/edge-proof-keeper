@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Shield, Check, ArrowRight, ArrowLeft, Zap, Lock, BarChart3, FileText } from "lucide-react";
+import { Shield, Check, ArrowRight, ArrowLeft, Zap, Lock, BarChart3, FileText, Users, RefreshCw, Globe, Rocket, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { LeadDialog } from "@/components/landing/LeadDialog";
@@ -43,6 +44,49 @@ const included = [
   "Support par email prioritaire",
   "Hébergement sécurisé en France 🇫🇷",
   "Chiffrement de bout en bout",
+];
+
+const addons = [
+  {
+    id: "cabinet-mode",
+    name: "Mode Cabinet / Multi-clients",
+    price: "+250€",
+    period: "TTC / an",
+    icon: Users,
+    description: "Gérez plusieurs organisations clients",
+    status: "coming_v2" as const,
+    href: "/offres/audit-pack-cabinets",
+  },
+  {
+    id: "continuous-governance",
+    name: "Continuous Governance",
+    price: "+150€",
+    period: "TTC / an",
+    icon: RefreshCw,
+    description: "Imports récurrents, suivi temporel",
+    status: "available" as const,
+    href: "/offres/continuous-governance",
+  },
+  {
+    id: "easm-signals",
+    name: "EASM & OSINT Signals",
+    price: "+200€",
+    period: "TTC / an",
+    icon: Globe,
+    description: "Surface d'attaque externe",
+    status: "available" as const,
+    href: "/offres/easm-osint-signals",
+  },
+  {
+    id: "onboarding",
+    name: "Onboarding / Audit Readiness",
+    price: "+300€",
+    period: "one-time",
+    icon: Rocket,
+    description: "Accompagnement initial",
+    status: "available" as const,
+    href: null,
+  },
 ];
 
 const Pricing = () => {
@@ -125,7 +169,7 @@ const Pricing = () => {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4 neon-glow">
                       <Shield className="w-8 h-8 text-primary" />
                     </div>
-                    <h3 className="text-2xl font-bold text-foreground">SENTINEL EDGE</h3>
+                    <h3 className="text-2xl font-bold text-foreground">SENTINEL EDGE Core</h3>
                     <p className="text-muted-foreground">Gouvernance cyber complète</p>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">
@@ -185,10 +229,10 @@ const Pricing = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="glass-card rounded-2xl p-8"
+              className="glass-card rounded-2xl p-8 mb-16"
             >
               <h2 className="text-2xl font-bold text-foreground mb-8 text-center">
-                Tout est <span className="text-gradient">inclus</span>
+                Tout est <span className="text-gradient">inclus</span> dans Core
               </h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {included.map((item, index) => (
@@ -198,6 +242,71 @@ const Pricing = () => {
                     </div>
                     <span className="text-foreground">{item}</span>
                   </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Add-ons section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="mb-16"
+            >
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 mb-4">
+                  <Package className="w-4 h-4 text-primary" />
+                  <span className="text-sm text-primary font-medium">Add-ons optionnels</span>
+                </div>
+                <h2 className="text-2xl font-bold text-foreground">Étendez votre gouvernance</h2>
+                <p className="text-muted-foreground mt-2">En complément du plan Core</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {addons.map((addon, index) => (
+                  <motion.div
+                    key={addon.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                  >
+                    <Card className="glass-card h-full hover:border-primary/50 transition-colors">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-primary/10">
+                              <addon.icon className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-foreground">{addon.name}</h3>
+                              <p className="text-sm text-muted-foreground">{addon.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-4">
+                          <div>
+                            <span className="text-xl font-bold text-primary">{addon.price}</span>
+                            <span className="text-xs text-muted-foreground ml-1">{addon.period}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {addon.status === "coming_v2" ? (
+                              <Badge variant="outline" className="text-xs">V2</Badge>
+                            ) : (
+                              <Badge className="bg-success/20 text-success border-0 text-xs">Disponible</Badge>
+                            )}
+                            {addon.href && (
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link to={addon.href}>
+                                  Détails
+                                  <ArrowRight className="w-3 h-3 ml-1" />
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
