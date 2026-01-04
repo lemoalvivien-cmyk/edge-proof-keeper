@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.upload-document]
 verify_jwt = false
+
+[functions.create-tool-run]
+verify_jwt = false
+
+[functions.upload-tool-run-artifact]
+verify_jwt = false
