@@ -27,20 +27,6 @@ function checkRateLimit(userId: string): boolean {
   return true;
 }
 
-// Stable JSON stringify for hash computation
-function canonicalJsonStringify(obj: unknown): string {
-  return JSON.stringify(obj, Object.keys(obj as object).sort());
-}
-
-// Simple SHA256 hex using SubtleCrypto
-async function sha256Hex(input: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(input);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -274,10 +260,7 @@ Deno.serve(async (req) => {
       ],
     };
 
-    // Compute pack_hash
-    const packHash = await sha256Hex(canonicalJsonStringify(packJson));
-
-    // Insert proof pack
+    // Insert proof pack - pack_hash computed by DB trigger for determinism
     const { data: proofPack, error: insertError } = await supabaseAdmin
       .from("proof_packs")
       .insert({
@@ -287,7 +270,6 @@ Deno.serve(async (req) => {
         report_id: report?.id || null,
         status: "ready",
         pack_json: packJson,
-        pack_hash: packHash,
         created_by: user.id,
       })
       .select()
@@ -301,7 +283,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Proof pack created: ${proofPack.id} with hash ${packHash}`);
+    console.log(`Proof pack created: ${proofPack.id} with hash ${proofPack.pack_hash}`);
 
     // Log evidence
     await supabaseAdmin.from("evidence_log").insert({
@@ -310,7 +292,7 @@ Deno.serve(async (req) => {
       action: "export_proof_pack",
       entity_type: "proof_pack",
       entity_id: proofPack.id,
-      artifact_hash: packHash,
+      artifact_hash: proofPack.pack_hash,
       details: {
         tool_run_id: toolRun?.id,
         report_id: report?.id,
@@ -323,7 +305,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         proof_pack_id: proofPack.id,
-        pack_hash: packHash,
+        pack_hash: proofPack.pack_hash,
         pack_json: packJson,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

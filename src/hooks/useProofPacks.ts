@@ -22,6 +22,7 @@ export interface ChainVerificationResult {
   head_hash: string;
   first_bad_seq: number | null;
   has_discrepancy: boolean;
+  legacy_rows_count: number;
 }
 
 export function useProofPacks() {

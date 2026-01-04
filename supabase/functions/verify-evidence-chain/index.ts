@@ -127,9 +127,10 @@ Deno.serve(async (req) => {
       first_bad_seq: null,
       expected_hash: null,
       found_hash: null,
+      legacy_rows_count: 0,
     };
 
-    console.log(`Chain verification result: is_valid=${result.is_valid}, last_seq=${result.last_seq}`);
+    console.log(`Chain verification result: is_valid=${result.is_valid}, last_seq=${result.last_seq}, legacy_rows=${result.legacy_rows_count}`);
 
     // Log this verification to evidence
     const logPayload = {
@@ -162,6 +163,7 @@ Deno.serve(async (req) => {
           last_seq: result.last_seq,
           head_hash: result.head_hash,
           first_bad_seq: result.first_bad_seq,
+          legacy_rows_count: result.legacy_rows_count,
           // Don't expose hash details for security
           has_discrepancy: result.first_bad_seq !== null,
         },
