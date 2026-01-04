@@ -15,9 +15,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
+import { sanitizeTextInput } from '@/lib/validation';
 
 const authorizationSchema = z.object({
-  scope: z.string().min(10, 'La portée doit contenir au moins 10 caractères'),
+  scope: z.string()
+    .min(10, 'La portée doit contenir au moins 10 caractères')
+    .max(1000, 'La portée ne peut pas dépasser 1000 caractères')
+    .refine(val => val.trim().length >= 10, 'La portée ne peut pas être vide ou contenir uniquement des espaces'),
   validUntil: z.string().optional(),
   consent: z.boolean().refine(val => val === true, {
     message: 'Vous devez accepter les conditions',
@@ -76,6 +80,9 @@ export default function NewAuthorization() {
     mutationFn: async (data: AuthorizationFormData & { fileUrl: string; fileHash: string; ip: string }) => {
       if (!organization?.id || !user?.id) throw new Error('Not authenticated');
 
+      // Sanitize scope input
+      const sanitizedScope = sanitizeTextInput(data.scope);
+
       const { error } = await supabase
         .from('authorizations')
         .insert([{
@@ -85,7 +92,7 @@ export default function NewAuthorization() {
           document_hash: data.fileHash,
           consent_checkbox: data.consent,
           consent_ip: data.ip,
-          scope: data.scope,
+          scope: sanitizedScope,
           valid_until: data.validUntil || null,
           status: 'approved', // Auto-approve for V1
         }]);

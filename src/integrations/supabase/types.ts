@@ -521,6 +521,70 @@ export type Database = {
           },
         ]
       }
+      proof_packs: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          organization_id: string
+          pack_hash: string | null
+          pack_json: Json
+          report_id: string | null
+          scope: string | null
+          status: string
+          tool_run_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          organization_id: string
+          pack_hash?: string | null
+          pack_json?: Json
+          report_id?: string | null
+          scope?: string | null
+          status?: string
+          tool_run_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          organization_id?: string
+          pack_hash?: string | null
+          pack_json?: Json
+          report_id?: string | null
+          scope?: string | null
+          status?: string
+          tool_run_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_packs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_packs_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_packs_tool_run_id_fkey"
+            columns: ["tool_run_id"]
+            isOneToOne: false
+            referencedRelation: "tool_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       remediation_tasks: {
         Row: {
           closed_at: string | null
@@ -1036,6 +1100,17 @@ export type Database = {
       }
       is_authorization_valid: { Args: { _auth_id: string }; Returns: boolean }
       sha256_hex: { Args: { input: string }; Returns: string }
+      verify_evidence_chain: {
+        Args: { _org_id: string }
+        Returns: {
+          expected_hash: string
+          first_bad_seq: number
+          found_hash: string
+          head_hash: string
+          is_valid: boolean
+          last_seq: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "auditor" | "user"

@@ -26,6 +26,8 @@ import RunDetail from "./pages/RunDetail";
 import Reports from "./pages/Reports";
 import Tasks from "./pages/Tasks";
 import TaskDetail from "./pages/TaskDetail";
+import GoNoGo from "./pages/GoNoGo";
+import Proofs from "./pages/Proofs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +64,8 @@ const App = () => (
             <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
             <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><Settings /></ProtectedRoute>} />
+            <Route path="/go-no-go" element={<ProtectedRoute requiredRoles={['admin']}><GoNoGo /></ProtectedRoute>} />
+            <Route path="/proofs" element={<ProtectedRoute><Proofs /></ProtectedRoute>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

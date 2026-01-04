@@ -14,6 +14,8 @@ import {
   Play,
   FileBarChart,
   ListTodo,
+  CheckSquare,
+  Package,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -49,6 +51,12 @@ const operationsItems = [
 const auditItems = [
   { title: 'Rapports', href: '/reports', icon: FileBarChart },
   { title: 'Journal de Preuves', href: '/evidence', icon: BookOpen },
+  { title: 'Proof Packs', href: '/proofs', icon: Package },
+];
+
+const adminItems = [
+  { title: 'Paramètres', href: '/settings', icon: Settings },
+  { title: 'GO/NO-GO', href: '/go-no-go', icon: CheckSquare },
 ];
 
 export function AppSidebar() {
@@ -133,14 +141,16 @@ export function AppSidebar() {
             <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/settings')}>
-                    <Link to="/settings">
-                      <Settings className="h-4 w-4" />
-                      <span>Paramètres</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive(item.href)}>
+                      <Link to={item.href}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
