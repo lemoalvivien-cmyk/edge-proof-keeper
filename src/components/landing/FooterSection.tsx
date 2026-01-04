@@ -57,19 +57,24 @@ export function FooterSection() {
               <h4 className="font-semibold text-foreground">Légal</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    Mentions légales
-                  </a>
+                  <Link to="/legal/terms" className="text-muted-foreground hover:text-primary transition-colors">
+                    Conditions d'utilisation
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Link to="/legal/privacy" className="text-muted-foreground hover:text-primary transition-colors">
                     Politique de confidentialité
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    CGV
-                  </a>
+                  <Link to="/legal/authorized-use" className="text-muted-foreground hover:text-primary transition-colors">
+                    Charte d'usage autorisé
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/legal/disclaimer" className="text-muted-foreground hover:text-primary transition-colors">
+                    Limitation de responsabilité
+                  </Link>
                 </li>
               </ul>
             </div>

@@ -32,7 +32,7 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, organization } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -40,9 +40,14 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      navigate(from, { replace: true });
+      // If new user without organization, redirect to onboarding
+      if (!organization) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     }
-  }, [user, navigate, from]);
+  }, [user, organization, navigate, from]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -69,7 +74,7 @@ export default function Auth() {
     }
     
     toast.success('Connexion réussie');
-    navigate(from, { replace: true });
+    // Navigation handled by useEffect
   };
 
   const onSignup = async (data: SignupFormData) => {
@@ -87,7 +92,7 @@ export default function Auth() {
     }
     
     toast.success('Compte créé avec succès');
-    navigate('/dashboard', { replace: true });
+    navigate('/onboarding', { replace: true });
   };
 
   return (
@@ -224,7 +229,10 @@ export default function Auth() {
           </Tabs>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            En vous connectant, vous acceptez nos conditions d'utilisation et notre politique de confidentialité.
+            En vous connectant, vous acceptez nos{" "}
+            <a href="/legal/terms" className="text-primary hover:underline">conditions d'utilisation</a>
+            {" "}et notre{" "}
+            <a href="/legal/privacy" className="text-primary hover:underline">politique de confidentialité</a>.
           </p>
         </CardContent>
       </Card>

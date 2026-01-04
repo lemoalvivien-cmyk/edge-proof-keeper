@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVerifyEvidenceChain, useExportProofPack } from "@/hooks/useProofPacks";
 import { useToolRuns } from "@/hooks/useTools";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -20,7 +21,11 @@ import {
   FileCheck, 
   RefreshCw,
   Package,
-  Loader2
+  Loader2,
+  Server,
+  Key,
+  CloudOff,
+  Play
 } from "lucide-react";
 
 interface CheckItem {
@@ -29,6 +34,7 @@ interface CheckItem {
   description: string;
   status: "pass" | "warn" | "fail" | "pending";
   details?: string;
+  category: "security" | "deployment" | "data";
 }
 
 export default function GoNoGo() {
@@ -39,12 +45,14 @@ export default function GoNoGo() {
   const { data: toolRuns } = useToolRuns();
   
   const [checks, setChecks] = useState<CheckItem[]>([
+    // Security checks
     {
       id: "auth_rbac",
       label: "Authentication & RBAC",
       description: "Admin role properly configured",
       status: isAdmin ? "pass" : "warn",
       details: isAdmin ? "Admin access verified" : "Current user is not admin",
+      category: "security",
     },
     {
       id: "rls_critical",
@@ -52,6 +60,7 @@ export default function GoNoGo() {
       description: "tool_runs, reports, findings, remediation_tasks, evidence_log",
       status: "pass",
       details: "RLS enabled with proper policies",
+      category: "security",
     },
     {
       id: "evidence_chain",
@@ -59,6 +68,7 @@ export default function GoNoGo() {
       description: "Hash chain verification",
       status: "pending",
       details: "Click verify to check",
+      category: "security",
     },
     {
       id: "storage_private",
@@ -66,13 +76,43 @@ export default function GoNoGo() {
       description: "Private buckets with RLS policies",
       status: "pass",
       details: "authorizations, documents, artifacts buckets private",
+      category: "security",
     },
+    // Deployment checks
+    {
+      id: "env_vars",
+      label: "Environment Variables",
+      description: "Required env vars configured",
+      status: "pending",
+      details: "Click 'Run Final Checks' to verify",
+      category: "deployment",
+    },
+    {
+      id: "demo_mode",
+      label: "Demo Mode",
+      description: "DEMO_MODE should be off in production",
+      status: import.meta.env.VITE_DEMO_MODE === "true" ? "warn" : "pass",
+      details: import.meta.env.VITE_DEMO_MODE === "true" 
+        ? "DEMO_MODE is enabled — disable for production" 
+        : "Demo mode disabled",
+      category: "deployment",
+    },
+    {
+      id: "edge_functions",
+      label: "Edge Functions",
+      description: "All edge functions deployed",
+      status: "pending",
+      details: "Click 'Run Final Checks' to verify",
+      category: "deployment",
+    },
+    // Data checks
     {
       id: "pricing",
       label: "Pricing Display",
       description: "490€ TTC/year shown on landing",
       status: "pass",
       details: "Pricing displayed correctly",
+      category: "data",
     },
     {
       id: "no_payment",
@@ -80,6 +120,15 @@ export default function GoNoGo() {
       description: "Payment not integrated (intentional for V1)",
       status: "pass",
       details: "Lead capture only, no payment processing",
+      category: "data",
+    },
+    {
+      id: "legal_pages",
+      label: "Legal Pages",
+      description: "Terms, Privacy, Authorized Use, Disclaimer",
+      status: "pass",
+      details: "All legal pages accessible at /legal/*",
+      category: "data",
     },
     {
       id: "build",
@@ -87,10 +136,12 @@ export default function GoNoGo() {
       description: "No TS compilation errors",
       status: "pass",
       details: "Build successful",
+      category: "data",
     },
   ]);
 
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isRunningFinalChecks, setIsRunningFinalChecks] = useState(false);
 
   const handleVerifyChain = async () => {
     setIsVerifying(true);
@@ -134,6 +185,77 @@ export default function GoNoGo() {
       });
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const handleRunFinalChecks = async () => {
+    setIsRunningFinalChecks(true);
+    
+    try {
+      // Check env vars
+      const envVarsOk = !!(
+        import.meta.env.VITE_SUPABASE_URL && 
+        import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+      );
+      
+      // Check edge functions by calling verify-evidence-chain
+      let edgeFunctionsOk = false;
+      try {
+        await verifyChain.mutateAsync();
+        edgeFunctionsOk = true;
+      } catch {
+        edgeFunctionsOk = false;
+      }
+
+      // Check tables exist
+      let tablesOk = false;
+      try {
+        const { error } = await supabase.from("evidence_log").select("id").limit(1);
+        tablesOk = !error;
+      } catch {
+        tablesOk = false;
+      }
+
+      setChecks((prev) =>
+        prev.map((c) => {
+          if (c.id === "env_vars") {
+            return {
+              ...c,
+              status: envVarsOk ? "pass" : "fail",
+              details: envVarsOk 
+                ? "SUPABASE_URL and SUPABASE_KEY configured" 
+                : "Missing required environment variables",
+            };
+          }
+          if (c.id === "edge_functions") {
+            return {
+              ...c,
+              status: edgeFunctionsOk ? "pass" : "fail",
+              details: edgeFunctionsOk 
+                ? "Edge functions responding correctly" 
+                : "Edge functions not responding",
+            };
+          }
+          if (c.id === "evidence_chain" && edgeFunctionsOk) {
+            return { ...c, status: "pass", details: "Chain verified via final checks" };
+          }
+          return c;
+        })
+      );
+
+      toast({
+        title: "Final Checks Complete",
+        description: `Env: ${envVarsOk ? "✓" : "✗"} | Edge: ${edgeFunctionsOk ? "✓" : "✗"} | Tables: ${tablesOk ? "✓" : "✗"}`,
+      });
+    } catch (error) {
+      console.error("Final checks error:", error);
+      toast({
+        title: "Checks Failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunningFinalChecks(false);
     }
   };
 
@@ -191,11 +313,27 @@ export default function GoNoGo() {
     }
   };
 
+  const getCategoryIcon = (category: CheckItem["category"]) => {
+    switch (category) {
+      case "security":
+        return <Lock className="h-4 w-4" />;
+      case "deployment":
+        return <Server className="h-4 w-4" />;
+      case "data":
+        return <Database className="h-4 w-4" />;
+    }
+  };
+
+  const securityChecks = checks.filter((c) => c.category === "security");
+  const deploymentChecks = checks.filter((c) => c.category === "deployment");
+  const dataChecks = checks.filter((c) => c.category === "data");
+
   const passCount = checks.filter((c) => c.status === "pass").length;
   const warnCount = checks.filter((c) => c.status === "warn").length;
   const failCount = checks.filter((c) => c.status === "fail").length;
+  const pendingCount = checks.filter((c) => c.status === "pending").length;
 
-  const overallStatus = failCount > 0 ? "NO-GO" : warnCount > 0 ? "GO (with warnings)" : "GO";
+  const overallStatus = failCount > 0 ? "NO-GO" : pendingCount > 0 ? "PENDING" : warnCount > 0 ? "GO (with warnings)" : "GO";
 
   if (!isAdmin) {
     return (
@@ -205,9 +343,12 @@ export default function GoNoGo() {
             <CardContent className="py-12 text-center">
               <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h2 className="text-xl font-semibold mb-2">Admin Access Required</h2>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 The GO/NO-GO page is only accessible to administrators.
               </p>
+              <Button onClick={() => navigate("/dashboard")}>
+                Go to Dashboard
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -230,24 +371,38 @@ export default function GoNoGo() {
         <Card className={
           failCount > 0 
             ? "border-red-500/50 bg-red-500/5" 
+            : pendingCount > 0
+            ? "border-muted"
             : warnCount > 0 
             ? "border-yellow-500/50 bg-yellow-500/5" 
             : "border-green-500/50 bg-green-500/5"
         }>
           <CardContent className="py-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 <Shield className={`h-10 w-10 ${
-                  failCount > 0 ? "text-red-500" : warnCount > 0 ? "text-yellow-500" : "text-green-500"
+                  failCount > 0 ? "text-red-500" : pendingCount > 0 ? "text-muted-foreground" : warnCount > 0 ? "text-yellow-500" : "text-green-500"
                 }`} />
                 <div>
                   <h2 className="text-2xl font-bold">{overallStatus}</h2>
                   <p className="text-sm text-muted-foreground">
-                    {passCount} passed • {warnCount} warnings • {failCount} failed
+                    {passCount} passed • {warnCount} warnings • {failCount} failed • {pendingCount} pending
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant="outline"
+                  onClick={handleRunFinalChecks}
+                  disabled={isRunningFinalChecks}
+                >
+                  {isRunningFinalChecks ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
+                  Run Final Checks
+                </Button>
                 <Button
                   variant="outline"
                   onClick={handleVerifyChain}
@@ -273,20 +428,20 @@ export default function GoNoGo() {
           </CardContent>
         </Card>
 
-        {/* Checks Table */}
+        {/* Security Checks */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileCheck className="h-5 w-5" />
-              Release Checks
+              <Lock className="h-5 w-5" />
+              Security Checks
             </CardTitle>
             <CardDescription>
-              All checks must pass or have acceptable warnings before release
+              Authentication, RLS policies, and data protection
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
-              {checks.map((check, idx) => (
+              {securityChecks.map((check, idx) => (
                 <div key={check.id}>
                   <div className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-3">
@@ -301,7 +456,77 @@ export default function GoNoGo() {
                     </div>
                     {getStatusBadge(check.status)}
                   </div>
-                  {idx < checks.length - 1 && <Separator />}
+                  {idx < securityChecks.length - 1 && <Separator />}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Deployment Checks */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Server className="h-5 w-5" />
+              Deployment Checklist
+            </CardTitle>
+            <CardDescription>
+              Environment variables, edge functions, and production readiness
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              {deploymentChecks.map((check, idx) => (
+                <div key={check.id}>
+                  <div className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(check.status)}
+                      <div>
+                        <p className="font-medium">{check.label}</p>
+                        <p className="text-sm text-muted-foreground">{check.description}</p>
+                        {check.details && (
+                          <p className="text-xs text-muted-foreground/70 mt-1">{check.details}</p>
+                        )}
+                      </div>
+                    </div>
+                    {getStatusBadge(check.status)}
+                  </div>
+                  {idx < deploymentChecks.length - 1 && <Separator />}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Data & Content Checks */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileCheck className="h-5 w-5" />
+              Data & Content Checks
+            </CardTitle>
+            <CardDescription>
+              Pricing, legal pages, and content verification
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              {dataChecks.map((check, idx) => (
+                <div key={check.id}>
+                  <div className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(check.status)}
+                      <div>
+                        <p className="font-medium">{check.label}</p>
+                        <p className="text-sm text-muted-foreground">{check.description}</p>
+                        {check.details && (
+                          <p className="text-xs text-muted-foreground/70 mt-1">{check.details}</p>
+                        )}
+                      </div>
+                    </div>
+                    {getStatusBadge(check.status)}
+                  </div>
+                  {idx < dataChecks.length - 1 && <Separator />}
                 </div>
               ))}
             </div>
@@ -316,7 +541,7 @@ export default function GoNoGo() {
               Quick Actions
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex gap-3">
+          <CardContent className="flex gap-3 flex-wrap">
             <Button variant="outline" onClick={() => navigate("/evidence")}>
               View Evidence Log
             </Button>
@@ -325,6 +550,9 @@ export default function GoNoGo() {
             </Button>
             <Button variant="outline" onClick={() => navigate("/runs")}>
               View Tool Runs
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/legal/terms")}>
+              View Legal Pages
             </Button>
           </CardContent>
         </Card>

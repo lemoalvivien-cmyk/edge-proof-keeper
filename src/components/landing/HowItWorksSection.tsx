@@ -1,31 +1,25 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Globe, FileSignature, Scan, FileText } from "lucide-react";
+import { FileSignature, Upload, FileText } from "lucide-react";
 
 const steps = [
   {
     number: "01",
-    icon: Globe,
-    title: "Entrez votre domaine",
-    description: "Indiquez simplement le domaine de votre entreprise. C'est tout ce dont nous avons besoin pour commencer.",
+    icon: FileSignature,
+    title: "Autorisation",
+    description: "Uploadez une preuve d'autorisation légale (attestation, mandat). 100% conforme.",
   },
   {
     number: "02",
-    icon: FileSignature,
-    title: "Preuve d'autorisation",
-    description: "Uploadez une preuve que vous êtes autorisé à scanner (attestation de propriété, mandat...). 100% légal.",
+    icon: Upload,
+    title: "Import",
+    description: "Importez les résultats de vos outils de sécurité (nmap, nuclei, etc.). Aucune intrusion.",
   },
   {
     number: "03",
-    icon: Scan,
-    title: "Scan safe & légal",
-    description: "Notre scanner analyse votre exposition sans intrusion. Aucune donnée sensible n'est collectée.",
-  },
-  {
-    number: "04",
     icon: FileText,
-    title: "Double rapport + Evidence Vault",
-    description: "Recevez un rapport Direction (zéro jargon) + un rapport Technique. Toutes vos preuves dans l'Evidence Vault.",
+    title: "Rapports & Preuves",
+    description: "Recevez un rapport Direction + un rapport Technique. Vos preuves dans l'Evidence Vault.",
   },
 ];
 
@@ -50,7 +44,7 @@ export function HowItWorksSection() {
               Comment ça marche ?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              4 étapes simples pour passer de l'incertitude à la maîtrise de votre risque cyber.
+              3 étapes simples pour passer de l'incertitude à la maîtrise de votre risque cyber.
             </p>
           </motion.div>
 
@@ -58,7 +52,7 @@ export function HowItWorksSection() {
             {/* Connecting line */}
             <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-y-1/2" />
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-3 gap-6">
               {steps.map((step, index) => (
                 <motion.div
                   key={index}
