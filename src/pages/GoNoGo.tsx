@@ -104,7 +104,7 @@ export default function GoNoGo() {
                 ...c,
                 status: result.is_valid ? "pass" : "fail",
                 details: result.is_valid
-                  ? `Chain valid. ${result.last_seq} entries, head: ${result.head_hash?.slice(0, 12)}...`
+                  ? `Chain valid. ${result.last_seq} entries, head: ${result.head_hash?.slice(0, 12)}...${result.legacy_rows_count > 0 ? ` (${result.legacy_rows_count} legacy rows)` : ""}`
                   : `Chain broken at seq ${result.first_bad_seq}`,
               }
             : c

@@ -1109,6 +1109,7 @@ export type Database = {
           head_hash: string
           is_valid: boolean
           last_seq: number
+          legacy_rows_count: number
         }[]
       }
     }
