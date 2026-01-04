@@ -371,6 +371,63 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          created_at: string
+          created_by: string
+          executive_json: Json | null
+          executive_md: string | null
+          id: string
+          organization_id: string
+          status: string
+          technical_json: Json | null
+          technical_md: string | null
+          tool_run_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          executive_json?: Json | null
+          executive_md?: string | null
+          id?: string
+          organization_id: string
+          status?: string
+          technical_json?: Json | null
+          technical_md?: string | null
+          tool_run_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          executive_json?: Json | null
+          executive_md?: string | null
+          id?: string
+          organization_id?: string
+          status?: string
+          technical_json?: Json | null
+          technical_md?: string | null
+          tool_run_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_tool_run_id_fkey"
+            columns: ["tool_run_id"]
+            isOneToOne: true
+            referencedRelation: "tool_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scans: {
         Row: {
           asset_id: string | null

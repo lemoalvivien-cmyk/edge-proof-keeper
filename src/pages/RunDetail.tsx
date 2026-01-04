@@ -1,14 +1,16 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Download, Upload, Shield, Hash, Clock, FileJson, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Download, Upload, Shield, Hash, Clock, FileJson, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TrustBanner } from '@/components/ui/TrustBanner';
+import { ReportTabs } from '@/components/reports/ReportTabs';
 import { useToolRun, useUploadToolRunArtifact } from '@/hooks/useTools';
+import { useReportByToolRun, useGenerateReport } from '@/hooks/useReports';
 import { CATEGORY_LABELS } from '@/types/tools';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
@@ -41,7 +43,9 @@ export default function RunDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: run, isLoading } = useToolRun(id);
+  const { data: report, refetch: refetchReport } = useReportByToolRun(id);
   const uploadMutation = useUploadToolRunArtifact();
+  const generateReportMutation = useGenerateReport();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -57,6 +61,17 @@ export default function RunDetail() {
       toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'import');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!id) return;
+    try {
+      await generateReportMutation.mutateAsync(id);
+      refetchReport();
+      toast.success('Rapport généré avec succès');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la génération');
     }
   };
 
@@ -101,20 +116,22 @@ export default function RunDetail() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <TrustBanner />
+      <div className="space-y-6 print:space-y-4">
+        <div className="print:hidden">
+          <TrustBanner />
+        </div>
 
         <Button
           variant="ghost"
           onClick={() => navigate('/runs')}
-          className="mb-4"
+          className="mb-4 print:hidden"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour aux imports
         </Button>
 
         {/* Header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between print:block">
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">
@@ -131,17 +148,42 @@ export default function RunDetail() {
             </p>
           </div>
 
-          {run.status === 'done' && run.normalized_output && (
-            <Button onClick={handleExportJson}>
-              <Download className="h-4 w-4 mr-2" />
-              Exporter JSON
-            </Button>
-          )}
+          <div className="flex gap-2 print:hidden">
+            {run.status === 'done' && !report && (
+              <Button
+                onClick={handleGenerateReport}
+                disabled={generateReportMutation.isPending}
+              >
+                {generateReportMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Génération...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Générer rapports
+                  </>
+                )}
+              </Button>
+            )}
+            {run.status === 'done' && run.normalized_output && (
+              <Button variant="outline" onClick={handleExportJson}>
+                <Download className="h-4 w-4 mr-2" />
+                Exporter JSON
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Report section */}
+        {report && (
+          <ReportTabs report={report} />
+        )}
 
         {/* Upload zone for awaiting_upload status */}
         {run.status === 'awaiting_upload' && (
-          <Card className="border-dashed border-2">
+          <Card className="border-dashed border-2 print:hidden">
             <CardContent className="py-8">
               <div className="text-center space-y-4">
                 <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
@@ -176,7 +218,7 @@ export default function RunDetail() {
         )}
 
         {/* Evidence info */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 print:grid-cols-2 print:gap-2">
           <Card>
             <CardContent className="py-4">
               <div className="flex items-center gap-3">
@@ -232,8 +274,8 @@ export default function RunDetail() {
         </div>
 
         {/* Summary */}
-        {run.summary && (
-          <Card>
+        {run.summary && !report && (
+          <Card className="print:hidden">
             <CardHeader>
               <CardTitle>Résumé des findings</CardTitle>
             </CardHeader>
@@ -269,9 +311,9 @@ export default function RunDetail() {
           </Card>
         )}
 
-        {/* Findings list */}
-        {findings.length > 0 && (
-          <Card>
+        {/* Findings list - hide if report is shown */}
+        {findings.length > 0 && !report && (
+          <Card className="print:hidden">
             <CardHeader>
               <CardTitle>Findings ({findings.length})</CardTitle>
               <CardDescription>
@@ -328,8 +370,8 @@ export default function RunDetail() {
         )}
 
         {/* Notes */}
-        {run.normalized_output?.notes && (
-          <Alert>
+        {run.normalized_output?.notes && !report && (
+          <Alert className="print:hidden">
             <AlertDescription>
               {run.normalized_output.notes}
             </AlertDescription>
@@ -337,7 +379,7 @@ export default function RunDetail() {
         )}
 
         {/* Evidence Vault link */}
-        <Card>
+        <Card className="print:hidden">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
               <div>
