@@ -527,7 +527,7 @@ export type Database = {
           created_by: string
           id: string
           organization_id: string
-          pack_hash: string | null
+          pack_hash: string
           pack_json: Json
           report_id: string | null
           scope: string | null
@@ -540,7 +540,7 @@ export type Database = {
           created_by: string
           id?: string
           organization_id: string
-          pack_hash?: string | null
+          pack_hash: string
           pack_json?: Json
           report_id?: string | null
           scope?: string | null
@@ -553,7 +553,7 @@ export type Database = {
           created_by?: string
           id?: string
           organization_id?: string
-          pack_hash?: string | null
+          pack_hash?: string
           pack_json?: Json
           report_id?: string | null
           scope?: string | null
