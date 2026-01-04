@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DemoProvider, DemoBanner } from "@/contexts/DemoContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AuthorizationGate } from "@/components/auth/AuthorizationGate";
 import Landing from "./pages/Landing";
 import Pricing from "./pages/Pricing";
 import ScopeGuard from "./pages/ScopeGuard";
@@ -39,6 +40,17 @@ import Disclaimer from "./pages/legal/Disclaimer";
 
 const queryClient = new QueryClient();
 
+// Wrapper combining ProtectedRoute + AuthorizationGate
+function ProtectedWithGate({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: ('admin' | 'auditor' | 'user')[] }) {
+  return (
+    <ProtectedRoute requiredRoles={requiredRoles}>
+      <AuthorizationGate>
+        {children}
+      </AuthorizationGate>
+    </ProtectedRoute>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -61,29 +73,33 @@ const App = () => (
               <Route path="/legal/authorized-use" element={<AuthorizedUse />} />
               <Route path="/legal/disclaimer" element={<Disclaimer />} />
               
-              {/* Onboarding (protected) */}
+              {/* Onboarding - protected but exempt from authorization gate */}
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               
-              {/* Protected app routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/dashboard/technical" element={<ProtectedRoute><DashboardTechnical /></ProtectedRoute>} />
+              {/* Authorization routes - protected but exempt from authorization gate */}
               <Route path="/authorizations" element={<ProtectedRoute><Authorizations /></ProtectedRoute>} />
               <Route path="/authorization/new" element={<ProtectedRoute><NewAuthorization /></ProtectedRoute>} />
-              <Route path="/assets" element={<ProtectedRoute><Assets /></ProtectedRoute>} />
-              <Route path="/scans" element={<ProtectedRoute><Scans /></ProtectedRoute>} />
-              <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-              <Route path="/compliance" element={<ProtectedRoute><Compliance /></ProtectedRoute>} />
-              <Route path="/evidence" element={<ProtectedRoute><Evidence /></ProtectedRoute>} />
-              <Route path="/tools" element={<ProtectedRoute><Tools /></ProtectedRoute>} />
-              <Route path="/tools/:slug" element={<ProtectedRoute><ToolDetail /></ProtectedRoute>} />
-              <Route path="/runs" element={<ProtectedRoute><Runs /></ProtectedRoute>} />
-              <Route path="/runs/:id" element={<ProtectedRoute><RunDetail /></ProtectedRoute>} />
-              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-              <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-              <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
+              
+              {/* Settings - protected, admin only, exempt from authorization gate */}
               <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><Settings /></ProtectedRoute>} />
-              <Route path="/go-no-go" element={<ProtectedRoute requiredRoles={['admin']}><GoNoGo /></ProtectedRoute>} />
-              <Route path="/proofs" element={<ProtectedRoute><Proofs /></ProtectedRoute>} />
+              
+              {/* Protected app routes - require valid authorization */}
+              <Route path="/dashboard" element={<ProtectedWithGate><Dashboard /></ProtectedWithGate>} />
+              <Route path="/dashboard/technical" element={<ProtectedWithGate><DashboardTechnical /></ProtectedWithGate>} />
+              <Route path="/assets" element={<ProtectedWithGate><Assets /></ProtectedWithGate>} />
+              <Route path="/scans" element={<ProtectedWithGate><Scans /></ProtectedWithGate>} />
+              <Route path="/documents" element={<ProtectedWithGate><Documents /></ProtectedWithGate>} />
+              <Route path="/compliance" element={<ProtectedWithGate><Compliance /></ProtectedWithGate>} />
+              <Route path="/evidence" element={<ProtectedWithGate><Evidence /></ProtectedWithGate>} />
+              <Route path="/tools" element={<ProtectedWithGate><Tools /></ProtectedWithGate>} />
+              <Route path="/tools/:slug" element={<ProtectedWithGate><ToolDetail /></ProtectedWithGate>} />
+              <Route path="/runs" element={<ProtectedWithGate><Runs /></ProtectedWithGate>} />
+              <Route path="/runs/:id" element={<ProtectedWithGate><RunDetail /></ProtectedWithGate>} />
+              <Route path="/reports" element={<ProtectedWithGate><Reports /></ProtectedWithGate>} />
+              <Route path="/tasks" element={<ProtectedWithGate><Tasks /></ProtectedWithGate>} />
+              <Route path="/tasks/:id" element={<ProtectedWithGate><TaskDetail /></ProtectedWithGate>} />
+              <Route path="/go-no-go" element={<ProtectedWithGate requiredRoles={['admin']}><GoNoGo /></ProtectedWithGate>} />
+              <Route path="/proofs" element={<ProtectedWithGate><Proofs /></ProtectedWithGate>} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>

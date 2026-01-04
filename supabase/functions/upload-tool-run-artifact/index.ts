@@ -202,6 +202,7 @@ Deno.serve(async (req) => {
         status,
         requested_by,
         asset_id,
+        authorization_id,
         tools_catalog (
           slug,
           name,
@@ -229,6 +230,19 @@ Deno.serve(async (req) => {
       console.error('Organization access denied:', orgError);
       return new Response(
         JSON.stringify({ error: 'Access denied' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify the authorization is still valid at upload time
+    const { data: authValid, error: authValidError } = await supabase.rpc('is_authorization_valid', {
+      _auth_id: toolRun.authorization_id
+    });
+
+    if (authValidError || !authValid) {
+      console.error('Authorization is no longer valid:', authValidError);
+      return new Response(
+        JSON.stringify({ error: 'Authorization expired or revoked. Cannot upload artifact.' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

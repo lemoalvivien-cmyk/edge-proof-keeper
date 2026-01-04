@@ -182,14 +182,12 @@ export default function Scans() {
             </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <AuthorizationGate actionDescription="l'import de scans">
-              <DialogTrigger asChild>
-                <Button disabled={!hasValidAuthorization}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Importer un scan
-                </Button>
-              </DialogTrigger>
-            </AuthorizationGate>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Importer un scan
+              </Button>
+            </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Importer un scan</DialogTitle>
