@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { useProofPacks, type ProofPack } from "@/hooks/useProofPacks";
+import { useProofPacksPaginated, type ProofPack } from "@/hooks/useProofPacks";
 import { format } from "date-fns";
 import { 
   Package, 
@@ -19,12 +19,23 @@ import {
   CheckCircle2, 
   XCircle,
   FileJson,
-  Shield
+  Shield,
+  Loader2
 } from "lucide-react";
 
 export default function Proofs() {
-  const { data: proofPacks, isLoading } = useProofPacks();
+  const { 
+    data, 
+    isLoading, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage 
+  } = useProofPacksPaginated();
   const [selectedPack, setSelectedPack] = useState<ProofPack | null>(null);
+
+  // Flatten all pages into a single array
+  const proofPacks = data?.pages.flatMap(page => page.data) ?? [];
+  const totalCount = proofPacks.length;
 
   const handleCopyHash = (hash: string) => {
     navigator.clipboard.writeText(hash);
@@ -74,7 +85,8 @@ export default function Proofs() {
           <CardHeader>
             <CardTitle>Export History</CardTitle>
             <CardDescription>
-              All exported proof packs for your organization
+              {totalCount} proof pack(s) loaded
+              {hasNextPage && " • More available"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -84,106 +96,128 @@ export default function Proofs() {
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
-            ) : !proofPacks?.length ? (
+            ) : proofPacks.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No proof packs exported yet</p>
                 <p className="text-sm">Export a proof pack from the GO/NO-GO page or a tool run</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Scope</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead>Pack Hash</TableHead>
-                    <TableHead>Chain Valid</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {proofPacks.map((pack) => (
-                    <TableRow key={pack.id}>
-                      <TableCell className="font-mono text-sm">
-                        {format(new Date(pack.created_at), "MMM d, yyyy HH:mm")}
-                      </TableCell>
-                      <TableCell>
-                        {pack.scope ? (
-                          <Badge variant="outline">{pack.scope}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {pack.tool_run_id && (
-                          <Badge variant="secondary">Tool Run</Badge>
-                        )}
-                        {pack.report_id && (
-                          <Badge variant="secondary">Report</Badge>
-                        )}
-                        {!pack.tool_run_id && !pack.report_id && (
-                          <span className="text-muted-foreground">Manual</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                          {pack.pack_hash?.slice(0, 16)}...
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        {getChainStatus(pack.pack_json) ? (
-                          <div className="flex items-center gap-1 text-green-600">
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span className="text-sm">Valid</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 text-red-600">
-                            <XCircle className="h-4 w-4" />
-                            <span className="text-sm">Invalid</span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={pack.status === "ready" ? "default" : "destructive"}
-                        >
-                          {pack.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSelectedPack(pack)}
-                            title="View details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => pack.pack_hash && handleCopyHash(pack.pack_hash)}
-                            title="Copy hash"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleExportJson(pack)}
-                            title="Download JSON"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Scope</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Pack Hash</TableHead>
+                      <TableHead>Chain Valid</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {proofPacks.map((pack) => (
+                      <TableRow key={pack.id}>
+                        <TableCell className="font-mono text-sm">
+                          {format(new Date(pack.created_at), "MMM d, yyyy HH:mm")}
+                        </TableCell>
+                        <TableCell>
+                          {pack.scope ? (
+                            <Badge variant="outline">{pack.scope}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {pack.tool_run_id && (
+                            <Badge variant="secondary">Tool Run</Badge>
+                          )}
+                          {pack.report_id && (
+                            <Badge variant="secondary">Report</Badge>
+                          )}
+                          {!pack.tool_run_id && !pack.report_id && (
+                            <span className="text-muted-foreground">Manual</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
+                            {pack.pack_hash?.slice(0, 16)}...
+                          </code>
+                        </TableCell>
+                        <TableCell>
+                          {getChainStatus(pack.pack_json) ? (
+                            <div className="flex items-center gap-1 text-green-600">
+                              <CheckCircle2 className="h-4 w-4" />
+                              <span className="text-sm">Valid</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 text-red-600">
+                              <XCircle className="h-4 w-4" />
+                              <span className="text-sm">Invalid</span>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={pack.status === "ready" ? "default" : "destructive"}
+                          >
+                            {pack.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setSelectedPack(pack)}
+                              title="View details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => pack.pack_hash && handleCopyHash(pack.pack_hash)}
+                              title="Copy hash"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleExportJson(pack)}
+                              title="Download JSON"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {/* Load More Button */}
+                {hasNextPage && (
+                  <div className="flex justify-center mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                    >
+                      {isFetchingNextPage ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Chargement...
+                        </>
+                      ) : (
+                        "Charger plus"
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
