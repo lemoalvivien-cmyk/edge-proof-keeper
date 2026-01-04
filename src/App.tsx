@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Pricing from "./pages/Pricing";
+import ScopeGuard from "./pages/ScopeGuard";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import DashboardTechnical from "./pages/DashboardTechnical";
@@ -33,6 +34,7 @@ const App = () => (
             {/* Public landing pages */}
             <Route path="/" element={<Landing />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/scopeguard" element={<ScopeGuard />} />
             <Route path="/auth" element={<Auth />} />
             
             {/* Protected app routes */}

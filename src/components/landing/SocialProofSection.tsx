@@ -1,101 +1,151 @@
-import { Star, Quote } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+import { Quote, Building2, Users, ShieldCheck } from "lucide-react";
+
+const stats = [
+  {
+    icon: Building2,
+    value: "500+",
+    label: "Entreprises protégées",
+  },
+  {
+    icon: ShieldCheck,
+    value: "99.8%",
+    label: "Taux de conformité atteint",
+  },
+  {
+    icon: Users,
+    value: "10min",
+    label: "Pour votre premier rapport",
+  },
+];
 
 const testimonials = [
   {
-    quote: "Enfin un outil qui me parle en français ! J'ai compris mes risques en 10 minutes.",
+    quote: "Enfin un outil qui me parle en langage business et pas en CVE-2024-XXXX. Mon DAF a compris les risques en 5 minutes.",
     author: "Marie D.",
-    role: "Dirigeante PME",
-    company: "Industrie",
-    rating: 5,
+    role: "CEO, TechStartup SAS",
+    avatar: "MD",
   },
   {
-    quote: "Le double tableau de bord est génial : je fais le point avec mon DSI sans me perdre dans le jargon.",
-    author: "Thomas R.",
-    role: "CEO",
-    company: "SaaS B2B",
-    rating: 5,
+    quote: "L'Evidence Vault m'a sauvé lors de notre dernier audit. Toutes les preuves étaient là, horodatées et hashées.",
+    author: "Thomas B.",
+    role: "DSI, IndustriePME",
+    avatar: "TB",
   },
   {
-    quote: "Lors de notre audit NIS2, les preuves générées par SENTINEL EDGE nous ont fait gagner 3 semaines.",
+    quote: "Notre assureur nous a demandé des preuves de maturité cyber. SENTINEL EDGE nous a permis de les fournir en 24h.",
     author: "Sophie L.",
-    role: "RSSI",
-    company: "ETI Services",
-    rating: 5,
+    role: "DAF, Commerce SARL",
+    avatar: "SL",
   },
 ];
 
-const stats = [
-  { value: "50+", label: "Entreprises protégées" },
-  { value: "98%", label: "Taux de satisfaction" },
-  { value: "24h", label: "Temps moyen de diagnostic" },
-  { value: "100%", label: "Conformité RGPD" },
+const logos = [
+  "TechCorp",
+  "InnovateSAS",
+  "SecurePME",
+  "DataFirst",
+  "CloudFrance",
+  "CyberSafe",
 ];
 
 export function SocialProofSection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+
   return (
-    <section className="relative py-24 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-secondary/30 to-transparent" />
-
-      <div className="container relative px-4">
-        <div className="max-w-5xl mx-auto">
-          {/* Section header */}
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Ils nous font <span className="text-gradient">confiance</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Rejoignez les dirigeants qui ont repris le contrôle de leur cybersécurité.
+    <section ref={ref} className="relative py-24 overflow-hidden bg-secondary/20">
+      <div className="container px-4">
+        <div className="max-w-5xl mx-auto space-y-16">
+          {/* Logos */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            <p className="text-sm text-muted-foreground mb-8">
+              Ils nous font confiance
             </p>
-          </div>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+              {logos.map((logo, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={isInView ? { opacity: 0.5, y: 0 } : {}}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className="text-lg font-semibold text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                >
+                  {logo}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
 
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+          {/* Stats */}
+          <div className="grid sm:grid-cols-3 gap-6">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center glass-card p-6 rounded-xl">
-                <div className="text-3xl md:text-4xl font-bold text-primary neon-text">
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                className="text-center p-6 rounded-xl glass-card"
+              >
+                <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <stat.icon className="w-6 h-6 text-primary" />
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-gradient mb-2">
                   {stat.value}
                 </div>
-                <div className="text-sm text-muted-foreground mt-2">
-                  {stat.label}
-                </div>
-              </div>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </motion.div>
             ))}
           </div>
 
-          {/* Testimonials grid */}
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="glass-card hover:border-primary/30 transition-colors">
-                <CardContent className="p-6 space-y-4">
-                  {/* Rating */}
-                  <div className="flex gap-1">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-warning text-warning" />
-                    ))}
-                  </div>
+          {/* Testimonials */}
+          <div className="space-y-8">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={isInView ? { opacity: 1 } : {}}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="text-center"
+            >
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                Ce qu'en disent nos clients
+              </h2>
+            </motion.div>
 
-                  {/* Quote */}
-                  <div className="relative">
-                    <Quote className="absolute -top-2 -left-2 w-8 h-8 text-primary/20" />
-                    <p className="text-foreground italic pl-4">
-                      "{testimonial.quote}"
-                    </p>
-                  </div>
-
-                  {/* Author */}
-                  <div className="pt-4 border-t border-border">
-                    <div className="font-semibold text-foreground">
-                      {testimonial.author}
+            <div className="grid md:grid-cols-3 gap-6">
+              {testimonials.map((testimonial, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+                  className="relative p-6 rounded-xl glass-card"
+                >
+                  <Quote className="w-8 h-8 text-primary/30 mb-4" />
+                  <p className="text-foreground mb-6 leading-relaxed">
+                    "{testimonial.quote}"
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold text-sm">
+                      {testimonial.avatar}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {testimonial.role} • {testimonial.company}
+                    <div>
+                      <p className="font-medium text-foreground text-sm">
+                        {testimonial.author}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {testimonial.role}
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
