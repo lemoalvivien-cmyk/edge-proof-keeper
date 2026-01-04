@@ -15,6 +15,32 @@ async function sha256(data: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Helper to call log-evidence with internal token
+async function logEvidenceInternal(
+  supabaseUrl: string,
+  authHeader: string,
+  internalToken: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authHeader,
+        "x-internal-token": internalToken,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      console.warn("Failed to log evidence:", error);
+    }
+  } catch (error) {
+    console.warn("Failed to log evidence:", error);
+  }
+}
+
 // Finding type detection based on tool slug and content
 function detectFindingType(slug: string, finding: Record<string, unknown>): string {
   const typeMap: Record<string, string[]> = {
@@ -136,6 +162,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const internalEdgeToken = Deno.env.get("INTERNAL_EDGE_TOKEN")!;
 
     // Create user client to verify auth
     const supabaseUser = createClient(supabaseUrl, anonKey, {
@@ -380,7 +407,7 @@ serve(async (req) => {
       }
     }
 
-    // Log to evidence_log
+    // Log to evidence_log via internal endpoint
     const normalizedPayload = {
       tool_run_id,
       tool_slug: toolSlug,
@@ -391,18 +418,12 @@ serve(async (req) => {
     };
     const payloadHash = await sha256(JSON.stringify(normalizedPayload));
 
-    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
-      || req.headers.get("x-real-ip") 
-      || null;
-
-    await supabase.from("evidence_log").insert({
+    await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {
       organization_id: toolRun.organization_id,
-      user_id: user.id,
       action: "normalized",
       entity_type: "tool_run",
       entity_id: tool_run_id,
       artifact_hash: payloadHash,
-      ip_address: clientIp,
       details: normalizedPayload,
     });
 

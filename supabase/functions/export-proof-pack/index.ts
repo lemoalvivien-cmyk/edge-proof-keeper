@@ -27,6 +27,32 @@ function checkRateLimit(userId: string): boolean {
   return true;
 }
 
+// Helper to call log-evidence with internal token
+async function logEvidenceInternal(
+  supabaseUrl: string,
+  authHeader: string,
+  internalToken: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authHeader,
+        "x-internal-token": internalToken,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      console.warn("Failed to log evidence:", error);
+    }
+  } catch (error) {
+    console.warn("Failed to log evidence:", error);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,6 +61,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const internalEdgeToken = Deno.env.get("INTERNAL_EDGE_TOKEN")!;
     
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -157,7 +184,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Exporting proof pack for org ${organizationId}, tool_run=${tool_run_id}, report=${report_id}`);
+    // ADMIN-ONLY: Check if user has admin role
+    const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc("has_role", {
+      _user_id: user.id,
+      _org_id: organizationId,
+      _role: "admin",
+    });
+
+    if (roleError || !isAdmin) {
+      console.warn(`Admin access denied for user ${user.id} on org ${organizationId}`);
+      return new Response(
+        JSON.stringify({ error: "Admin access required for proof pack export" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Exporting proof pack for org ${organizationId}, tool_run=${tool_run_id}, report=${report_id} by admin ${user.id}`);
 
     // Get findings summary
     const { data: findings, error: findingsError } = await supabaseAdmin
@@ -285,10 +327,9 @@ Deno.serve(async (req) => {
 
     console.log(`Proof pack created: ${proofPack.id} with hash ${proofPack.pack_hash}`);
 
-    // Log evidence
-    await supabaseAdmin.from("evidence_log").insert({
+    // Log evidence using internal endpoint
+    await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {
       organization_id: organizationId,
-      user_id: user.id,
       action: "export_proof_pack",
       entity_type: "proof_pack",
       entity_id: proofPack.id,
@@ -298,7 +339,6 @@ Deno.serve(async (req) => {
         report_id: report?.id,
         scope: scope,
       },
-      ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
     });
 
     return new Response(

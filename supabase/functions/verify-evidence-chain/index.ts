@@ -27,6 +27,32 @@ function checkRateLimit(userId: string): boolean {
   return true;
 }
 
+// Helper to call log-evidence with internal token
+async function logEvidenceInternal(
+  supabaseUrl: string,
+  authHeader: string,
+  internalToken: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authHeader,
+        "x-internal-token": internalToken,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      console.warn("Failed to log evidence:", error);
+    }
+  } catch (error) {
+    console.warn("Failed to log evidence:", error);
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -36,6 +62,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const internalEdgeToken = Deno.env.get("INTERNAL_EDGE_TOKEN")!;
     
     // Get auth token from request
     const authHeader = req.headers.get("Authorization");
@@ -105,7 +132,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Verifying evidence chain for org ${organization_id} by user ${user.id}`);
+    // ADMIN-ONLY: Check if user has admin role
+    const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc("has_role", {
+      _user_id: user.id,
+      _org_id: organization_id,
+      _role: "admin",
+    });
+
+    if (roleError || !isAdmin) {
+      console.warn(`Admin access denied for user ${user.id} on org ${organization_id}`);
+      return new Response(
+        JSON.stringify({ error: "Admin access required for chain verification" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Verifying evidence chain for org ${organization_id} by admin ${user.id}`);
 
     // Call verify_evidence_chain function
     const { data: verifyResult, error: verifyError } = await supabaseAdmin.rpc("verify_evidence_chain", {
@@ -132,10 +174,9 @@ Deno.serve(async (req) => {
 
     console.log(`Chain verification result: is_valid=${result.is_valid}, last_seq=${result.last_seq}, legacy_rows=${result.legacy_rows_count}`);
 
-    // Log this verification to evidence
-    const logPayload = {
+    // Log this verification to evidence using internal endpoint
+    await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {
       organization_id,
-      user_id: user.id,
       action: "verify_chain",
       entity_type: "evidence",
       entity_id: null,
@@ -145,15 +186,7 @@ Deno.serve(async (req) => {
         head_hash: result.head_hash,
         first_bad_seq: result.first_bad_seq,
       },
-      ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
-    };
-
-    // Insert evidence log entry
-    const { error: logError } = await supabaseAdmin.from("evidence_log").insert(logPayload);
-    if (logError) {
-      console.warn("Failed to log verification event:", logError);
-      // Don't fail the request, just log warning
-    }
+    });
 
     return new Response(
       JSON.stringify({

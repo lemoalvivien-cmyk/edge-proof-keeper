@@ -15,6 +15,32 @@ async function sha256(data: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Helper to call log-evidence with internal token
+async function logEvidenceInternal(
+  supabaseUrl: string,
+  authHeader: string,
+  internalToken: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authHeader,
+        "x-internal-token": internalToken,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      console.warn("Failed to log evidence:", error);
+    }
+  } catch (error) {
+    console.warn("Failed to log evidence:", error);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -33,6 +59,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    const internalEdgeToken = Deno.env.get("INTERNAL_EDGE_TOKEN")!;
 
     if (!lovableApiKey) {
       console.error("LOVABLE_API_KEY not configured");
@@ -330,12 +357,6 @@ Si findings est vide ou absent, indique "Aucun finding importé - données insuf
       console.error("Report update error:", updateError);
     }
 
-    // Log to evidence_log with full details per spec
-    // Get IP from request headers if available
-    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
-      || req.headers.get("x-real-ip") 
-      || null;
-
     // Determine fact_pack limitations
     const limitations: string[] = [];
     if (findings.length === 0) limitations.push("Aucun finding dans les données importées");
@@ -343,14 +364,13 @@ Si findings est vide ou absent, indique "Aucun finding importé - données insuf
     if (!normalizedOutput.target) limitations.push("Cible non spécifiée");
     if (factPack.data_confidence === "Low") limitations.push("Confiance données faible - import non structuré");
 
-    await supabase.from("evidence_log").insert({
+    // Log to evidence_log via internal endpoint
+    await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {
       organization_id: toolRun.organization_id,
-      user_id: user.id,
       action: "report_generated",
       entity_type: "report",
       entity_id: newReport.id,
       artifact_hash: factPackHash,
-      ip_address: clientIp,
       details: {
         tool_run_id: tool_run_id,
         tool_slug: factPack.tool.slug,
