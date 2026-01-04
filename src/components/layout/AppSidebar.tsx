@@ -12,6 +12,7 @@ import {
   BookOpen,
   Wrench,
   Play,
+  FileBarChart,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -44,6 +45,7 @@ const operationsItems = [
 ];
 
 const auditItems = [
+  { title: 'Rapports', href: '/reports', icon: FileBarChart },
   { title: 'Journal de Preuves', href: '/evidence', icon: BookOpen },
 ];
 

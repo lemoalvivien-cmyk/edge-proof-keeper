@@ -23,6 +23,7 @@ import Tools from "./pages/Tools";
 import ToolDetail from "./pages/ToolDetail";
 import Runs from "./pages/Runs";
 import RunDetail from "./pages/RunDetail";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/tools/:slug" element={<ProtectedRoute><ToolDetail /></ProtectedRoute>} />
             <Route path="/runs" element={<ProtectedRoute><Runs /></ProtectedRoute>} />
             <Route path="/runs/:id" element={<ProtectedRoute><RunDetail /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><Settings /></ProtectedRoute>} />
             
             <Route path="*" element={<NotFound />} />
