@@ -1035,6 +1035,7 @@ export type Database = {
         Returns: boolean
       }
       is_authorization_valid: { Args: { _auth_id: string }; Returns: boolean }
+      sha256_hex: { Args: { input: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "auditor" | "user"
