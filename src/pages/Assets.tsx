@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEvidenceLog } from '@/hooks/useEvidenceLog';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthorizationGate } from '@/components/auth/AuthorizationGate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +34,6 @@ type AssetFormData = z.infer<typeof assetSchema>;
 export default function Assets() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { user, organization } = useAuth();
-  const { logEvent } = useEvidenceLog();
   const queryClient = useQueryClient();
 
   const form = useForm<AssetFormData>({
@@ -84,13 +82,7 @@ export default function Assets() {
 
       if (error) throw error;
 
-      await logEvent({
-        action: 'asset_created',
-        entity_type: 'asset',
-        entity_id: asset.id,
-        details: { name: data.name, type: data.asset_type },
-      });
-
+      // Note: Evidence logging is now done server-side only
       return asset;
     },
     onSuccess: () => {

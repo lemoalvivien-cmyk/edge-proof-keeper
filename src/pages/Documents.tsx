@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEvidenceLog } from '@/hooks/useEvidenceLog';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +31,6 @@ export default function Documents() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const { user, organization } = useAuth();
-  const { logEvent } = useEvidenceLog();
   const queryClient = useQueryClient();
 
   const form = useForm<DocumentFormData>({
@@ -89,14 +87,7 @@ export default function Documents() {
 
       if (error) throw error;
 
-      await logEvent({
-        action: 'document_uploaded',
-        entity_type: 'document',
-        entity_id: doc.id,
-        details: { title: data.title, type: data.document_type },
-        artifact_hash: fileHash,
-      });
-
+      // Note: Evidence logging is now done server-side only via upload-document edge function
       return doc;
     },
     onSuccess: () => {

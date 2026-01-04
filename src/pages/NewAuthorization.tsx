@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FileCheck, Upload, Loader2, CheckCircle2, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEvidenceLog } from '@/hooks/useEvidenceLog';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,6 @@ export default function NewAuthorization() {
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const { user, organization } = useAuth();
-  const { logEvent } = useEvidenceLog();
   const navigate = useNavigate();
 
   const form = useForm<AuthorizationFormData>({
@@ -94,17 +92,7 @@ export default function NewAuthorization() {
 
       if (error) throw error;
 
-      // Log to evidence
-      await logEvent({
-        action: 'authorization_created',
-        entity_type: 'authorization',
-        details: {
-          scope: data.scope,
-          document_hash: data.fileHash,
-          consent_ip: data.ip,
-        },
-        artifact_hash: data.fileHash,
-      });
+      // Note: Evidence logging is now done server-side only via upload-authorization edge function
     },
     onSuccess: () => {
       toast.success('Autorisation créée avec succès');

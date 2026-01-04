@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthorization } from '@/hooks/useAuthorization';
-import { useEvidenceLog } from '@/hooks/useEvidenceLog';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthorizationGate } from '@/components/auth/AuthorizationGate';
 import { TrustBanner } from '@/components/ui/TrustBanner';
@@ -35,7 +34,6 @@ export default function Scans() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { user, organization } = useAuth();
   const { authorizations, hasValidAuthorization } = useAuthorization();
-  const { logEvent } = useEvidenceLog();
   const queryClient = useQueryClient();
 
   const form = useForm<ScanFormData>({
@@ -132,13 +130,7 @@ export default function Scans() {
 
       if (error) throw error;
 
-      await logEvent({
-        action: 'scan_created',
-        entity_type: 'scan',
-        entity_id: scan.id,
-        details: { type: data.scan_type, findings: findings.total },
-      });
-
+      // Note: Evidence logging is now done server-side only
       return scan;
     },
     onSuccess: () => {
