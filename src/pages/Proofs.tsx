@@ -141,9 +141,15 @@ export default function Proofs() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                            {pack.pack_hash?.slice(0, 16)}...
-                          </code>
+                          {pack.pack_hash ? (
+                            <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
+                              {pack.pack_hash.slice(0, 16)}...
+                            </code>
+                          ) : (
+                            <Badge variant="destructive" className="text-xs">
+                              ⚠️ Hash manquant
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           {getChainStatus(pack.pack_json) ? (
