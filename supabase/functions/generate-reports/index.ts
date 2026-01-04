@@ -328,17 +328,32 @@ Si findings est vide ou absent, indique "Aucun finding importé - données insuf
       console.error("Report update error:", updateError);
     }
 
-    // Log to evidence_log
+    // Log to evidence_log with full details per spec
+    // Get IP from request headers if available
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
+      || req.headers.get("x-real-ip") 
+      || null;
+
+    // Determine fact_pack limitations
+    const limitations: string[] = [];
+    if (findings.length === 0) limitations.push("Aucun finding dans les données importées");
+    if (!toolRun.input_artifact_hash) limitations.push("Pas de hash d'artefact d'entrée");
+    if (!normalizedOutput.target) limitations.push("Cible non spécifiée");
+    if (factPack.data_confidence === "Low") limitations.push("Confiance données faible - import non structuré");
+
     await supabase.from("evidence_log").insert({
       organization_id: toolRun.organization_id,
       user_id: user.id,
       action: "report_generated",
-      entity_type: "tool_run",
-      entity_id: tool_run_id,
+      entity_type: "report",
+      entity_id: newReport.id,
       artifact_hash: factPackHash,
+      ip_address: clientIp,
       details: {
-        report_id: newReport.id,
-        data_confidence: factPack.data_confidence,
+        tool_run_id: tool_run_id,
+        tool_slug: factPack.tool.slug,
+        fact_pack_confidence: factPack.data_confidence,
+        limitations: limitations,
         findings_count: findings.length,
       },
     });
