@@ -525,6 +525,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      authorization_belongs_to_org: {
+        Args: { _auth_id: string; _org_id: string }
+        Returns: boolean
+      }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_org_access: {
         Args: { _org_id: string; _user_id: string }
@@ -542,6 +546,7 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_authorization_valid: { Args: { _auth_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "auditor" | "user"

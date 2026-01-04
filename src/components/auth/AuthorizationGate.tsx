@@ -75,7 +75,7 @@ export function AuthorizationGate({ children, actionDescription = 'cette action'
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction asChild>
-              <Button onClick={() => navigate('/authorizations/new')}>
+              <Button onClick={() => navigate('/scopeguard')}>
                 <FileCheck className="h-4 w-4 mr-2" />
                 Créer une autorisation
               </Button>
