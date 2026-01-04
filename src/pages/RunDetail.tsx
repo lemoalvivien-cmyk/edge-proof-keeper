@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Download, Upload, Shield, Hash, Clock, FileJson, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Upload, Shield, Hash, Clock, FileJson, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TrustBanner } from '@/components/ui/TrustBanner';
 import { ReportTabs } from '@/components/reports/ReportTabs';
+import { FindingsTable } from '@/components/findings/FindingsTable';
 import { useToolRun, useUploadToolRunArtifact } from '@/hooks/useTools';
 import { useReportByToolRun, useGenerateReport } from '@/hooks/useReports';
+import { useFindingsByToolRun, useNormalizeToolRun } from '@/hooks/useFindings';
 import { CATEGORY_LABELS } from '@/types/tools';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
@@ -31,21 +33,16 @@ const STATUS_COLORS: Record<string, string> = {
   failed: 'bg-red-500/10 text-red-500',
 };
 
-const SEVERITY_COLORS: Record<string, string> = {
-  critical: 'bg-red-500/10 text-red-500 border-red-500/20',
-  high: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-  medium: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-  low: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  info: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-};
 
 export default function RunDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: run, isLoading } = useToolRun(id);
   const { data: report, refetch: refetchReport } = useReportByToolRun(id);
+  const { data: findings = [], isLoading: findingsLoading, refetch: refetchFindings } = useFindingsByToolRun(id);
   const uploadMutation = useUploadToolRunArtifact();
   const generateReportMutation = useGenerateReport();
+  const normalizeMutation = useNormalizeToolRun();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -72,6 +69,17 @@ export default function RunDetail() {
       toast.success('Rapport généré avec succès');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erreur lors de la génération');
+    }
+  };
+
+  const handleNormalize = async () => {
+    if (!id) return;
+    try {
+      await normalizeMutation.mutateAsync(id);
+      refetchFindings();
+      toast.success('Normalisation effectuée');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la normalisation');
     }
   };
 
@@ -112,7 +120,7 @@ export default function RunDetail() {
     );
   }
 
-  const findings = run.normalized_output?.findings || [];
+  const summaryFromDb = run.summary as { counts?: { critical?: number; high?: number; medium?: number; low?: number; info?: number; total?: number }; confidence?: string; limitations?: string[] } | undefined;
 
   return (
     <AppLayout>
@@ -149,6 +157,25 @@ export default function RunDetail() {
           </div>
 
           <div className="flex gap-2 print:hidden">
+            {run.status === 'done' && findings.length === 0 && (
+              <Button
+                variant="outline"
+                onClick={handleNormalize}
+                disabled={normalizeMutation.isPending}
+              >
+                {normalizeMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Normalisation...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Normaliser
+                  </>
+                )}
+              </Button>
+            )}
             {run.status === 'done' && !report && (
               <Button
                 onClick={handleGenerateReport}
@@ -266,44 +293,54 @@ export default function RunDetail() {
                 <Shield className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground">Total findings</p>
-                  <p className="font-medium">{run.summary?.total ?? 0}</p>
+                  <p className="font-medium">{summaryFromDb?.counts?.total ?? findings.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Summary */}
-        {run.summary && !report && (
+        {/* Summary counts */}
+        {summaryFromDb?.counts && !report && (
           <Card className="print:hidden">
             <CardHeader>
               <CardTitle>Résumé des findings</CardTitle>
+              {summaryFromDb.confidence && (
+                <CardDescription>
+                  Confiance: {summaryFromDb.confidence}
+                  {summaryFromDb.limitations && summaryFromDb.limitations.length > 0 && (
+                    <span className="text-destructive ml-2">
+                      ({summaryFromDb.limitations.join(', ')})
+                    </span>
+                  )}
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-red-500" />
-                  <span className="font-medium">{run.summary.critical ?? 0}</span>
+                  <span className="font-medium">{summaryFromDb.counts.critical ?? 0}</span>
                   <span className="text-muted-foreground">Critical</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-orange-500" />
-                  <span className="font-medium">{run.summary.high ?? 0}</span>
+                  <span className="font-medium">{summaryFromDb.counts.high ?? 0}</span>
                   <span className="text-muted-foreground">High</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-yellow-500" />
-                  <span className="font-medium">{run.summary.medium ?? 0}</span>
+                  <span className="font-medium">{summaryFromDb.counts.medium ?? 0}</span>
                   <span className="text-muted-foreground">Medium</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-blue-500" />
-                  <span className="font-medium">{run.summary.low ?? 0}</span>
+                  <span className="font-medium">{summaryFromDb.counts.low ?? 0}</span>
                   <span className="text-muted-foreground">Low</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-gray-500" />
-                  <span className="font-medium">{run.summary.info ?? 0}</span>
+                  <span className="font-medium">{summaryFromDb.counts.info ?? 0}</span>
                   <span className="text-muted-foreground">Info</span>
                 </div>
               </div>
@@ -311,60 +348,17 @@ export default function RunDetail() {
           </Card>
         )}
 
-        {/* Findings list - hide if report is shown */}
+        {/* Findings table from DB */}
         {findings.length > 0 && !report && (
           <Card className="print:hidden">
             <CardHeader>
               <CardTitle>Findings ({findings.length})</CardTitle>
               <CardDescription>
-                Résultats normalisés de l'import
+                Résultats normalisés stockés en base
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {findings.map((finding, index) => (
-                <div
-                  key={index}
-                  className="p-4 rounded-lg border space-y-2"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      <span className="font-medium">{finding.title}</span>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={SEVERITY_COLORS[finding.severity] || ''}
-                    >
-                      {finding.severity.toUpperCase()}
-                    </Badge>
-                  </div>
-                  {finding.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {finding.description}
-                    </p>
-                  )}
-                  {finding.evidence && (
-                    <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">
-                      {finding.evidence}
-                    </pre>
-                  )}
-                  {finding.references?.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {finding.references.map((ref, i) => (
-                        <a
-                          key={i}
-                          href={ref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline"
-                        >
-                          {ref}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+            <CardContent>
+              <FindingsTable findings={findings} isLoading={findingsLoading} showFilters={false} />
             </CardContent>
           </Card>
         )}
