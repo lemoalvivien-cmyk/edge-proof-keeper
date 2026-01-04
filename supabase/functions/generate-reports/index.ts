@@ -31,6 +31,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
     if (!lovableApiKey) {
@@ -41,11 +42,12 @@ serve(async (req) => {
       });
     }
 
-    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey.replace("service_role", "anon"), {
+    // Create user client to verify auth
+    const supabaseUser = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -82,14 +84,14 @@ serve(async (req) => {
       });
     }
 
-    // Verify org access
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("organization_id")
-      .eq("id", user.id)
-      .maybeSingle();
+    // Verify org access using has_org_access RPC
+    const { data: orgAccess, error: orgError } = await supabase.rpc('has_org_access', {
+      _user_id: user.id,
+      _org_id: toolRun.organization_id,
+    });
 
-    if (!profile || profile.organization_id !== toolRun.organization_id) {
+    if (orgError || !orgAccess) {
+      console.error("Organization access denied:", orgError);
       return new Response(JSON.stringify({ error: "Access denied" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

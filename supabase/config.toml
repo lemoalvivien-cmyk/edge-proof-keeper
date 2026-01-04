@@ -1,28 +1,28 @@
 project_id = "ypjcpehbehcfjlhkrltd"
 
 [functions.upload-authorization]
-verify_jwt = false
+verify_jwt = true
 
 [functions.upload-document]
-verify_jwt = false
+verify_jwt = true
 
 [functions.create-tool-run]
-verify_jwt = false
+verify_jwt = true
 
 [functions.upload-tool-run-artifact]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-reports]
-verify_jwt = false
+verify_jwt = true
 
 [functions.normalize-tool-run]
-verify_jwt = false
+verify_jwt = true
 
 [functions.log-evidence]
-verify_jwt = false
+verify_jwt = true
 
 [functions.verify-evidence-chain]
-verify_jwt = false
+verify_jwt = true
 
 [functions.export-proof-pack]
-verify_jwt = false
+verify_jwt = true
