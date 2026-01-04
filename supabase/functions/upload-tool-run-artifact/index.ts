@@ -12,6 +12,32 @@ async function sha256(data: ArrayBuffer): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Helper to call log-evidence with internal token
+async function logEvidenceInternal(
+  supabaseUrl: string,
+  authHeader: string,
+  internalToken: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authHeader,
+        "x-internal-token": internalToken,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      console.warn("Failed to log evidence:", error);
+    }
+  } catch (error) {
+    console.warn("Failed to log evidence:", error);
+  }
+}
+
 // Normalize JSON findings to standard format
 function normalizeJsonFindings(rawData: unknown): { 
   findings: Array<{
@@ -111,6 +137,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const internalEdgeToken = Deno.env.get('INTERNAL_EDGE_TOKEN')!;
     
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
@@ -333,23 +360,20 @@ Deno.serve(async (req) => {
       console.error('Failed to update tool run:', updateError);
     }
 
-    // Log to evidence vault
-    await supabase
-      .from('evidence_log')
-      .insert({
-        organization_id: toolRun.organization_id,
-        user_id: user.id,
-        action: 'tool_run_imported',
-        entity_type: 'tool_run',
-        entity_id: toolRunId,
-        artifact_hash: fileHash,
-        details: {
-          file_name: file.name,
-          file_type: file.type,
-          file_size: file.size,
-          findings_count: (summary as Record<string, number>).total || 0,
-        },
-      });
+    // Log to evidence vault via internal endpoint
+    await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {
+      organization_id: toolRun.organization_id,
+      action: 'tool_run_imported',
+      entity_type: 'tool_run',
+      entity_id: toolRunId,
+      artifact_hash: fileHash,
+      details: {
+        file_name: file.name,
+        file_type: file.type,
+        file_size: file.size,
+        findings_count: (summary as Record<string, number>).total || 0,
+      },
+    });
 
     console.log('Tool run completed:', toolRunId);
 

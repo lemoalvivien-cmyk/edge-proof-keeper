@@ -13,6 +13,32 @@ interface CreateToolRunRequest {
   mode: 'import_json' | 'import_pdf' | 'import_csv';
 }
 
+// Helper to call log-evidence with internal token
+async function logEvidenceInternal(
+  supabaseUrl: string,
+  authHeader: string,
+  internalToken: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authHeader,
+        "x-internal-token": internalToken,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      console.warn("Failed to log evidence:", error);
+    }
+  } catch (error) {
+    console.warn("Failed to log evidence:", error);
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -22,6 +48,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const internalEdgeToken = Deno.env.get('INTERNAL_EDGE_TOKEN')!;
     
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
@@ -140,27 +167,20 @@ Deno.serve(async (req) => {
 
     console.log('Tool run created:', toolRun.id);
 
-    // Log to evidence vault
-    const { error: logError } = await supabase
-      .from('evidence_log')
-      .insert({
-        organization_id,
-        user_id: user.id,
-        action: 'tool_run_requested',
-        entity_type: 'tool_run',
-        entity_id: toolRun.id,
-        details: {
-          tool_slug,
-          tool_name: tool.name,
-          tool_category: tool.category,
-          mode,
-          authorization_id,
-        },
-      });
-
-    if (logError) {
-      console.warn('Failed to log evidence:', logError);
-    }
+    // Log to evidence vault via internal endpoint
+    await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {
+      organization_id,
+      action: 'tool_run_requested',
+      entity_type: 'tool_run',
+      entity_id: toolRun.id,
+      details: {
+        tool_slug,
+        tool_name: tool.name,
+        tool_category: tool.category,
+        mode,
+        authorization_id,
+      },
+    });
 
     // Determine accepted formats
     const formatMap: Record<string, string[]> = {

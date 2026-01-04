@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-internal-token",
 };
 
 // Truncate IP for GDPR compliance
@@ -59,8 +59,19 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const internalEdgeToken = Deno.env.get("INTERNAL_EDGE_TOKEN");
 
-    // Get auth token from request
+    // INTERNAL-ONLY: Require x-internal-token header
+    const internalToken = req.headers.get("x-internal-token");
+    if (!internalEdgeToken || !internalToken || internalToken !== internalEdgeToken) {
+      console.warn("Internal token validation failed - access denied");
+      return new Response(
+        JSON.stringify({ error: "Forbidden - internal use only" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Get auth token from request (still required for user context)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       console.error("No authorization header provided");
@@ -98,7 +109,8 @@ Deno.serve(async (req) => {
       entity_id,
       details,
       artifact_hash,
-      ip_address,
+      // user_id ignored - we always use auth.uid()
+      // ip_address ignored - we always use x-forwarded-for from headers
     } = body;
 
     // Validate required fields
@@ -158,8 +170,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get IP from request if not provided
-    const clientIp = ip_address || 
+    // Get IP from request headers ONLY (never from payload)
+    const clientIp = 
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
       null;
@@ -176,6 +188,7 @@ Deno.serve(async (req) => {
     }
 
     // Insert into evidence_log - the trigger will compute seq, prev_hash, entry_hash
+    // ALWAYS use authenticated user.id, ignore any user_id from payload
     const { data: logEntry, error: insertError } = await supabase
       .from("evidence_log")
       .insert({
