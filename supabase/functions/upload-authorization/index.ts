@@ -72,6 +72,14 @@ Deno.serve(async (req) => {
     const scope = formData.get('scope') as string;
     const consentCheckbox = formData.get('consent_checkbox') === 'true';
     const validUntil = formData.get('valid_until') as string | null;
+    
+    // New scope fields for V1 strict binding
+    const scopeType = (formData.get('scope_type') as string) || 'domain';
+    const scopeDomainsRaw = formData.get('scope_domains') as string | null;
+    const scopeCidrsRaw = formData.get('scope_cidrs') as string | null;
+    const scopeAssetsRaw = formData.get('scope_assets') as string | null;
+    const consentTextVersion = (formData.get('consent_text_version') as string) || '1.0';
+    const consentText = formData.get('consent_text') as string | null;
 
     if (!file || !organizationId || !scope) {
       return new Response(
@@ -121,10 +129,10 @@ Deno.serve(async (req) => {
     const fileBuffer = await file.arrayBuffer();
     const fileHash = await hashSHA256(fileBuffer);
 
-    // Generate unique filename
+    // Generate unique filename with canonical path
     const timestamp = Date.now();
     const ext = file.name.split('.').pop();
-    const fileName = `${organizationId}/${timestamp}-${fileHash.substring(0, 8)}.${ext}`;
+    const fileName = `${organizationId}/authorizations/${timestamp}-${fileHash.substring(0, 8)}.${ext}`;
 
     // Upload to storage
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
@@ -142,16 +150,39 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get client IP (hashed/truncated for privacy)
+    // Get client IP and hash it for GDPR compliance
     const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] || 
                      req.headers.get('cf-connecting-ip') || 
                      'unknown';
     const hashedIP = hashIP(clientIP);
 
+    // Compute consent text hash if provided
+    let consentTextHash: string | null = null;
+    if (consentText) {
+      const encoder = new TextEncoder();
+      const textBuffer = encoder.encode(consentText);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', textBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      consentTextHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Parse scope arrays
+    const scopeDomains = scopeDomainsRaw ? scopeDomainsRaw.split(',').map(d => d.trim().toLowerCase()).filter(Boolean) : [];
+    const scopeCidrs = scopeCidrsRaw ? scopeCidrsRaw.split(',').map(c => c.trim()).filter(Boolean) : [];
+    const scopeAssets = scopeAssetsRaw ? scopeAssetsRaw.split(',').map(a => a.trim()).filter(Boolean) : [];
+
+    // Extract domain from legacy scope format and add to scope_domains if not present
+    const domainMatch = scope.match(/domain:([^;]+)/);
+    if (domainMatch && !scopeDomains.includes(domainMatch[1].toLowerCase())) {
+      scopeDomains.push(domainMatch[1].toLowerCase());
+    }
+
     // Determine status: admin = auto-approved, others = pending
     const status = isAdmin ? 'approved' : 'pending';
+    const approvedBy = isAdmin ? user.id : null;
+    const approvedAt = isAdmin ? new Date().toISOString() : null;
 
-    // Create authorization record
+    // Create authorization record with extended fields
     const { data: authRecord, error: insertError } = await supabaseAdmin
       .from('authorizations')
       .insert({
@@ -160,10 +191,19 @@ Deno.serve(async (req) => {
         document_url: uploadData.path,
         document_hash: fileHash,
         consent_checkbox: consentCheckbox,
-        consent_ip: hashedIP,
+        consent_ip_raw_deprecated: clientIP, // Keep raw for migration, deprecated
+        consent_ip_hash: hashedIP,
         consent_timestamp: new Date().toISOString(),
+        consent_text_version: consentTextVersion,
+        consent_text_hash: consentTextHash,
         scope: scope,
+        scope_type: scopeType,
+        scope_domains: scopeDomains,
+        scope_cidrs: scopeCidrs,
+        scope_assets: scopeAssets,
         status: status,
+        approved_by: approvedBy,
+        approved_at: approvedAt,
         valid_from: new Date().toISOString(),
         valid_until: validUntil || null
       })

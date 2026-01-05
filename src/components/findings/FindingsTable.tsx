@@ -58,8 +58,8 @@ const severityConfig: Record<RiskLevel, { label: string; className: string; icon
 
 const statusConfig: Record<FindingStatus, { label: string; className: string }> = {
   open: { label: 'Ouvert', className: 'bg-destructive/10 text-destructive border-destructive/20' },
-  triaged: { label: 'Trié', className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' },
-  resolved: { label: 'Résolu', className: 'bg-green-500/10 text-green-600 border-green-500/20' },
+  acknowledged: { label: 'Accepté', className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' },
+  remediated: { label: 'Remédié', className: 'bg-green-500/10 text-green-600 border-green-500/20' },
   false_positive: { label: 'Faux positif', className: 'bg-muted text-muted-foreground border-muted' },
 };
 
@@ -152,8 +152,8 @@ export function FindingsTable({ findings, isLoading, showFilters = true, onFilte
             <SelectContent>
               <SelectItem value="all">Tous</SelectItem>
               <SelectItem value="open">Ouvert</SelectItem>
-              <SelectItem value="triaged">Trié</SelectItem>
-              <SelectItem value="resolved">Résolu</SelectItem>
+              <SelectItem value="acknowledged">Accepté</SelectItem>
+              <SelectItem value="remediated">Remédié</SelectItem>
               <SelectItem value="false_positive">Faux positif</SelectItem>
             </SelectContent>
           </Select>
@@ -235,17 +235,17 @@ export function FindingsTable({ findings, isLoading, showFilters = true, onFilte
                             <Eye className="mr-2 h-4 w-4" />
                             Voir détails
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(finding.id, 'resolved')}>
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(finding.id, 'remediated')}>
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Marquer résolu
+                            Marquer remédié
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleStatusUpdate(finding.id, 'false_positive')}>
                             <XCircle className="mr-2 h-4 w-4" />
                             Faux positif
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(finding.id, 'triaged')}>
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(finding.id, 'acknowledged')}>
                             <Shield className="mr-2 h-4 w-4" />
-                            Marquer trié
+                            Marquer accepté
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setCreateTaskFinding(finding)}>

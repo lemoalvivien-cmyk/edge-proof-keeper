@@ -95,8 +95,11 @@ export default function NewAuthorization() {
           document_url: data.fileUrl,
           document_hash: data.fileHash,
           consent_checkbox: data.consentAuthorized && data.consentLimits,
-          consent_ip: data.ip,
+          consent_ip_raw_deprecated: data.ip,
+          consent_ip_hash: data.ip.split('.').slice(0, 2).join('.') + '.xxx.xxx',
           scope: sanitizedScope,
+          scope_type: 'any',
+          scope_domains: [],
           valid_until: data.validUntil || null,
           status: 'approved', // Auto-approve for V1
         }])

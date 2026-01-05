@@ -39,9 +39,22 @@ export interface Authorization {
   document_url: string;
   document_hash: string;
   consent_checkbox: boolean;
-  consent_ip: string;
+  consent_ip_raw_deprecated: string;
+  consent_ip_hash: string | null;
   consent_timestamp: string;
+  consent_text_version: string | null;
+  consent_text_hash: string | null;
   scope: string;
+  scope_type: string;
+  scope_domains: string[];
+  scope_cidrs: string[];
+  scope_assets: string[];
+  target_rules: Record<string, unknown>;
+  approved_by: string | null;
+  approved_at: string | null;
+  revoked_by: string | null;
+  revoked_at: string | null;
+  revoked_reason: string | null;
   valid_from: string;
   valid_until: string | null;
   status: AuthorizationStatus;
@@ -107,7 +120,7 @@ export interface EvidenceLog {
   artifact_hash: string | null;
   created_at: string;
   // Hash chain fields
-  source: 'server' | 'client';
+  source: string;
   seq: number | null;
   prev_hash: string | null;
   entry_hash: string | null;

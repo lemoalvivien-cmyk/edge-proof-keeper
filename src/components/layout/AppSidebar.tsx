@@ -16,6 +16,7 @@ import {
   CheckSquare,
   Package,
   CreditCard,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -35,6 +36,7 @@ import { Button } from '@/components/ui/button';
 const mainNavItems = [
   { title: 'Vue Direction', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Vue Technique', href: '/dashboard/technical', icon: Shield },
+  { title: 'Risques', href: '/risks', icon: AlertTriangle },
   { title: 'Conformité', href: '/compliance', icon: ClipboardCheck },
 ];
 
