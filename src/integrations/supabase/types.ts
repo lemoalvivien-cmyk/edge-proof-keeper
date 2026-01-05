@@ -26,6 +26,7 @@ export type Database = {
           name: string
           organization_id: string
           risk_level: Database["public"]["Enums"]["risk_level"] | null
+          target_identifier: string | null
           updated_at: string
         }
         Insert: {
@@ -39,6 +40,7 @@ export type Database = {
           name: string
           organization_id: string
           risk_level?: Database["public"]["Enums"]["risk_level"] | null
+          target_identifier?: string | null
           updated_at?: string
         }
         Update: {
@@ -52,6 +54,7 @@ export type Database = {
           name?: string
           organization_id?: string
           risk_level?: Database["public"]["Enums"]["risk_level"] | null
+          target_identifier?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -73,8 +76,13 @@ export type Database = {
       }
       authorizations: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           consent_checkbox: boolean
-          consent_ip: string
+          consent_ip_hash: string | null
+          consent_ip_raw_deprecated: string
+          consent_text_hash: string | null
+          consent_text_version: string | null
           consent_timestamp: string
           created_at: string
           created_by: string
@@ -82,14 +90,27 @@ export type Database = {
           document_url: string
           id: string
           organization_id: string
+          revoked_at: string | null
+          revoked_by: string | null
+          revoked_reason: string | null
           scope: string
+          scope_assets: string[] | null
+          scope_cidrs: string[] | null
+          scope_domains: string[] | null
+          scope_type: string | null
           status: Database["public"]["Enums"]["authorization_status"]
+          target_rules: Json | null
           valid_from: string
           valid_until: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           consent_checkbox?: boolean
-          consent_ip: string
+          consent_ip_hash?: string | null
+          consent_ip_raw_deprecated: string
+          consent_text_hash?: string | null
+          consent_text_version?: string | null
           consent_timestamp?: string
           created_at?: string
           created_by: string
@@ -97,14 +118,27 @@ export type Database = {
           document_url: string
           id?: string
           organization_id: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          revoked_reason?: string | null
           scope: string
+          scope_assets?: string[] | null
+          scope_cidrs?: string[] | null
+          scope_domains?: string[] | null
+          scope_type?: string | null
           status?: Database["public"]["Enums"]["authorization_status"]
+          target_rules?: Json | null
           valid_from?: string
           valid_until?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           consent_checkbox?: boolean
-          consent_ip?: string
+          consent_ip_hash?: string | null
+          consent_ip_raw_deprecated?: string
+          consent_text_hash?: string | null
+          consent_text_version?: string | null
           consent_timestamp?: string
           created_at?: string
           created_by?: string
@@ -112,8 +146,16 @@ export type Database = {
           document_url?: string
           id?: string
           organization_id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          revoked_reason?: string | null
           scope?: string
+          scope_assets?: string[] | null
+          scope_cidrs?: string[] | null
+          scope_domains?: string[] | null
+          scope_type?: string | null
           status?: Database["public"]["Enums"]["authorization_status"]
+          target_rules?: Json | null
           valid_from?: string
           valid_until?: string | null
         }
@@ -723,6 +765,7 @@ export type Database = {
           scan_type: Database["public"]["Enums"]["scan_type"]
           started_at: string | null
           status: string
+          target_identifier: string | null
         }
         Insert: {
           asset_id?: string | null
@@ -741,6 +784,7 @@ export type Database = {
           scan_type: Database["public"]["Enums"]["scan_type"]
           started_at?: string | null
           status?: string
+          target_identifier?: string | null
         }
         Update: {
           asset_id?: string | null
@@ -759,6 +803,7 @@ export type Database = {
           scan_type?: Database["public"]["Enums"]["scan_type"]
           started_at?: string | null
           status?: string
+          target_identifier?: string | null
         }
         Relationships: [
           {
@@ -919,6 +964,7 @@ export type Database = {
           requested_by: string
           status: string
           summary: Json | null
+          target_identifier: string | null
           tool_id: string
         }
         Insert: {
@@ -937,6 +983,7 @@ export type Database = {
           requested_by: string
           status?: string
           summary?: Json | null
+          target_identifier?: string | null
           tool_id: string
         }
         Update: {
@@ -955,6 +1002,7 @@ export type Database = {
           requested_by?: string
           status?: string
           summary?: Json | null
+          target_identifier?: string | null
           tool_id?: string
         }
         Relationships: [
@@ -1081,6 +1129,7 @@ export type Database = {
         Args: { _auth_id: string; _org_id: string }
         Returns: boolean
       }
+      get_my_org_id: { Args: never; Returns: string }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_org_access: {
         Args: { _org_id: string; _user_id: string }
@@ -1099,6 +1148,11 @@ export type Database = {
         Returns: boolean
       }
       is_authorization_valid: { Args: { _auth_id: string }; Returns: boolean }
+      is_target_in_scope: {
+        Args: { _auth_id: string; _target: string }
+        Returns: boolean
+      }
+      normalize_target: { Args: { _target: string }; Returns: string }
       sha256_hex: { Args: { input: string }; Returns: string }
       verify_evidence_chain: {
         Args: { _org_id: string }
