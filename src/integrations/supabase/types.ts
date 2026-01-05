@@ -440,6 +440,7 @@ export type Database = {
           confidence: string
           evidence: Json | null
           finding_type: string
+          fingerprint: string | null
           first_seen: string
           id: string
           organization_id: string
@@ -455,6 +456,7 @@ export type Database = {
           confidence?: string
           evidence?: Json | null
           finding_type?: string
+          fingerprint?: string | null
           first_seen?: string
           id?: string
           organization_id: string
@@ -470,6 +472,7 @@ export type Database = {
           confidence?: string
           evidence?: Json | null
           finding_type?: string
+          fingerprint?: string | null
           first_seen?: string
           id?: string
           organization_id?: string
@@ -694,9 +697,12 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          evidence_refs: Json | null
           executive_json: Json | null
           executive_md: string | null
+          fact_pack_hash: string | null
           id: string
+          model_limits: Json | null
           organization_id: string
           status: string
           technical_json: Json | null
@@ -707,9 +713,12 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          evidence_refs?: Json | null
           executive_json?: Json | null
           executive_md?: string | null
+          fact_pack_hash?: string | null
           id?: string
+          model_limits?: Json | null
           organization_id: string
           status?: string
           technical_json?: Json | null
@@ -720,9 +729,12 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          evidence_refs?: Json | null
           executive_json?: Json | null
           executive_md?: string | null
+          fact_pack_hash?: string | null
           id?: string
+          model_limits?: Json | null
           organization_id?: string
           status?: string
           technical_json?: Json | null
@@ -743,6 +755,44 @@ export type Database = {
             columns: ["tool_run_id"]
             isOneToOne: true
             referencedRelation: "tool_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      retention_policies: {
+        Row: {
+          artifacts_years: number
+          created_at: string
+          id: string
+          logs_detail_months: number
+          organization_id: string
+          reports_years: number
+          updated_at: string
+        }
+        Insert: {
+          artifacts_years?: number
+          created_at?: string
+          id?: string
+          logs_detail_months?: number
+          organization_id: string
+          reports_years?: number
+          updated_at?: string
+        }
+        Update: {
+          artifacts_years?: number
+          created_at?: string
+          id?: string
+          logs_detail_months?: number
+          organization_id?: string
+          reports_years?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retention_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1131,6 +1181,7 @@ export type Database = {
       }
       get_my_org_id: { Args: never; Returns: string }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
+      has_consent_proof: { Args: { _auth_id: string }; Returns: boolean }
       has_org_access: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean

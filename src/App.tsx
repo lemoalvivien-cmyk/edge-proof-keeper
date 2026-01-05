@@ -30,6 +30,8 @@ import Tasks from "./pages/Tasks";
 import TaskDetail from "./pages/TaskDetail";
 import GoNoGo from "./pages/GoNoGo";
 import Proofs from "./pages/Proofs";
+import Risks from "./pages/Risks";
+import Findings from "./pages/Findings";
 import NotFound from "./pages/NotFound";
 // Legal pages
 import Terms from "./pages/legal/Terms";
@@ -114,6 +116,8 @@ const App = () => (
             <Route path="/tasks/:id" element={<ProtectedWithGate><TaskDetail /></ProtectedWithGate>} />
             <Route path="/go-no-go" element={<ProtectedWithGate requiredRoles={['admin']}><GoNoGo /></ProtectedWithGate>} />
             <Route path="/proofs" element={<ProtectedWithGate><Proofs /></ProtectedWithGate>} />
+            <Route path="/risks" element={<ProtectedWithGate><Risks /></ProtectedWithGate>} />
+            <Route path="/findings" element={<ProtectedWithGate><Findings /></ProtectedWithGate>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -341,6 +341,30 @@ Si findings est vide ou absent, indique "Aucun finding importé - données insuf
     const executiveMd = generateExecutiveMarkdown(reportJson.executive, factPack);
     const technicalMd = generateTechnicalMarkdown(reportJson.technical, factPack);
 
+    // Determine fact_pack limitations
+    const limitations: string[] = [];
+    if (findings.length === 0) limitations.push("Aucun finding dans les données importées");
+    if (!toolRun.input_artifact_hash) limitations.push("Pas de hash d'artefact d'entrée");
+    if (!normalizedOutput.target) limitations.push("Cible non spécifiée");
+    if (factPack.data_confidence === "Low") limitations.push("Confiance données faible - import non structuré");
+
+    // Build evidence_refs for anti-hallucination traceability
+    const evidenceRefs = {
+      tool_run_id: toolRun.id,
+      artifact_hash: toolRun.input_artifact_hash,
+      finding_ids: findings.map((f: { id?: string }) => f.id).filter(Boolean),
+      sources: [toolRun.tools_catalog?.slug || 'unknown'],
+    };
+
+    // Build model_limits
+    const modelLimits = {
+      model: 'google/gemini-2.5-flash',
+      fact_pack_only: true,
+      no_invented_data: true,
+      confidence: factPack.data_confidence,
+      limitations: limitations,
+    };
+
     // Update report with content
     const { error: updateError } = await supabase
       .from("reports")
@@ -350,19 +374,15 @@ Si findings est vide ou absent, indique "Aucun finding importé - données insuf
         technical_md: technicalMd,
         executive_json: reportJson.executive,
         technical_json: reportJson.technical,
+        evidence_refs: evidenceRefs,
+        model_limits: modelLimits,
+        fact_pack_hash: factPackHash,
       })
       .eq("id", newReport.id);
 
     if (updateError) {
       console.error("Report update error:", updateError);
     }
-
-    // Determine fact_pack limitations
-    const limitations: string[] = [];
-    if (findings.length === 0) limitations.push("Aucun finding dans les données importées");
-    if (!toolRun.input_artifact_hash) limitations.push("Pas de hash d'artefact d'entrée");
-    if (!normalizedOutput.target) limitations.push("Cible non spécifiée");
-    if (factPack.data_confidence === "Low") limitations.push("Confiance données faible - import non structuré");
 
     // Log to evidence_log via internal endpoint
     await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {

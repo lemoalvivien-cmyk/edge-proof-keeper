@@ -1,6 +1,6 @@
 // Finding types for SENTINEL EDGE
 
-export type FindingStatus = 'open' | 'triaged' | 'resolved' | 'false_positive';
+export type FindingStatus = 'open' | 'acknowledged' | 'remediated' | 'false_positive';
 export type FindingConfidence = 'high' | 'medium' | 'low';
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'info';
 

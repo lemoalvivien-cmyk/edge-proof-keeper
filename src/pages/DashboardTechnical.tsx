@@ -88,24 +88,24 @@ export default function DashboardTechnical() {
             Ouverts uniquement
           </Badge>
           <Badge 
-            variant={filters.status === 'triaged' ? 'default' : 'outline'}
+            variant={filters.status === 'acknowledged' ? 'default' : 'outline'}
             className="cursor-pointer"
             onClick={() => setFilters(prev => ({
               ...prev,
-              status: prev.status === 'triaged' ? undefined : 'triaged'
+              status: prev.status === 'acknowledged' ? undefined : 'acknowledged'
             }))}
           >
-            Triés
+            Acceptés
           </Badge>
           <Badge 
-            variant={filters.status === 'resolved' ? 'default' : 'outline'}
+            variant={filters.status === 'remediated' ? 'default' : 'outline'}
             className="cursor-pointer"
             onClick={() => setFilters(prev => ({
               ...prev,
-              status: prev.status === 'resolved' ? undefined : 'resolved'
+              status: prev.status === 'remediated' ? undefined : 'remediated'
             }))}
           >
-            Résolus
+            Remédiés
           </Badge>
           {(filters.severity || filters.status || filters.finding_type) && (
             <Badge 
