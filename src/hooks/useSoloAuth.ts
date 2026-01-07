@@ -4,53 +4,51 @@ import { SOLO_MODE, SOLO_STORAGE_KEYS } from '@/config/app';
 
 type SoloAuthState = 'loading' | 'needs_setup' | 'authenticated';
 
+/**
+ * Hook for Solo Mode authentication.
+ * 
+ * SECURITY: We do NOT store passwords in localStorage.
+ * We rely on Supabase's built-in session persistence (localStorage tokens are encrypted by Supabase).
+ * If the session expires, user will need to re-authenticate via the OwnerSetup screen.
+ */
 export function useSoloAuth() {
   const [state, setState] = useState<SoloAuthState>('loading');
 
-  const checkAndRestoreSession = useCallback(async () => {
+  const checkSession = useCallback(async () => {
     if (!SOLO_MODE) {
       setState('authenticated');
       return;
     }
 
-    // Check if there's already a valid session
+    // Check if there's already a valid Supabase session
+    // Supabase handles session persistence securely via its own mechanism
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session) {
+      // Mark setup as complete if we have a session
+      localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
       setState('authenticated');
       return;
     }
 
-    // Check if we have stored credentials
-    const storedEmail = localStorage.getItem(SOLO_STORAGE_KEYS.ownerEmail);
-    const storedPassword = localStorage.getItem(SOLO_STORAGE_KEYS.ownerPassword);
+    // Check if setup was previously completed
     const setupComplete = localStorage.getItem(SOLO_STORAGE_KEYS.ownerSetupComplete);
-
-    if (storedEmail && storedPassword && setupComplete === 'true') {
-      // Try to auto sign-in
-      const { error } = await supabase.auth.signInWithPassword({
-        email: storedEmail,
-        password: storedPassword,
-      });
-
-      if (!error) {
-        setState('authenticated');
-        return;
-      }
-      
-      // If auto sign-in failed, clear credentials and require setup
-      localStorage.removeItem(SOLO_STORAGE_KEYS.ownerEmail);
-      localStorage.removeItem(SOLO_STORAGE_KEYS.ownerPassword);
+    
+    if (setupComplete === 'true') {
+      // Setup was done before but session expired
+      // User needs to re-authenticate
+      // Clear the flag so they go through setup again
       localStorage.removeItem(SOLO_STORAGE_KEYS.ownerSetupComplete);
+      localStorage.removeItem(SOLO_STORAGE_KEYS.ownerEmail);
     }
 
-    // No session, no valid credentials - need setup
+    // No valid session - need setup
     setState('needs_setup');
   }, []);
 
   useEffect(() => {
-    checkAndRestoreSession();
-  }, [checkAndRestoreSession]);
+    checkSession();
+  }, [checkSession]);
 
   const onSetupComplete = useCallback(() => {
     setState('authenticated');
