@@ -11,6 +11,15 @@ interface OwnerSetupProps {
   onComplete: () => void;
 }
 
+/**
+ * One-time owner setup screen for Solo Mode.
+ * 
+ * SECURITY NOTES:
+ * - We do NOT store passwords in localStorage
+ * - We only store email for display purposes
+ * - Supabase handles session persistence securely
+ * - If session expires, user re-authenticates here
+ */
 export function OwnerSetup({ onComplete }: OwnerSetupProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,10 +57,11 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
       });
 
       if (!signInError) {
-        // Sign in successful, store credentials
+        // Sign in successful
+        // SECURITY: Only store email for display, NOT password
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerEmail, email);
-        localStorage.setItem(SOLO_STORAGE_KEYS.ownerPassword, password);
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
+        // Password is intentionally NOT stored - Supabase session handles auth
         onComplete();
         return;
       }
@@ -70,10 +80,10 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
           throw signUpError;
         }
 
-        // Store credentials
+        // SECURITY: Only store email for display, NOT password
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerEmail, email);
-        localStorage.setItem(SOLO_STORAGE_KEYS.ownerPassword, password);
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
+        // Password is intentionally NOT stored
         
         toast({
           title: 'Accès initialisé',
@@ -104,7 +114,7 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
             <Shield className="w-12 h-12 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">SENTINEL EDGE</h1>
-          <p className="text-muted-foreground">Configuration initiale de votre accès</p>
+          <p className="text-muted-foreground">Configuration de votre accès</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -130,7 +140,7 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
-              autoComplete="new-password"
+              autoComplete="current-password"
             />
           </div>
 
@@ -138,16 +148,16 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Initialisation...
+                Connexion...
               </>
             ) : (
-              'Initialiser mon accès'
+              'Se connecter'
             )}
           </Button>
         </form>
 
         <p className="text-xs text-center text-muted-foreground">
-          Cet écran n'apparaîtra qu'une seule fois.
+          Mode solo — Vos identifiants ne sont pas stockés localement.
         </p>
       </div>
     </div>

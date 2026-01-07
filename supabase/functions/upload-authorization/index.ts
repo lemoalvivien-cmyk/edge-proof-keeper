@@ -183,6 +183,7 @@ Deno.serve(async (req) => {
     const approvedAt = isAdmin ? new Date().toISOString() : null;
 
     // Create authorization record with extended fields
+    // SECURITY: We only store hashed IP, not raw IP (GDPR compliance)
     const { data: authRecord, error: insertError } = await supabaseAdmin
       .from('authorizations')
       .insert({
@@ -191,7 +192,7 @@ Deno.serve(async (req) => {
         document_url: uploadData.path,
         document_hash: fileHash,
         consent_checkbox: consentCheckbox,
-        consent_ip_raw_deprecated: clientIP, // Keep raw for migration, deprecated
+        consent_ip_raw_deprecated: 'REDACTED', // SECURITY: Never store raw IP
         consent_ip_hash: hashedIP,
         consent_timestamp: new Date().toISOString(),
         consent_text_version: consentTextVersion,

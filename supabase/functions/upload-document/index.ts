@@ -11,6 +11,32 @@ async function hashSHA256(data: ArrayBuffer): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Helper to call log-evidence with internal token
+async function logEvidenceInternal(
+  supabaseUrl: string,
+  authHeader: string,
+  internalToken: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authHeader,
+        "x-internal-token": internalToken,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      console.warn("Failed to log evidence:", error);
+    }
+  } catch (error) {
+    console.warn("Failed to log evidence:", error);
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -20,6 +46,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const internalEdgeToken = Deno.env.get('INTERNAL_EDGE_TOKEN')!;
     
     // Get user's auth token
     const authHeader = req.headers.get('Authorization');
@@ -165,10 +192,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Log to evidence
-    await supabaseAdmin.from('evidence_log').insert({
+    // Log to evidence using internal endpoint (consistent with other edge functions)
+    await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {
       organization_id: organizationId,
-      user_id: user.id,
       action: 'document_uploaded',
       entity_type: 'document',
       entity_id: docRecord.id,
