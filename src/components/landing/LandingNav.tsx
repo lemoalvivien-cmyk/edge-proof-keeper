@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { SOLO_MODE } from "@/config/app";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,6 @@ const offresLinks = [
 export function LandingNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -120,15 +119,9 @@ export function LandingNav() {
                 FAQ
               </button>
               
-              {user ? (
-                <Button size="sm" className="neon-glow" asChild>
-                  <Link to="/dashboard">Accéder au cockpit</Link>
-                </Button>
-              ) : (
-                <Button size="sm" className="neon-glow" asChild>
-                  <Link to="/auth">Se connecter</Link>
-                </Button>
-              )}
+              <Button size="sm" className="neon-glow" asChild>
+                <Link to="/dashboard">Accéder au cockpit</Link>
+              </Button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -188,19 +181,11 @@ export function LandingNav() {
                 FAQ
               </button>
               
-              {user ? (
-                <Button className="w-full neon-glow" asChild>
-                  <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                    Accéder au cockpit
-                  </Link>
-                </Button>
-              ) : (
-                <Button className="w-full neon-glow" asChild>
-                  <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
-                    Se connecter
-                  </Link>
-                </Button>
-              )}
+              <Button className="w-full neon-glow" asChild>
+                <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                  Accéder au cockpit
+                </Link>
+              </Button>
             </div>
           </motion.div>
         )}
