@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { SOLO_MODE } from '@/config/app';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,7 +20,16 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
     );
   }
 
+  // In SOLO_MODE, if no user, show loader instead of redirecting to /auth
+  // The SoloModeWrapper in App.tsx handles auto-session
   if (!user) {
+    if (SOLO_MODE) {
+      return (
+        <div className="flex h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
