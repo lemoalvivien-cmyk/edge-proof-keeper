@@ -247,7 +247,7 @@ export default function EasmOsintSignals() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button asChild size="lg" className="neon-glow">
                     <Link to="/auth">
-                      Demander activation
+                      Se connecter
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Link>
                   </Button>

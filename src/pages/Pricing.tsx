@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { FooterSection } from "@/components/landing/FooterSection";
-import { LeadDialog } from "@/components/landing/LeadDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
   {
@@ -90,6 +90,8 @@ const addons = [
 ];
 
 const Pricing = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-background">
       <LandingNav />
@@ -186,17 +188,29 @@ const Pricing = () => {
 
                     {/* CTA */}
                     <div className="space-y-4">
-                      <LeadDialog
-                        trigger={
-                          <Button 
-                            size="lg" 
-                            className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
-                          >
-                            Demander activation
+                      {user ? (
+                        <Button 
+                          size="lg" 
+                          className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
+                          asChild
+                        >
+                          <Link to="/dashboard">
+                            Accéder au cockpit
                             <ArrowRight className="w-5 h-5 ml-2" />
-                          </Button>
-                        }
-                      />
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button 
+                          size="lg" 
+                          className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
+                          asChild
+                        >
+                          <Link to="/auth">
+                            Se connecter
+                            <ArrowRight className="w-5 h-5 ml-2" />
+                          </Link>
+                        </Button>
+                      )}
                       
                       <div className="p-4 rounded-xl bg-primary/10 border border-primary/30 text-center">
                         <p className="text-sm text-foreground font-medium">
