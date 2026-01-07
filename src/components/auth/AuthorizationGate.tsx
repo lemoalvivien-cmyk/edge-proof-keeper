@@ -1,7 +1,9 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { AlertTriangle, FileCheck, Shield, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useAuthorization } from '@/hooks/useAuthorization';
+import { usePermanentAuthorization } from '@/hooks/usePermanentAuthorization';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthorizationGateProps {
   children: React.ReactNode;
@@ -22,77 +24,74 @@ function isRouteExempt(pathname: string): boolean {
 }
 
 export function AuthorizationGate({ children }: AuthorizationGateProps) {
-  const { hasValidAuthorization, isLoading } = useAuthorization();
-  const navigate = useNavigate();
+  const { hasValidAuthorization, isLoading, refetch } = useAuthorization();
+  const { ensurePermanentAuthorization, isCreating } = usePermanentAuthorization();
+  const { user, organization } = useAuth();
   const location = useLocation();
+  const [isEnsuring, setIsEnsuring] = useState(false);
+  const [hasAttempted, setHasAttempted] = useState(false);
 
   // Allow exempt routes without checking authorization
   if (isRouteExempt(location.pathname)) {
     return <>{children}</>;
   }
 
-  if (isLoading) {
+  // Auto-create permanent authorization if none exists
+  useEffect(() => {
+    const autoEnsure = async () => {
+      if (
+        !isLoading &&
+        !hasValidAuthorization &&
+        !isEnsuring &&
+        !hasAttempted &&
+        user?.id &&
+        organization?.id
+      ) {
+        setIsEnsuring(true);
+        setHasAttempted(true);
+        
+        const authId = await ensurePermanentAuthorization();
+        
+        if (authId) {
+          // Refetch authorizations to update state
+          await refetch();
+        }
+        
+        setIsEnsuring(false);
+      }
+    };
+
+    autoEnsure();
+  }, [isLoading, hasValidAuthorization, isEnsuring, hasAttempted, user?.id, organization?.id, ensurePermanentAuthorization, refetch]);
+
+  // Show loader while checking or creating authorization
+  if (isLoading || isCreating || isEnsuring) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">
+            {isCreating || isEnsuring 
+              ? 'Configuration de votre autorisation...' 
+              : 'Chargement...'}
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (hasValidAuthorization) {
-    return <>{children}</>;
-  }
-
-  // Blocking screen for unauthorized access
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-      <div className="mx-auto max-w-md text-center">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
-          <AlertTriangle className="h-10 w-10 text-destructive" />
-        </div>
-        
-        <h1 className="mb-2 text-2xl font-bold text-foreground">
-          Autorisation requise
-        </h1>
-        
-        <p className="mb-6 text-muted-foreground">
-          Pour utiliser Sentinel Edge, vous devez d'abord fournir une preuve d'autorisation légale.
-          Cette étape est obligatoire pour garantir la conformité et protéger votre organisation.
-        </p>
-
-        <div className="mb-8 rounded-lg border bg-muted/50 p-4 text-left">
-          <div className="flex items-start gap-3">
-            <Shield className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <div className="text-sm">
-              <p className="font-medium">Pourquoi cette étape ?</p>
-              <p className="text-muted-foreground mt-1">
-                Toute opération de scan ou d'import nécessite une autorisation légale documentée.
-                Cela vous protège et assure la traçabilité pour les audits de conformité.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <Button 
-            size="lg" 
-            onClick={() => navigate('/authorization/new')}
-            className="w-full"
-          >
-            <FileCheck className="h-4 w-4 mr-2" />
-            Créer une autorisation
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="lg"
-            onClick={() => navigate('/authorizations')}
-            className="w-full"
-          >
-            Voir mes autorisations
-          </Button>
+  // If we've attempted and still no authorization, show a simple error
+  // This should rarely happen in solo mode
+  if (!hasValidAuthorization && hasAttempted) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-destructive">Erreur lors de la création de l'autorisation.</p>
+          <p className="text-sm text-muted-foreground mt-2">Veuillez rafraîchir la page.</p>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <>{children}</>;
 }

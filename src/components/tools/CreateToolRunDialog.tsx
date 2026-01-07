@@ -19,9 +19,10 @@ import {
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertTriangle } from 'lucide-react';
+import { Shield, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthorization } from '@/hooks/useAuthorization';
+import { usePermanentAuthorization } from '@/hooks/usePermanentAuthorization';
 import { useToolBySlug, useCreateToolRun } from '@/hooks/useTools';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -45,7 +46,8 @@ export function CreateToolRunDialog({
 }: CreateToolRunDialogProps) {
   const navigate = useNavigate();
   const { organization } = useAuth();
-  const { authorizations, hasValidAuthorization } = useAuthorization();
+  const { authorizations, hasValidAuthorization, defaultAuthorizationId, refetch } = useAuthorization();
+  const { ensurePermanentAuthorization, isCreating } = usePermanentAuthorization();
   const { data: tool } = useToolBySlug(toolSlug || '');
   const createMutation = useCreateToolRun();
 
@@ -54,6 +56,7 @@ export function CreateToolRunDialog({
   const [mode, setMode] = useState<ToolRunMode>('import_json');
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isEnsuring, setIsEnsuring] = useState(false);
 
   // Get valid authorizations
   const validAuthorizations = authorizations.filter(
@@ -77,12 +80,28 @@ export function CreateToolRunDialog({
     }
   }, [organization?.id]);
 
+  // Auto-ensure permanent authorization if none exists
+  useEffect(() => {
+    const autoEnsure = async () => {
+      if (open && !hasValidAuthorization && !isCreating && !isEnsuring && organization?.id) {
+        setIsEnsuring(true);
+        const authId = await ensurePermanentAuthorization();
+        if (authId) {
+          await refetch();
+        }
+        setIsEnsuring(false);
+      }
+    };
+    autoEnsure();
+  }, [open, hasValidAuthorization, isCreating, isEnsuring, organization?.id, ensurePermanentAuthorization, refetch]);
+
   // Set default authorization
   useEffect(() => {
     if (validAuthorizations.length > 0 && !selectedAuthId) {
-      setSelectedAuthId(validAuthorizations[0].id);
+      // Prefer permanent authorization (defaultAuthorizationId) or first valid
+      setSelectedAuthId(defaultAuthorizationId || validAuthorizations[0].id);
     }
-  }, [validAuthorizations, selectedAuthId]);
+  }, [validAuthorizations, selectedAuthId, defaultAuthorizationId]);
 
   const handleSubmit = async () => {
     if (!organization?.id || !toolSlug || !selectedAuthId) {
@@ -110,31 +129,15 @@ export function CreateToolRunDialog({
     }
   };
 
-  if (!hasValidAuthorization) {
+  // Show loader while ensuring authorization
+  if (isCreating || isEnsuring) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Autorisation requise</DialogTitle>
-            <DialogDescription>
-              Vous devez avoir une autorisation valide pour créer un import.
-            </DialogDescription>
-          </DialogHeader>
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Aucune autorisation valide trouvée. Veuillez créer une autorisation
-              dans ScopeGuard avant de continuer.
-            </AlertDescription>
-          </Alert>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Annuler
-            </Button>
-            <Button onClick={() => navigate('/scopeguard')}>
-              Créer une autorisation
-            </Button>
-          </DialogFooter>
+          <div className="flex flex-col items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-sm text-muted-foreground">Configuration de l'autorisation...</p>
+          </div>
         </DialogContent>
       </Dialog>
     );

@@ -29,9 +29,17 @@ export function useAuthorization() {
             (!auth.valid_until || new Date(auth.valid_until) > new Date())
   ) ?? false;
 
+  // Get the default authorization ID (permanent or latest valid)
+  const defaultAuthorizationId = authorizations?.find(
+    auth => auth.status === 'approved' && 
+            auth.consent_checkbox && 
+            (!auth.valid_until || new Date(auth.valid_until) > new Date())
+  )?.id ?? null;
+
   return {
     authorizations: authorizations ?? [],
     hasValidAuthorization,
+    defaultAuthorizationId,
     isLoading,
     refetch,
   };
