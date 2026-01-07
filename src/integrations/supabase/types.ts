@@ -512,6 +512,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          permanent_authorization_id: string | null
           slug: string
           updated_at: string
         }
@@ -519,6 +520,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          permanent_authorization_id?: string | null
           slug: string
           updated_at?: string
         }
@@ -526,10 +528,19 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          permanent_authorization_id?: string | null
           slug?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_permanent_authorization_id_fkey"
+            columns: ["permanent_authorization_id"]
+            isOneToOne: false
+            referencedRelation: "authorizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1178,6 +1189,14 @@ export type Database = {
       authorization_belongs_to_org: {
         Args: { _auth_id: string; _org_id: string }
         Returns: boolean
+      }
+      ensure_permanent_authorization: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: string
+      }
+      get_default_authorization_id: {
+        Args: { _org_id: string }
+        Returns: string
       }
       get_my_org_id: { Args: never; Returns: string }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
