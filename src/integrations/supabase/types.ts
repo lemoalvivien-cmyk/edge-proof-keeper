@@ -811,7 +811,7 @@ export type Database = {
       scans: {
         Row: {
           asset_id: string | null
-          authorization_id: string
+          authorization_id: string | null
           completed_at: string | null
           created_at: string
           created_by: string
@@ -830,7 +830,7 @@ export type Database = {
         }
         Insert: {
           asset_id?: string | null
-          authorization_id: string
+          authorization_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by: string
@@ -849,7 +849,7 @@ export type Database = {
         }
         Update: {
           asset_id?: string | null
-          authorization_id?: string
+          authorization_id?: string | null
           completed_at?: string | null
           created_at?: string
           created_by?: string
@@ -1011,7 +1011,7 @@ export type Database = {
       tool_runs: {
         Row: {
           asset_id: string | null
-          authorization_id: string
+          authorization_id: string | null
           completed_at: string | null
           created_at: string
           id: string
@@ -1030,7 +1030,7 @@ export type Database = {
         }
         Insert: {
           asset_id?: string | null
-          authorization_id: string
+          authorization_id?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
@@ -1049,7 +1049,7 @@ export type Database = {
         }
         Update: {
           asset_id?: string | null
-          authorization_id?: string
+          authorization_id?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
