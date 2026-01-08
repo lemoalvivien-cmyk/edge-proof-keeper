@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ExternalLink, Github, Book, Box, Search, Plus, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ExternalLink, Github, Book, Box, Search, Plus, Filter, Globe } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { TrustBanner } from '@/components/ui/TrustBanner';
 import { useToolsCatalog } from '@/hooks/useTools';
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/tools';
@@ -14,11 +15,24 @@ import { CreateToolRunDialog } from '@/components/tools/CreateToolRunDialog';
 
 export default function Tools() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: tools, isLoading } = useToolsCatalog();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedToolSlug, setSelectedToolSlug] = useState<string | null>(null);
+  const [detectedDomain, setDetectedDomain] = useState<string | null>(null);
+
+  // Check for domain query param on mount
+  useEffect(() => {
+    const domain = searchParams.get('domain');
+    if (domain) {
+      setDetectedDomain(domain);
+      // Clear the query param from URL
+      searchParams.delete('domain');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const categories = [...new Set(tools?.map(t => t.category) || [])];
 
@@ -38,6 +52,24 @@ export default function Tools() {
     <AppLayout>
       <div className="space-y-6">
         <TrustBanner />
+
+        {/* Domain detected banner */}
+        {detectedDomain && (
+          <Alert className="border-primary/50 bg-primary/5">
+            <Globe className="h-4 w-4" />
+            <AlertTitle>Domaine détecté : {detectedDomain}</AlertTitle>
+            <AlertDescription className="flex items-center justify-between">
+              <span>Choisissez un outil ci-dessous pour créer une analyse de ce domaine.</span>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setDetectedDomain(null)}
+              >
+                Fermer
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
