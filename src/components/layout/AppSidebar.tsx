@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Shield,
-  FileCheck,
   Server,
   FileText,
   ClipboardCheck,
@@ -41,7 +40,6 @@ const mainNavItems = [
 ];
 
 const operationsItems = [
-  { title: 'Autorisations', href: '/authorizations', icon: FileCheck },
   { title: 'Actifs', href: '/assets', icon: Server },
   { title: 'Documents', href: '/documents', icon: FileText },
   { title: 'Outils', href: '/tools', icon: Wrench },

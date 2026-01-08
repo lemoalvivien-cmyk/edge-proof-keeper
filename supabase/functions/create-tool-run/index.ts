@@ -8,7 +8,6 @@ const corsHeaders = {
 interface CreateToolRunRequest {
   organization_id: string;
   asset_id?: string;
-  authorization_id: string;
   tool_slug: string;
   mode: 'import_json' | 'import_pdf' | 'import_csv';
 }
@@ -79,7 +78,7 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: CreateToolRunRequest = await req.json();
-    const { organization_id, asset_id, authorization_id, tool_slug, mode } = body;
+    const { organization_id, asset_id, tool_slug, mode } = body;
 
     console.log('Creating tool run:', { organization_id, tool_slug, mode });
 
@@ -100,33 +99,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify authorization is valid
-    const { data: authValid, error: authValidError } = await supabase.rpc('is_authorization_valid', {
-      _auth_id: authorization_id
-    });
-
-    if (authValidError || !authValid) {
-      console.error('Authorization not valid:', authValidError);
-      return new Response(
-        JSON.stringify({ error: 'Authorization is not valid or has expired' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verify authorization belongs to org
-    const { data: authBelongsToOrg, error: authOrgError } = await supabase.rpc('authorization_belongs_to_org', {
-      _auth_id: authorization_id,
-      _org_id: organization_id
-    });
-
-    if (authOrgError || !authBelongsToOrg) {
-      console.error('Authorization does not belong to organization:', authOrgError);
-      return new Response(
-        JSON.stringify({ error: 'Authorization does not belong to this organization' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Get tool by slug
     const { data: tool, error: toolError } = await supabase
       .from('tools_catalog')
@@ -142,13 +114,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create the tool run
+    // Create the tool run without authorization_id
     const { data: toolRun, error: runError } = await supabase
       .from('tool_runs')
       .insert({
         organization_id,
         asset_id: asset_id || null,
-        authorization_id,
+        authorization_id: null,
         tool_id: tool.id,
         mode,
         status: 'awaiting_upload',
@@ -178,7 +150,6 @@ Deno.serve(async (req) => {
         tool_name: tool.name,
         tool_category: tool.category,
         mode,
-        authorization_id,
       },
     });
 

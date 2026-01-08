@@ -123,13 +123,11 @@ export function useCreateToolRun() {
     mutationFn: async ({
       organization_id,
       asset_id,
-      authorization_id,
       tool_slug,
       mode,
     }: {
       organization_id: string;
       asset_id?: string;
-      authorization_id: string;
       tool_slug: string;
       mode: ToolRunMode;
     }) => {
@@ -140,7 +138,6 @@ export function useCreateToolRun() {
         body: {
           organization_id,
           asset_id,
-          authorization_id,
           tool_slug,
           mode,
         },

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { TrustBanner } from '@/components/ui/TrustBanner';
 import { useToolBySlug, useToolPresets } from '@/hooks/useTools';
-import { useAuthorization } from '@/hooks/useAuthorization';
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/tools';
 import { CreateToolRunDialog } from '@/components/tools/CreateToolRunDialog';
 import { useState } from 'react';
@@ -17,7 +16,6 @@ export default function ToolDetail() {
   const navigate = useNavigate();
   const { data: tool, isLoading } = useToolBySlug(slug || '');
   const { data: presets } = useToolPresets(tool?.id);
-  const { hasValidAuthorization } = useAuthorization();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   if (isLoading) {
@@ -45,10 +43,6 @@ export default function ToolDetail() {
   }
 
   const handleImport = () => {
-    if (!hasValidAuthorization) {
-      navigate('/scopeguard');
-      return;
-    }
     setShowCreateDialog(true);
   };
 
@@ -104,26 +98,10 @@ export default function ToolDetail() {
           <Shield className="h-4 w-4" />
           <AlertTitle>Usage autorisé uniquement</AlertTitle>
           <AlertDescription>
-            L'utilisation de cet outil doit être effectuée avec une autorisation légale valide.
+            L'utilisation de cet outil doit être effectuée sur vos propres systèmes.
             SENTINEL EDGE permet uniquement l'import de résultats, pas l'exécution directe de scans.
           </AlertDescription>
         </Alert>
-
-        {/* Authorization warning */}
-        {!hasValidAuthorization && (
-          <Card className="border-warning bg-warning/5">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm">
-                  Une autorisation valide est requise pour importer des résultats.
-                </p>
-                <Button size="sm" onClick={() => navigate('/scopeguard')}>
-                  Créer une autorisation
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Links */}

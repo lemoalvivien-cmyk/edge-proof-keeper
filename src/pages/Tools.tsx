@@ -9,14 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TrustBanner } from '@/components/ui/TrustBanner';
 import { useToolsCatalog } from '@/hooks/useTools';
-import { useAuthorization } from '@/hooks/useAuthorization';
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/tools';
 import { CreateToolRunDialog } from '@/components/tools/CreateToolRunDialog';
 
 export default function Tools() {
   const navigate = useNavigate();
   const { data: tools, isLoading } = useToolsCatalog();
-  const { hasValidAuthorization } = useAuthorization();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -32,10 +30,6 @@ export default function Tools() {
   }) || [];
 
   const handleCreateRun = (toolSlug: string) => {
-    if (!hasValidAuthorization) {
-      navigate('/scopeguard');
-      return;
-    }
     setSelectedToolSlug(toolSlug);
     setShowCreateDialog(true);
   };
@@ -86,22 +80,6 @@ export default function Tools() {
             </SelectContent>
           </Select>
         </div>
-
-        {/* Authorization warning */}
-        {!hasValidAuthorization && (
-          <Card className="border-warning bg-warning/5">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm text-warning-foreground">
-                  Une autorisation valide est requise pour importer des résultats.
-                </p>
-                <Button size="sm" onClick={() => navigate('/scopeguard')}>
-                  Créer une autorisation
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Tools grid */}
         {isLoading ? (
