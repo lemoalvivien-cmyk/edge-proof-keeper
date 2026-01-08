@@ -34,7 +34,7 @@ export default function Tools() {
     }
   }, [searchParams, setSearchParams]);
 
-  const categories = [...new Set(tools?.map(t => t.category) || [])];
+  const categories = [...new Set(tools?.map(t => t.category).filter(Boolean) || [])];
 
   const filteredTools = tools?.filter(tool => {
     const matchesSearch = tool.name.toLowerCase().includes(search.toLowerCase()) ||
