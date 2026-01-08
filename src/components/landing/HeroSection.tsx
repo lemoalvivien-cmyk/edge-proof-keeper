@@ -60,8 +60,8 @@ export function HeroSection() {
     // Small delay for UX
     await new Promise((resolve) => setTimeout(resolve, 300));
     
-    // Navigate to ScopeGuard wizard
-    navigate("/scopeguard");
+    // Navigate to tools page with domain
+    navigate(`/tools?domain=${encodeURIComponent(domain.trim())}`);
   };
 
   const scrollToPricing = () => {

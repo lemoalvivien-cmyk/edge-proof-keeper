@@ -88,6 +88,11 @@ const App = () => (
               {/* Auth route - redirect to dashboard in SOLO_MODE */}
               <Route path="/auth" element={SOLO_MODE ? <Navigate to="/dashboard" replace /> : <Auth />} />
               
+              {/* Compatibility redirects for removed authorization module */}
+              <Route path="/scopeguard" element={<Navigate to="/tools" replace />} />
+              <Route path="/authorizations" element={<Navigate to="/tools" replace />} />
+              <Route path="/authorizations/*" element={<Navigate to="/tools" replace />} />
+              
               {/* Offres pages (public) */}
               <Route path="/offres/imports-hub" element={<ImportsHub />} />
               <Route path="/offres/devsecops-pack" element={<DevsecOpsPack />} />
