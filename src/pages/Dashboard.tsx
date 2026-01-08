@@ -4,7 +4,6 @@ import {
   AlertTriangle, 
   CheckCircle2, 
   TrendingUp,
-  FileCheck,
   Server,
   ArrowRight,
   ListTodo,
@@ -15,17 +14,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useAuthorization } from '@/hooks/useAuthorization';
 import { useFindingCounts, useTopPriorityFindings } from '@/hooks/useFindings';
 import { useTaskCounts } from '@/hooks/useRemediation';
 import { useQuery } from '@tanstack/react-query';
-
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { organization, profile } = useAuth();
-  const { hasValidAuthorization } = useAuthorization();
   const { data: findingCounts } = useFindingCounts();
   const { data: topFindings = [] } = useTopPriorityFindings(5);
   const { data: taskCounts } = useTaskCounts();
@@ -110,21 +106,6 @@ export default function Dashboard() {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
-
-        {/* Authorization Warning */}
-        {!hasValidAuthorization && (
-          <Card className="border-destructive bg-destructive/5">
-            <CardContent className="flex items-center gap-4 py-4">
-              <AlertTriangle className="h-8 w-8 text-destructive" />
-              <div>
-                <p className="font-medium text-destructive">Aucune autorisation active</p>
-                <p className="text-sm text-muted-foreground">
-                  Vous devez créer une autorisation avant de pouvoir effectuer des scans ou imports.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Key Metrics */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -282,35 +263,23 @@ export default function Dashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileCheck className="h-5 w-5" />
-                Statut des Autorisations
+                <CheckCircle2 className="h-5 w-5" />
+                Statut Opérationnel
               </CardTitle>
               <CardDescription>
-                État de vos autorisations légales
+                État de votre plateforme
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {hasValidAuthorization ? (
-                <div className="flex items-center gap-3 text-green-600">
-                  <CheckCircle2 className="h-6 w-6" />
-                  <div>
-                    <p className="font-medium">Autorisation active</p>
-                    <p className="text-sm text-muted-foreground">
-                      Vous pouvez effectuer des opérations
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3 text-green-600">
+                <CheckCircle2 className="h-6 w-6" />
+                <div>
+                  <p className="font-medium">Plateforme active</p>
+                  <p className="text-sm text-muted-foreground">
+                    Prêt pour les opérations
+                  </p>
                 </div>
-              ) : (
-                <div className="flex items-center gap-3 text-destructive">
-                  <AlertTriangle className="h-6 w-6" />
-                  <div>
-                    <p className="font-medium">Aucune autorisation valide</p>
-                    <p className="text-sm text-muted-foreground">
-                      Action requise avant tout scan
-                    </p>
-                  </div>
-                </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 

@@ -5,20 +5,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { AuthorizationGate } from "@/components/auth/AuthorizationGate";
 import { OwnerSetup } from "@/components/auth/OwnerSetup";
 import { useSoloAuth } from "@/hooks/useSoloAuth";
 import { SOLO_MODE } from "@/config/app";
 import { Loader2 } from "lucide-react";
 import Landing from "./pages/Landing";
 import Pricing from "./pages/Pricing";
-import ScopeGuard from "./pages/ScopeGuard";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import DashboardTechnical from "./pages/DashboardTechnical";
-import Authorizations from "./pages/Authorizations";
-import NewAuthorization from "./pages/NewAuthorization";
 import Assets from "./pages/Assets";
 import Scans from "./pages/Scans";
 import Documents from "./pages/Documents";
@@ -52,17 +48,6 @@ import EasmOsintSignals from "./pages/offres/EasmOsintSignals";
 import PlansAddons from "./pages/PlansAddons";
 
 const queryClient = new QueryClient();
-
-// Wrapper combining ProtectedRoute + AuthorizationGate
-function ProtectedWithGate({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: ('admin' | 'auditor' | 'user')[] }) {
-  return (
-    <ProtectedRoute requiredRoles={requiredRoles}>
-      <AuthorizationGate>
-        {children}
-      </AuthorizationGate>
-    </ProtectedRoute>
-  );
-}
 
 // Solo mode wrapper that handles auto-session
 function SoloModeWrapper({ children }: { children: React.ReactNode }) {
@@ -99,7 +84,6 @@ const App = () => (
               {/* Public landing pages */}
               <Route path="/" element={<Landing />} />
               <Route path="/pricing" element={<Pricing />} />
-              <Route path="/scopeguard" element={<ScopeGuard />} />
               
               {/* Auth route - redirect to dashboard in SOLO_MODE */}
               <Route path="/auth" element={SOLO_MODE ? <Navigate to="/dashboard" replace /> : <Auth />} />
@@ -118,36 +102,32 @@ const App = () => (
               <Route path="/legal/authorized-use" element={<AuthorizedUse />} />
               <Route path="/legal/disclaimer" element={<Disclaimer />} />
               
-              {/* Onboarding - protected but exempt from authorization gate */}
+              {/* Onboarding */}
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               
-              {/* Authorization routes - protected but exempt from authorization gate */}
-              <Route path="/authorizations" element={<ProtectedRoute><Authorizations /></ProtectedRoute>} />
-              <Route path="/authorization/new" element={<ProtectedRoute><NewAuthorization /></ProtectedRoute>} />
-              
-              {/* Settings - protected, admin only, exempt from authorization gate */}
+              {/* Settings - admin only */}
               <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><Settings /></ProtectedRoute>} />
               <Route path="/plans" element={<ProtectedRoute requiredRoles={['admin']}><PlansAddons /></ProtectedRoute>} />
               
-              {/* Protected app routes - require valid authorization */}
-              <Route path="/dashboard" element={<ProtectedWithGate><Dashboard /></ProtectedWithGate>} />
-              <Route path="/dashboard/technical" element={<ProtectedWithGate><DashboardTechnical /></ProtectedWithGate>} />
-              <Route path="/assets" element={<ProtectedWithGate><Assets /></ProtectedWithGate>} />
-              <Route path="/scans" element={<ProtectedWithGate><Scans /></ProtectedWithGate>} />
-              <Route path="/documents" element={<ProtectedWithGate><Documents /></ProtectedWithGate>} />
-              <Route path="/compliance" element={<ProtectedWithGate><Compliance /></ProtectedWithGate>} />
-              <Route path="/evidence" element={<ProtectedWithGate><Evidence /></ProtectedWithGate>} />
-              <Route path="/tools" element={<ProtectedWithGate><Tools /></ProtectedWithGate>} />
-              <Route path="/tools/:slug" element={<ProtectedWithGate><ToolDetail /></ProtectedWithGate>} />
-              <Route path="/runs" element={<ProtectedWithGate><Runs /></ProtectedWithGate>} />
-              <Route path="/runs/:id" element={<ProtectedWithGate><RunDetail /></ProtectedWithGate>} />
-              <Route path="/reports" element={<ProtectedWithGate><Reports /></ProtectedWithGate>} />
-              <Route path="/tasks" element={<ProtectedWithGate><Tasks /></ProtectedWithGate>} />
-              <Route path="/tasks/:id" element={<ProtectedWithGate><TaskDetail /></ProtectedWithGate>} />
-              <Route path="/go-no-go" element={<ProtectedWithGate requiredRoles={['admin']}><GoNoGo /></ProtectedWithGate>} />
-              <Route path="/proofs" element={<ProtectedWithGate><Proofs /></ProtectedWithGate>} />
-              <Route path="/risks" element={<ProtectedWithGate><Risks /></ProtectedWithGate>} />
-              <Route path="/findings" element={<ProtectedWithGate><Findings /></ProtectedWithGate>} />
+              {/* Protected app routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard/technical" element={<ProtectedRoute><DashboardTechnical /></ProtectedRoute>} />
+              <Route path="/assets" element={<ProtectedRoute><Assets /></ProtectedRoute>} />
+              <Route path="/scans" element={<ProtectedRoute><Scans /></ProtectedRoute>} />
+              <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+              <Route path="/compliance" element={<ProtectedRoute><Compliance /></ProtectedRoute>} />
+              <Route path="/evidence" element={<ProtectedRoute><Evidence /></ProtectedRoute>} />
+              <Route path="/tools" element={<ProtectedRoute><Tools /></ProtectedRoute>} />
+              <Route path="/tools/:slug" element={<ProtectedRoute><ToolDetail /></ProtectedRoute>} />
+              <Route path="/runs" element={<ProtectedRoute><Runs /></ProtectedRoute>} />
+              <Route path="/runs/:id" element={<ProtectedRoute><RunDetail /></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+              <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+              <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
+              <Route path="/go-no-go" element={<ProtectedRoute requiredRoles={['admin']}><GoNoGo /></ProtectedRoute>} />
+              <Route path="/proofs" element={<ProtectedRoute><Proofs /></ProtectedRoute>} />
+              <Route path="/risks" element={<ProtectedRoute><Risks /></ProtectedRoute>} />
+              <Route path="/findings" element={<ProtectedRoute><Findings /></ProtectedRoute>} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>

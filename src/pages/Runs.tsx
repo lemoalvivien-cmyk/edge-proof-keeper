@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TrustBanner } from '@/components/ui/TrustBanner';
 import { useToolRuns } from '@/hooks/useTools';
-import { useAuthorization } from '@/hooks/useAuthorization';
 import { CATEGORY_LABELS, ToolRunStatus } from '@/types/tools';
 
 const STATUS_LABELS: Record<ToolRunStatus, string> = {
@@ -34,7 +33,6 @@ const STATUS_COLORS: Record<ToolRunStatus, string> = {
 export default function Runs() {
   const navigate = useNavigate();
   const { data: runs, isLoading } = useToolRuns();
-  const { hasValidAuthorization } = useAuthorization();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -88,22 +86,6 @@ export default function Runs() {
             </SelectContent>
           </Select>
         </div>
-
-        {/* Authorization warning */}
-        {!hasValidAuthorization && (
-          <Card className="border-warning bg-warning/5">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm">
-                  Une autorisation valide est requise pour créer de nouveaux imports.
-                </p>
-                <Button size="sm" onClick={() => navigate('/scopeguard')}>
-                  Créer une autorisation
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Runs table */}
         <Card>
