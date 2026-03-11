@@ -23,6 +23,7 @@ export function PricingSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
   const { user } = useAuth();
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
   return (
     <section ref={ref} className="relative py-24 overflow-hidden" id="pricing">

@@ -462,10 +462,16 @@ export default function Demo() {
                 <p className="text-sm text-muted-foreground">
                   Importez vos propres résultats d'outils de sécurité et générez ce rapport instantanément.
                 </p>
-                <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
-                  <Shield className="h-4 w-4" />
-                  Démarrer gratuitement
-                </Button>
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="outline" onClick={() => setDemoContactOpen(true)} className="gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Demander une démo
+                  </Button>
+                  <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
+                    <Shield className="h-4 w-4" />
+                    Démarrer gratuitement
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
