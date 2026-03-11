@@ -16,6 +16,7 @@ import {
   Package,
   CreditCard,
   AlertTriangle,
+  Wand2,
 } from 'lucide-react';
 import {
   Sidebar,
