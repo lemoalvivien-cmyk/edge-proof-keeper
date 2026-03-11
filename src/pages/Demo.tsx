@@ -480,6 +480,13 @@ export default function Demo() {
           )}
         </AnimatePresence>
       </div>
+
+      <DemoRequestDialog
+        open={demoContactOpen}
+        onOpenChange={setDemoContactOpen}
+        ctaOrigin="demo_page_bottom"
+        sourcePage="/demo"
+      />
     </div>
   );
 }
