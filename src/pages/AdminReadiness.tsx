@@ -27,8 +27,12 @@ import {
   DollarSign,
   MousePointerClick,
   Star,
+  CalendarDays,
+  ShoppingCart,
+  Zap,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getRevenueLinks } from '@/lib/revenue-links';
 
 type Status = 'ok' | 'warn' | 'fail' | 'unknown';
 
@@ -69,6 +73,8 @@ export default function AdminReadiness() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const coreApiConfigured = Boolean(import.meta.env.VITE_CORE_API_URL);
+  const revenue = getRevenueLinks();
+
 
   const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: ['platform-health-readiness', organization?.id, refreshKey],
@@ -423,30 +429,94 @@ export default function AdminReadiness() {
               </div>
             )}
 
-            {/* Revenue checklist */}
-            <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-              {[
-                { label: 'Capture lead opérationnelle',       status: 'ok'   as Status, detail: 'Edge function submit-sales-lead active' },
-                { label: 'Pipeline leads accessible',          status: 'ok'   as Status, detail: '/admin/leads — filtres, statuts, scoring' },
-                { label: 'CTA tracking actif',                 status: 'ok'   as Status, detail: 'conversion_events — 5 events trackés' },
-                { label: 'Page Pricing branchée',              status: 'ok'   as Status, detail: 'CTA "Parler à un expert" → formulaire' },
-                { label: 'Démo interactive opérationnelle',    status: 'ok'   as Status, detail: '/demo — rapport complet ACME Corp' },
-                { label: 'Import sans friction',               status: 'ok'   as Status, detail: 'Empty state 3 étapes + CTA clair' },
-                { label: 'Report Studio',                      status: coreApiConfigured ? 'ok' : 'warn' as Status, detail: coreApiConfigured ? 'Opérationnel' : 'VITE_CORE_API_URL requis' },
-                { label: 'Lien prise de RDV configuré',        status: import.meta.env.VITE_BOOKING_URL ? 'ok' as Status : 'warn' as Status, detail: import.meta.env.VITE_BOOKING_URL ? 'VITE_BOOKING_URL configuré' : 'Optionnel — VITE_BOOKING_URL non défini' },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between gap-4 px-4 py-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <StatusIcon status={item.status} />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{item.label}</p>
-                      <p className="text-xs text-muted-foreground/70 font-mono">{item.detail}</p>
+            {/* Revenue Activation checklist */}
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5 mb-3">
+                <Zap className="h-3.5 w-3.5" />
+                Activation commerciale
+              </p>
+              <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
+                {[
+                  {
+                    label: 'Capture lead opérationnelle',
+                    icon: <Users className="h-4 w-4" />,
+                    status: 'ok' as Status,
+                    detail: 'Edge function submit-sales-lead — validation, dédup, scoring',
+                  },
+                  {
+                    label: 'Pipeline leads accessible',
+                    icon: <TrendingUp className="h-4 w-4" />,
+                    status: 'ok' as Status,
+                    detail: '/admin/leads — actions rapides, filtres, statuts',
+                  },
+                  {
+                    label: 'CTA tracking actif',
+                    icon: <MousePointerClick className="h-4 w-4" />,
+                    status: 'ok' as Status,
+                    detail: 'conversion_events — booking, submit, démo, pricing',
+                  },
+                  {
+                    label: 'Next step post-soumission',
+                    icon: <CalendarDays className="h-4 w-4" />,
+                    status: 'ok' as Status,
+                    detail: 'Écran succès avec RDV / Démo / Offres',
+                  },
+                  {
+                    label: 'Booking direct (VITE_BOOKING_URL)',
+                    icon: <CalendarDays className="h-4 w-4" />,
+                    status: revenue.bookingUrl ? 'ok' as Status : 'warn' as Status,
+                    detail: revenue.bookingUrl
+                      ? `Configuré — ${revenue.bookingUrl}`
+                      : 'Non défini — fallback vers formulaire démo',
+                  },
+                  {
+                    label: 'Checkout Starter (VITE_STARTER_CHECKOUT_URL)',
+                    icon: <ShoppingCart className="h-4 w-4" />,
+                    status: revenue.starterCheckoutUrl ? 'ok' as Status : 'warn' as Status,
+                    detail: revenue.starterCheckoutUrl
+                      ? 'Configuré'
+                      : 'Non défini — fallback formulaire démo',
+                  },
+                  {
+                    label: 'Checkout Pro (VITE_PRO_CHECKOUT_URL)',
+                    icon: <ShoppingCart className="h-4 w-4" />,
+                    status: revenue.proCheckoutUrl ? 'ok' as Status : 'warn' as Status,
+                    detail: revenue.proCheckoutUrl
+                      ? 'Configuré'
+                      : 'Non défini — fallback formulaire démo',
+                  },
+                  {
+                    label: 'Checkout Enterprise (VITE_ENTERPRISE_CHECKOUT_URL)',
+                    icon: <ShoppingCart className="h-4 w-4" />,
+                    status: revenue.enterpriseCheckoutUrl ? 'ok' as Status : 'warn' as Status,
+                    detail: revenue.enterpriseCheckoutUrl
+                      ? 'Configuré'
+                      : 'Non défini — fallback formulaire démo',
+                  },
+                  {
+                    label: 'Report Studio',
+                    icon: <BarChart3 className="h-4 w-4" />,
+                    status: coreApiConfigured ? 'ok' as Status : 'warn' as Status,
+                    detail: coreApiConfigured ? 'Opérationnel' : 'Nécessite VITE_CORE_API_URL',
+                  },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center justify-between gap-4 px-4 py-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <StatusIcon status={item.status} />
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-muted-foreground shrink-0">{item.icon}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{item.label}</p>
+                          <p className="text-xs text-muted-foreground/70 font-mono truncate">{item.detail}</p>
+                        </div>
+                      </div>
                     </div>
+                    <StatusBadge status={item.status} />
                   </div>
-                  <StatusBadge status={item.status} />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+
           </CardContent>
         </Card>
 

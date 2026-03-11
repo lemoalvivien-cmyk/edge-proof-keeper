@@ -1,11 +1,14 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Shield, ArrowRight, Sparkles, Calendar } from "lucide-react";
+import { Check, Shield, ArrowRight, Sparkles, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
+import { openBookingOrFallback, getCheckoutUrl } from "@/lib/revenue-links";
+import { trackEvent } from "@/lib/tracking";
+
 
 const features = [
   "Diagnostic cyber complet",
@@ -93,10 +96,10 @@ export function PricingSection() {
                 </div>
 
                 {/* CTA */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {user ? (
-                    <Button 
-                      size="lg" 
+                    <Button
+                      size="lg"
                       className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
                       asChild
                     >
@@ -105,9 +108,21 @@ export function PricingSection() {
                         <ArrowRight className="w-5 h-5 ml-2" />
                       </Link>
                     </Button>
+                  ) : getCheckoutUrl('starter') ? (
+                    <Button
+                      size="lg"
+                      className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
+                      onClick={() => {
+                        trackEvent('checkout_click', { source_page: '/pricing', cta_origin: 'pricing_starter' });
+                        window.open(getCheckoutUrl('starter')!, '_blank', 'noopener,noreferrer');
+                      }}
+                    >
+                      Commander — 490€ TTC / an
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
                   ) : (
-                    <Button 
-                      size="lg" 
+                    <Button
+                      size="lg"
                       className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
                       asChild
                     >
@@ -122,20 +137,22 @@ export function PricingSection() {
                     variant="outline"
                     size="lg"
                     className="w-full h-12 text-base border-primary/40 text-primary hover:bg-primary/10 gap-2"
-                    onClick={() => setDemoDialogOpen(true)}
+                    onClick={() => {
+                      trackEvent('cta_demander_demo', { source_page: '/pricing', cta_origin: 'pricing_expert_cta' });
+                      openBookingOrFallback(() => setDemoDialogOpen(true));
+                    }}
                   >
-                    <Calendar className="w-5 h-5" />
+                    <CalendarDays className="w-5 h-5" />
                     Parler à un expert — démo personnalisée
                   </Button>
-                  
-                  <div className="p-4 rounded-xl bg-primary/10 border border-primary/30 text-center">
-                    <p className="text-sm text-foreground font-medium">
-                      💳 Paiement via lien Stripe externe (V1)
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Paiement intégré prévu V2 (feature flag)
-                    </p>
-                  </div>
+
+                  {!getCheckoutUrl('starter') && (
+                    <div className="p-3 rounded-xl bg-primary/10 border border-primary/30 text-center">
+                      <p className="text-xs text-muted-foreground">
+                        💳 Paiement via lien Stripe — configurez <code className="font-mono text-xs">VITE_STARTER_CHECKOUT_URL</code> pour activer le checkout direct
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

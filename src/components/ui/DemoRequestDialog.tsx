@@ -5,14 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle2, Loader2, Shield } from 'lucide-react';
+import { CheckCircle2, Loader2, Shield, CalendarDays, FlaskConical, ArrowRight, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/tracking';
+import { getBookingUrl } from '@/lib/revenue-links';
+import { useNavigate } from 'react-router-dom';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_URL     = import.meta.env.VITE_SUPABASE_URL     as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
-interface DemoRequestDialogProps {
+export interface DemoRequestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ctaOrigin?: string;
@@ -35,7 +37,6 @@ const INTEREST_TYPES = [
   { value: 'other',       label: 'Autre' },
 ];
 
-/** Read UTM params from current URL */
 function getUtmParams(): Record<string, string> {
   if (typeof window === 'undefined') return {};
   const p = new URLSearchParams(window.location.search);
@@ -47,6 +48,95 @@ function getUtmParams(): Record<string, string> {
   };
 }
 
+// ── Post-submit success screen ────────────────────────────────────────────────
+
+function SuccessScreen({
+  email,
+  onClose,
+}: {
+  email: string;
+  onClose: () => void;
+}) {
+  const navigate = useNavigate();
+  const bookingUrl = getBookingUrl();
+
+  return (
+    <div className="py-6 space-y-6">
+      {/* Confirmation */}
+      <div className="text-center space-y-3">
+        <div className="flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+            <CheckCircle2 className="h-8 w-8 text-success" />
+          </div>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">Demande envoyée !</h3>
+          <p className="text-sm text-muted-foreground mt-1.5 max-w-xs mx-auto">
+            Notre équipe vous contactera sous{' '}
+            <strong className="text-foreground">24 heures ouvrées</strong>{' '}
+            à l'adresse <strong className="text-foreground">{email}</strong>.
+          </p>
+        </div>
+      </div>
+
+      {/* Next steps */}
+      <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-1">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          Étapes suivantes
+        </p>
+
+        {/* Primary — Booking (if configured) */}
+        {bookingUrl && (
+          <Button
+            className="w-full gap-2 h-11 font-semibold neon-glow"
+            onClick={() => {
+              window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+              trackEvent('booking_click_post_submit', { source_page: 'demo_dialog_success', cta_origin: 'post_submit_booking' });
+            }}
+          >
+            <CalendarDays className="h-4 w-4" />
+            Prendre rendez-vous maintenant
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        )}
+
+        {/* See demo */}
+        <Button
+          variant={bookingUrl ? 'outline' : 'default'}
+          className={`w-full gap-2 h-11 ${!bookingUrl ? 'neon-glow font-semibold' : ''}`}
+          onClick={() => {
+            onClose();
+            navigate('/demo');
+            trackEvent('demo_click_post_submit', { source_page: 'demo_dialog_success', cta_origin: 'post_submit_demo' });
+          }}
+        >
+          <FlaskConical className="h-4 w-4" />
+          Voir la démonstration interactive
+        </Button>
+
+        {/* Back to offers */}
+        <Button
+          variant="ghost"
+          className="w-full gap-2 h-10 text-muted-foreground"
+          onClick={() => {
+            onClose();
+            navigate('/pricing');
+          }}
+        >
+          <Sparkles className="h-4 w-4" />
+          Voir les offres et tarifs
+        </Button>
+      </div>
+
+      <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={onClose}>
+        Fermer
+      </Button>
+    </div>
+  );
+}
+
+// ── Main dialog ───────────────────────────────────────────────────────────────
+
 export function DemoRequestDialog({
   open,
   onOpenChange,
@@ -55,15 +145,15 @@ export function DemoRequestDialog({
 }: DemoRequestDialogProps) {
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading,   setLoading]   = useState(false);
   const [form, setForm] = useState({
-    full_name: '',
-    email: '',
-    company: '',
-    role: '',
-    company_size: '',
+    full_name:     '',
+    email:         '',
+    company:       '',
+    role:          '',
+    company_size:  '',
     interest_type: '',
-    message: '',
+    message:       '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -77,16 +167,16 @@ export function DemoRequestDialog({
   const validate = () => {
     const e: Record<string, string> = {};
     const name = form.full_name.trim();
-    if (!name || name.length < 2)  e.full_name = 'Nom requis (min. 2 caractères)';
-    if (name.length > 100)          e.full_name = 'Nom trop long (max. 100 caractères)';
+    if (!name || name.length < 2)   e.full_name = 'Nom requis (min. 2 caractères)';
+    if (name.length > 100)           e.full_name = 'Nom trop long (max. 100 caractères)';
     const email = form.email.trim();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) e.email = 'Email valide requis';
-    if (email.length > 255)         e.email = 'Email trop long';
+    if (email.length > 255)          e.email = 'Email trop long';
     const company = form.company.trim();
     if (!company || company.length < 2) e.company = 'Entreprise requise (min. 2 caractères)';
-    if (company.length > 150)       e.company = "Nom d'entreprise trop long";
-    if (form.role.length > 100)     e.role = 'Fonction trop longue';
-    if (form.message.length > 2000) e.message = 'Message trop long (max. 2000 caractères)';
+    if (company.length > 150)        e.company = "Nom d'entreprise trop long";
+    if (form.role.length > 100)      e.role = 'Fonction trop longue';
+    if (form.message.length > 2000)  e.message = 'Message trop long (max. 2000 caractères)';
     return e;
   };
 
@@ -106,29 +196,28 @@ export function DemoRequestDialog({
           'apikey': SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
-          full_name:    form.full_name.trim(),
-          email:        form.email.trim().toLowerCase(),
-          company:      form.company.trim(),
-          role:         form.role.trim() || undefined,
-          company_size: form.company_size || undefined,
-          interest_type:form.interest_type || undefined,
-          message:      form.message.trim() || undefined,
-          source_page:  sourcePage,
-          cta_origin:   ctaOrigin,
+          full_name:     form.full_name.trim(),
+          email:         form.email.trim().toLowerCase(),
+          company:       form.company.trim(),
+          role:          form.role.trim() || undefined,
+          company_size:  form.company_size || undefined,
+          interest_type: form.interest_type || undefined,
+          message:       form.message.trim() || undefined,
+          source_page:   sourcePage,
+          cta_origin:    ctaOrigin,
           ...utm,
         }),
       });
 
       const json = await res.json().catch(() => ({}));
-
       if (!res.ok && res.status !== 201) {
         throw new Error(json?.error ?? `Erreur ${res.status}`);
       }
 
       await trackEvent('demo_dialog_submit', {
         source_page: sourcePage,
-        cta_origin: ctaOrigin,
-        metadata: { lead_score: json?.lead_score },
+        cta_origin:  ctaOrigin,
+        metadata:    { lead_score: json?.lead_score },
       });
 
       setSubmitted(true);
@@ -160,7 +249,12 @@ export function DemoRequestDialog({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
-        {!submitted ? (
+        {submitted ? (
+          <SuccessScreen
+            email={form.email}
+            onClose={() => handleClose(false)}
+          />
+        ) : (
           <>
             <DialogHeader>
               <div className="flex items-center gap-3 mb-1">
@@ -271,25 +365,6 @@ export function DemoRequestDialog({
               </p>
             </form>
           </>
-        ) : (
-          <div className="py-8 text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-                <CheckCircle2 className="h-8 w-8 text-success" />
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">Demande envoyée !</h3>
-              <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
-                Notre équipe vous contactera sous{' '}
-                <strong>24 heures ouvrées</strong> à l'adresse{' '}
-                <strong>{form.email}</strong>.
-              </p>
-            </div>
-            <Button variant="outline" onClick={() => handleClose(false)}>
-              Fermer
-            </Button>
-          </div>
         )}
       </DialogContent>
     </Dialog>

@@ -23,7 +23,7 @@ import {
   Wifi,
   Mail,
   Cloud,
-  Calendar,
+  CalendarDays,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,8 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { DemoBanner } from '@/components/ui/DemoBanner';
 import { DemoRequestDialog } from '@/components/ui/DemoRequestDialog';
+import { openBookingOrFallback } from '@/lib/revenue-links';
+import { trackEvent } from '@/lib/tracking';
 import {
   DEMO_SUMMARY,
   DEMO_ASSETS,
@@ -39,6 +41,7 @@ import {
   DEMO_TECHNICAL_REPORT,
   type DemoFinding,
 } from '@/lib/demo-data';
+
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -419,10 +422,23 @@ export default function Demo() {
                 <p className="text-sm text-muted-foreground">
                   Convaincu ? Lancez votre vrai audit en moins de 10 minutes.
                 </p>
-                <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
-                  <Shield className="h-4 w-4" />
-                  Démarrer gratuitement
-                </Button>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      trackEvent('cta_demander_demo', { source_page: '/demo', cta_origin: 'demo_executive_cta' });
+                      openBookingOrFallback(() => setDemoContactOpen(true));
+                    }}
+                    className="gap-2"
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                    Demander une démo
+                  </Button>
+                  <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
+                    <Shield className="h-4 w-4" />
+                    Démarrer gratuitement
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -466,8 +482,15 @@ export default function Demo() {
                   Importez vos propres résultats d'outils de sécurité et générez ce rapport instantanément.
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                  <Button variant="outline" onClick={() => setDemoContactOpen(true)} className="gap-2">
-                    <Calendar className="h-4 w-4" />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      trackEvent('cta_demander_demo', { source_page: '/demo', cta_origin: 'demo_technical_cta' });
+                      openBookingOrFallback(() => setDemoContactOpen(true));
+                    }}
+                    className="gap-2"
+                  >
+                    <CalendarDays className="h-4 w-4" />
                     Demander une démo
                   </Button>
                   <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">

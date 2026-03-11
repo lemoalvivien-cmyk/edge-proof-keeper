@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, ArrowRight, Sparkles, FlaskConical, Upload, Calendar } from "lucide-react";
+import { Shield, ArrowRight, Sparkles, FlaskConical, Upload, Calendar, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import { trackEvent } from "@/lib/tracking";
+import { openBookingOrFallback } from "@/lib/revenue-links";
+
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
@@ -125,10 +127,10 @@ export function HeroSection() {
               className="h-13 px-6 text-base text-muted-foreground hover:text-foreground gap-2 w-full sm:w-auto"
               onClick={() => {
                 trackEvent('cta_demander_demo', { source_page: '/', cta_origin: 'hero_ghost' });
-                setDemoDialogOpen(true);
+                openBookingOrFallback(() => setDemoDialogOpen(true));
               }}
             >
-              <Calendar className="w-5 h-5" />
+              <CalendarDays className="w-5 h-5" />
               Demander une démo
             </Button>
           </motion.div>
