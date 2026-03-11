@@ -36,6 +36,7 @@ import NotFound from "./pages/NotFound";
 import ApiTest from "./pages/ApiTest";
 import ReportStudio from "./pages/ReportStudio";
 import AdminReadiness from "./pages/AdminReadiness";
+import AdminLeads from "./pages/AdminLeads";
 // Legal pages
 import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
