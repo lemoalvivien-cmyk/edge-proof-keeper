@@ -106,7 +106,7 @@ function ExecutiveReport({ data }: { data: ExecutiveReportResult }) {
           <ul className="space-y-1.5">
             {data.recommendations.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                 {r}
               </li>
             ))}
