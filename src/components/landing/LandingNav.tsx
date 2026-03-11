@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SOLO_MODE } from "@/config/app";
+import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
