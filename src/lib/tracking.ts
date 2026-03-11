@@ -12,7 +12,11 @@ export type TrackEventName =
   | 'demo_dialog_open'
   | 'demo_dialog_submit'
   | 'cta_pricing'
-  | 'cta_demarrer';
+  | 'cta_demarrer'
+  | 'booking_click_post_submit'
+  | 'demo_click_post_submit'
+  | 'booking_click_direct'
+  | 'checkout_click';
 
 export interface TrackEventOptions {
   source_page?: string;
