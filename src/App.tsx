@@ -87,6 +87,7 @@ const App = () => (
               {/* Public landing pages */}
               <Route path="/" element={<Landing />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/demo" element={<Demo />} />
               
               {/* Auth route - redirect to dashboard in SOLO_MODE */}
               <Route path="/auth" element={SOLO_MODE ? <Navigate to="/dashboard" replace /> : <Auth />} />

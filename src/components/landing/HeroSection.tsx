@@ -171,10 +171,11 @@ export function HeroSection() {
             </div>
           </motion.form>
 
-          {/* Secondary CTA */}
+          {/* Secondary CTAs */}
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.5 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
           >
             <Button
               variant="outline"
@@ -183,6 +184,15 @@ export function HeroSection() {
               className="border-primary/50 text-primary hover:bg-primary/10"
             >
               Voir l'offre — 490€ TTC/an
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => navigate('/demo')}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <FlaskConical className="w-4 h-4" />
+              Voir une démonstration
             </Button>
           </motion.div>
 
