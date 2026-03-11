@@ -62,6 +62,7 @@ const auditItems = [
 const adminItems = [
   { title: 'Paramètres', href: '/settings', icon: Settings },
   { title: 'Plans & Add-ons', href: '/plans', icon: CreditCard },
+  { title: 'Revenue Settings', href: '/settings/revenue', icon: DollarSign },
   { title: 'GO/NO-GO', href: '/go-no-go', icon: CheckSquare },
   { title: 'Leads', href: '/admin/leads', icon: Users },
   { title: 'Admin Readiness', href: '/admin-readiness', icon: Gauge },
