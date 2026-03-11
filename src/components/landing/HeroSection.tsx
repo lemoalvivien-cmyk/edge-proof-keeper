@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Shield, ArrowRight, Sparkles, FlaskConical, Upload, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
+import { trackEvent } from "@/lib/tracking";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
@@ -93,7 +94,10 @@ export function HeroSection() {
             <Button
               size="lg"
               className="h-13 px-8 text-base font-semibold neon-glow hover:scale-105 transition-transform gap-2 w-full sm:w-auto"
-              onClick={() => navigate('/demo')}
+              onClick={() => {
+                trackEvent('cta_voir_demo', { source_page: '/', cta_origin: 'hero_primary' });
+                navigate('/demo');
+              }}
             >
               <FlaskConical className="w-5 h-5" />
               Voir une démonstration
@@ -105,7 +109,10 @@ export function HeroSection() {
               variant="outline"
               size="lg"
               className="h-13 px-6 text-base border-border hover:border-primary/50 gap-2 w-full sm:w-auto"
-              onClick={() => navigate('/tools')}
+              onClick={() => {
+                trackEvent('cta_tester_fichier', { source_page: '/', cta_origin: 'hero_secondary' });
+                navigate('/tools');
+              }}
             >
               <Upload className="w-5 h-5" />
               Tester avec un fichier
@@ -116,7 +123,10 @@ export function HeroSection() {
               variant="ghost"
               size="lg"
               className="h-13 px-6 text-base text-muted-foreground hover:text-foreground gap-2 w-full sm:w-auto"
-              onClick={() => setDemoDialogOpen(true)}
+              onClick={() => {
+                trackEvent('cta_demander_demo', { source_page: '/', cta_origin: 'hero_ghost' });
+                setDemoDialogOpen(true);
+              }}
             >
               <Calendar className="w-5 h-5" />
               Demander une démo

@@ -297,6 +297,33 @@ export type Database = {
           },
         ]
       }
+      conversion_events: {
+        Row: {
+          created_at: string
+          cta_origin: string | null
+          event_name: string
+          id: string
+          metadata: Json
+          source_page: string | null
+        }
+        Insert: {
+          created_at?: string
+          cta_origin?: string | null
+          event_name: string
+          id?: string
+          metadata?: Json
+          source_page?: string | null
+        }
+        Update: {
+          created_at?: string
+          cta_origin?: string | null
+          event_name?: string
+          id?: string
+          metadata?: Json
+          source_page?: string | null
+        }
+        Relationships: []
+      }
       data_sources: {
         Row: {
           category: string
@@ -1047,10 +1074,16 @@ export type Database = {
           full_name: string
           id: string
           interest_type: string | null
+          last_activity_at: string
+          lead_score: number
           message: string | null
           role: string | null
           source_page: string | null
           status: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           company: string
@@ -1061,10 +1094,16 @@ export type Database = {
           full_name: string
           id?: string
           interest_type?: string | null
+          last_activity_at?: string
+          lead_score?: number
           message?: string | null
           role?: string | null
           source_page?: string | null
           status?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           company?: string
@@ -1075,10 +1114,16 @@ export type Database = {
           full_name?: string
           id?: string
           interest_type?: string | null
+          last_activity_at?: string
+          lead_score?: number
           message?: string | null
           role?: string | null
           source_page?: string | null
           status?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: []
       }

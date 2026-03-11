@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CheckCircle2, Loader2, Shield } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { trackEvent } from '@/lib/tracking';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 interface DemoRequestDialogProps {
   open: boolean;
@@ -17,22 +20,39 @@ interface DemoRequestDialogProps {
 }
 
 const COMPANY_SIZES = [
-  { value: '1-10', label: '1 – 10 collaborateurs' },
-  { value: '11-50', label: '11 – 50 collaborateurs' },
-  { value: '51-200', label: '51 – 200 collaborateurs' },
+  { value: '1-10',    label: '1 – 10 collaborateurs' },
+  { value: '11-50',   label: '11 – 50 collaborateurs' },
+  { value: '51-200',  label: '51 – 200 collaborateurs' },
   { value: '201-500', label: '201 – 500 collaborateurs' },
-  { value: '500+', label: '500+ collaborateurs' },
+  { value: '500+',    label: '500+ collaborateurs' },
 ];
 
 const INTEREST_TYPES = [
-  { value: 'demo_live', label: 'Démonstration live' },
-  { value: 'pilot', label: 'Pilote / POC' },
-  { value: 'pricing', label: 'Information tarifaire' },
+  { value: 'demo_live',   label: 'Démonstration live' },
+  { value: 'pilot',       label: 'Pilote / POC' },
+  { value: 'pricing',     label: 'Information tarifaire' },
   { value: 'integration', label: 'Intégration technique' },
-  { value: 'other', label: 'Autre' },
+  { value: 'other',       label: 'Autre' },
 ];
 
-export function DemoRequestDialog({ open, onOpenChange, ctaOrigin = 'unknown', sourcePage = '/' }: DemoRequestDialogProps) {
+/** Read UTM params from current URL */
+function getUtmParams(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const p = new URLSearchParams(window.location.search);
+  return {
+    utm_source:   p.get('utm_source')   ?? '',
+    utm_medium:   p.get('utm_medium')   ?? '',
+    utm_campaign: p.get('utm_campaign') ?? '',
+    utm_content:  p.get('utm_content')  ?? '',
+  };
+}
+
+export function DemoRequestDialog({
+  open,
+  onOpenChange,
+  ctaOrigin = 'unknown',
+  sourcePage = '/',
+}: DemoRequestDialogProps) {
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,15 +67,25 @@ export function DemoRequestDialog({ open, onOpenChange, ctaOrigin = 'unknown', s
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Track dialog open
+  useEffect(() => {
+    if (open) {
+      trackEvent('demo_dialog_open', { source_page: sourcePage, cta_origin: ctaOrigin });
+    }
+  }, [open, sourcePage, ctaOrigin]);
+
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.full_name.trim() || form.full_name.trim().length < 2) e.full_name = 'Nom requis (min. 2 caractères)';
-    if (form.full_name.trim().length > 100) e.full_name = 'Nom trop long (max. 100 caractères)';
-    if (!form.email.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) e.email = 'Email valide requis';
-    if (form.email.trim().length > 255) e.email = 'Email trop long (max. 255 caractères)';
-    if (!form.company.trim() || form.company.trim().length < 2) e.company = 'Entreprise requise (min. 2 caractères)';
-    if (form.company.trim().length > 150) e.company = 'Nom d\'entreprise trop long (max. 150 caractères)';
-    if (form.role.length > 100) e.role = 'Fonction trop longue (max. 100 caractères)';
+    const name = form.full_name.trim();
+    if (!name || name.length < 2)  e.full_name = 'Nom requis (min. 2 caractères)';
+    if (name.length > 100)          e.full_name = 'Nom trop long (max. 100 caractères)';
+    const email = form.email.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) e.email = 'Email valide requis';
+    if (email.length > 255)         e.email = 'Email trop long';
+    const company = form.company.trim();
+    if (!company || company.length < 2) e.company = 'Entreprise requise (min. 2 caractères)';
+    if (company.length > 150)       e.company = "Nom d'entreprise trop long";
+    if (form.role.length > 100)     e.role = 'Fonction trop longue';
     if (form.message.length > 2000) e.message = 'Message trop long (max. 2000 caractères)';
     return e;
   };
@@ -63,31 +93,49 @@ export function DemoRequestDialog({ open, onOpenChange, ctaOrigin = 'unknown', s
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
-    }
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
     setLoading(true);
+
     try {
-      const { error } = await supabase.from('sales_leads').insert({
-        full_name: form.full_name.trim(),
-        email: form.email.trim().toLowerCase(),
-        company: form.company.trim(),
-        role: form.role.trim() || null,
-        company_size: form.company_size || null,
-        interest_type: form.interest_type || null,
-        message: form.message.trim() || null,
+      const utm = getUtmParams();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-sales-lead`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          full_name:    form.full_name.trim(),
+          email:        form.email.trim().toLowerCase(),
+          company:      form.company.trim(),
+          role:         form.role.trim() || undefined,
+          company_size: form.company_size || undefined,
+          interest_type:form.interest_type || undefined,
+          message:      form.message.trim() || undefined,
+          source_page:  sourcePage,
+          cta_origin:   ctaOrigin,
+          ...utm,
+        }),
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok && res.status !== 201) {
+        throw new Error(json?.error ?? `Erreur ${res.status}`);
+      }
+
+      await trackEvent('demo_dialog_submit', {
         source_page: sourcePage,
         cta_origin: ctaOrigin,
-        status: 'new',
+        metadata: { lead_score: json?.lead_score },
       });
-      if (error) throw error;
+
       setSubmitted(true);
-    } catch {
+    } catch (err) {
       toast({
         title: 'Erreur',
-        description: 'Impossible d\'envoyer votre demande. Réessayez dans un instant.',
+        description: err instanceof Error ? err.message : "Impossible d'envoyer votre demande. Réessayez.",
         variant: 'destructive',
       });
     } finally {
@@ -209,10 +257,13 @@ export function DemoRequestDialog({ open, onOpenChange, ctaOrigin = 'unknown', s
                   rows={3}
                   className="resize-none"
                 />
+                {errors.message && <p className="text-xs text-destructive">{errors.message}</p>}
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Envoi en cours…</> : 'Envoyer ma demande'}
+                {loading
+                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Envoi en cours…</>
+                  : 'Envoyer ma demande'}
               </Button>
 
               <p className="text-center text-xs text-muted-foreground">
@@ -230,7 +281,9 @@ export function DemoRequestDialog({ open, onOpenChange, ctaOrigin = 'unknown', s
             <div>
               <h3 className="text-lg font-semibold">Demande envoyée !</h3>
               <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
-                Notre équipe vous contactera sous <strong>24 heures ouvrées</strong> à l'adresse <strong>{form.email}</strong>.
+                Notre équipe vous contactera sous{' '}
+                <strong>24 heures ouvrées</strong> à l'adresse{' '}
+                <strong>{form.email}</strong>.
               </p>
             </div>
             <Button variant="outline" onClick={() => handleClose(false)}>

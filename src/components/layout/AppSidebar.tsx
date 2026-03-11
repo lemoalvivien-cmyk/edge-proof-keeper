@@ -19,6 +19,7 @@ import {
   Wand2,
   FlaskConical,
   Gauge,
+  Users,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -61,6 +62,7 @@ const adminItems = [
   { title: 'Paramètres', href: '/settings', icon: Settings },
   { title: 'Plans & Add-ons', href: '/plans', icon: CreditCard },
   { title: 'GO/NO-GO', href: '/go-no-go', icon: CheckSquare },
+  { title: 'Leads', href: '/admin/leads', icon: Users },
   { title: 'Admin Readiness', href: '/admin-readiness', icon: Gauge },
   { title: 'Test API', href: '/api-test', icon: FlaskConical },
 ];
