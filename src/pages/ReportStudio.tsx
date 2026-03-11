@@ -7,31 +7,194 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { generateExecutiveReport, generateTechnicalReport, isExternalBackendConfigured } from '@/lib/api-client';
+import {
+  generateExecutiveReport,
+  generateTechnicalReport,
+  isExternalBackendConfigured,
+  type ExecutiveReportResult,
+  type TechnicalReportResult,
+  type TechnicalFinding,
+} from '@/lib/api-client';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Loader2, AlertTriangle, CheckCircle2, Info, ExternalLink } from 'lucide-react';
+import {
+  FileText,
+  Loader2,
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  ShieldAlert,
+  TrendingUp,
+  ListChecks,
+  Lightbulb,
+  Bug,
+  Wrench,
+  Server,
+  ClipboardList,
+} from 'lucide-react';
 
 type ReportStatus = 'idle' | 'loading' | 'success' | 'error';
 
-interface ReportResult {
-  report_id: string;
-  status: string;
+const SEVERITY_COLOR: Record<string, string> = {
+  critical: 'bg-destructive text-destructive-foreground',
+  high: 'bg-orange-500 text-white',
+  medium: 'bg-yellow-500 text-white',
+  low: 'bg-blue-500 text-white',
+  info: 'bg-muted text-muted-foreground',
+};
+
+const RISK_LABEL: Record<string, string> = {
+  critical: 'Critique',
+  high: 'Élevé',
+  medium: 'Modéré',
+  low: 'Faible',
+  info: 'Info',
+};
+
+function RiskBadge({ level }: { level: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${SEVERITY_COLOR[level] ?? SEVERITY_COLOR.info}`}>
+      {RISK_LABEL[level] ?? level}
+    </span>
+  );
+}
+
+function ExecutiveReport({ data }: { data: ExecutiveReportResult }) {
+  return (
+    <div className="space-y-4 mt-4">
+      <div className="rounded-lg border border-border bg-card p-5 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            Résumé exécutif
+          </h2>
+          <RiskBadge level={data.risk_level} />
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">{data.summary}</p>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-5 space-y-2">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          Impact métier
+        </h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">{data.business_impact}</p>
+      </div>
+
+      {data.top_priorities?.length > 0 && (
+        <div className="rounded-lg border border-border bg-card p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4 text-primary" />
+            Priorités immédiates
+          </h3>
+      <ul className="space-y-1.5">
+            {data.top_priorities.map((p, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="mt-0.5 h-4 w-4 rounded-full border border-primary/30 bg-primary/5 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {data.recommendations?.length > 0 && (
+        <div className="rounded-lg border border-border bg-card p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-primary" />
+            Recommandations
+          </h3>
+          <ul className="space-y-1.5">
+            {data.recommendations.map((r, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                {r}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FindingCard({ finding, index }: { finding: TechnicalFinding; index: number }) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <Bug className="h-4 w-4 text-destructive shrink-0" />
+          {index + 1}. {finding.title}
+        </h4>
+        <RiskBadge level={finding.severity} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 text-xs">
+        {finding.asset && (
+          <div className="flex items-start gap-2">
+            <Server className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+            <span className="text-muted-foreground"><span className="font-medium text-foreground">Actif :</span> {finding.asset}</span>
+          </div>
+        )}
+        {finding.evidence && (
+          <div className="flex items-start gap-2">
+            <ClipboardList className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+            <span className="text-muted-foreground"><span className="font-medium text-foreground">Preuve :</span> {finding.evidence}</span>
+          </div>
+        )}
+        {finding.remediation && (
+          <div className="flex items-start gap-2">
+            <Wrench className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+            <span className="text-muted-foreground"><span className="font-medium text-foreground">Remédiation :</span> {finding.remediation}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TechnicalReport({ data }: { data: TechnicalReportResult }) {
+  return (
+    <div className="space-y-4 mt-4">
+      <div className="rounded-lg border border-border bg-card p-5 space-y-2">
+        <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+          <ListChecks className="h-4 w-4 text-primary" />
+          Résumé technique
+        </h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">{data.summary}</p>
+      </div>
+
+      {data.findings?.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">
+            Findings ({data.findings.length})
+          </h3>
+          {data.findings.map((f, i) => (
+            <FindingCard key={i} finding={f} index={i} />
+          ))}
+        </div>
+      )}
+
+      {(!data.findings || data.findings.length === 0) && (
+        <p className="text-sm text-muted-foreground italic">Aucun finding retourné.</p>
+      )}
+    </div>
+  );
 }
 
 export default function ReportStudio() {
   const [toolRunId, setToolRunId] = useState('');
   const [executiveStatus, setExecutiveStatus] = useState<ReportStatus>('idle');
   const [technicalStatus, setTechnicalStatus] = useState<ReportStatus>('idle');
-  const [executiveResult, setExecutiveResult] = useState<ReportResult | null>(null);
-  const [technicalResult, setTechnicalResult] = useState<ReportResult | null>(null);
+  const [executiveResult, setExecutiveResult] = useState<ExecutiveReportResult | null>(null);
+  const [technicalResult, setTechnicalResult] = useState<TechnicalReportResult | null>(null);
   const [executiveError, setExecutiveError] = useState<string | null>(null);
   const [technicalError, setTechnicalError] = useState<string | null>(null);
 
   const backendConfigured = isExternalBackendConfigured();
 
-  const getToken = async (): Promise<string | null> => {
+  const getToken = async (): Promise<string | undefined> => {
     const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
+    return session?.access_token ?? undefined;
   };
 
   const isValidUuid = (v: string) =>
@@ -79,7 +242,7 @@ export default function ReportStudio() {
 
   return (
     <AppLayout>
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         {/* Header */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -128,107 +291,76 @@ export default function ReportStudio() {
           </CardContent>
         </Card>
 
-        {/* Report generators */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Executive */}
-          <Card className="flex flex-col">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Rapport DG / PDG</CardTitle>
-                <Badge variant="secondary" className="text-xs">Exécutif</Badge>
+        {/* ── RAPPORT DG / PDG ── */}
+        <Card className="flex flex-col">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Rapport DG / PDG</CardTitle>
+              <Badge variant="secondary" className="text-xs">Exécutif</Badge>
+            </div>
+            <CardDescription className="text-xs">
+              Résumé, risques business, conformité GDPR/NIS2, plan d'action.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Button
+              onClick={handleGenerateExecutive}
+              disabled={!backendConfigured || !toolRunId || executiveStatus === 'loading'}
+              className="w-full"
+            >
+              {executiveStatus === 'loading' ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Génération…</>
+              ) : 'Générer rapport DG / PDG'}
+            </Button>
+
+            {executiveStatus === 'error' && executiveError && (
+              <div className="flex items-start gap-2 text-sm text-destructive">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{executiveError}</span>
               </div>
-              <CardDescription className="text-xs">
-                Résumé, risques business, conformité GDPR/NIS2, plan d'action.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3 flex-1">
-              <Button
-                onClick={handleGenerateExecutive}
-                disabled={!backendConfigured || !toolRunId || executiveStatus === 'loading'}
-                className="w-full"
-              >
-                {executiveStatus === 'loading' ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" />Génération…</>
-                ) : 'Générer rapport DG / PDG'}
-              </Button>
+            )}
 
-              {executiveStatus === 'success' && executiveResult && (
-                <div className="flex items-start gap-2 text-sm text-primary">
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>
-                    Rapport créé —{' '}
-                    <a
-                      href={`/reports`}
-                      className="underline underline-offset-2 inline-flex items-center gap-1"
-                    >
-                      Voir les rapports <ExternalLink className="h-3 w-3" />
-                    </a>
-                    <br />
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {executiveResult.report_id}
-                    </span>
-                  </span>
-                </div>
-              )}
-              {executiveStatus === 'error' && executiveError && (
-                <div className="flex items-start gap-2 text-sm text-destructive">
-                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>{executiveError}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            {executiveStatus === 'success' && executiveResult && (
+              <ExecutiveReport data={executiveResult} />
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Technical */}
-          <Card className="flex flex-col">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Rapport DSI</CardTitle>
-                <Badge variant="outline" className="text-xs">Technique</Badge>
+        {/* ── RAPPORT DSI ── */}
+        <Card className="flex flex-col">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Rapport DSI</CardTitle>
+              <Badge variant="outline" className="text-xs">Technique</Badge>
+            </div>
+            <CardDescription className="text-xs">
+              Périmètre, findings détaillés, recommandations, traçabilité.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Button
+              variant="outline"
+              onClick={handleGenerateTechnical}
+              disabled={!backendConfigured || !toolRunId || technicalStatus === 'loading'}
+              className="w-full"
+            >
+              {technicalStatus === 'loading' ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Génération…</>
+              ) : 'Générer rapport DSI'}
+            </Button>
+
+            {technicalStatus === 'error' && technicalError && (
+              <div className="flex items-start gap-2 text-sm text-destructive">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>{technicalError}</span>
               </div>
-              <CardDescription className="text-xs">
-                Périmètre, findings détaillés, recommandations, traçabilité.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3 flex-1">
-              <Button
-                variant="outline"
-                onClick={handleGenerateTechnical}
-                disabled={!backendConfigured || !toolRunId || technicalStatus === 'loading'}
-                className="w-full"
-              >
-                {technicalStatus === 'loading' ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" />Génération…</>
-                ) : 'Générer rapport DSI'}
-              </Button>
+            )}
 
-              {technicalStatus === 'success' && technicalResult && (
-                <div className="flex items-start gap-2 text-sm text-primary">
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>
-                    Rapport créé —{' '}
-                    <a
-                      href={`/reports`}
-                      className="underline underline-offset-2 inline-flex items-center gap-1"
-                    >
-                      Voir les rapports <ExternalLink className="h-3 w-3" />
-                    </a>
-                    <br />
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {technicalResult.report_id}
-                    </span>
-                  </span>
-                </div>
-              )}
-              {technicalStatus === 'error' && technicalError && (
-                <div className="flex items-start gap-2 text-sm text-destructive">
-                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>{technicalError}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+            {technicalStatus === 'success' && technicalResult && (
+              <TechnicalReport data={technicalResult} />
+            )}
+          </CardContent>
+        </Card>
 
         <Separator />
 

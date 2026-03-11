@@ -39,9 +39,29 @@ export interface GenerateReportPayload {
   tool_run_id: string;
 }
 
-export interface GenerateReportResult {
-  report_id: string;
-  status: 'generating' | 'ready' | 'failed';
+// ─── Executive Report (DG / PDG) ──────────────────────────────────────────────
+
+export interface ExecutiveReportResult {
+  summary: string;
+  risk_level: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  business_impact: string;
+  top_priorities: string[];
+  recommendations: string[];
+}
+
+// ─── Technical Report (DSI) ───────────────────────────────────────────────────
+
+export interface TechnicalFinding {
+  title: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  asset: string;
+  evidence: string;
+  remediation: string;
+}
+
+export interface TechnicalReportResult {
+  summary: string;
+  findings: TechnicalFinding[];
 }
 
 export interface VerifyChainPayload {
@@ -142,15 +162,16 @@ export async function uploadToolRunArtifact(
  */
 export async function generateExecutiveReport(
   runId: string,
-  token: string
-): Promise<GenerateReportResult> {
+  token?: string
+): Promise<ExecutiveReportResult> {
   const base = requireAiGateway();
+  const headers: HeadersInit = token ? authHeaders(token) : { 'Content-Type': 'application/json' };
   const res = await fetch(`${base}/v1/reports/executive`, {
     method: 'POST',
-    headers: authHeaders(token),
+    headers,
     body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
   });
-  return handleResponse<GenerateReportResult>(res);
+  return handleResponse<ExecutiveReportResult>(res);
 }
 
 /**
@@ -160,15 +181,16 @@ export async function generateExecutiveReport(
  */
 export async function generateTechnicalReport(
   runId: string,
-  token: string
-): Promise<GenerateReportResult> {
+  token?: string
+): Promise<TechnicalReportResult> {
   const base = requireAiGateway();
+  const headers: HeadersInit = token ? authHeaders(token) : { 'Content-Type': 'application/json' };
   const res = await fetch(`${base}/v1/reports/technical`, {
     method: 'POST',
-    headers: authHeaders(token),
+    headers,
     body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
   });
-  return handleResponse<GenerateReportResult>(res);
+  return handleResponse<TechnicalReportResult>(res);
 }
 
 /**
