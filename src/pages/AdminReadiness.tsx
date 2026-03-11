@@ -27,8 +27,12 @@ import {
   DollarSign,
   MousePointerClick,
   Star,
+  CalendarDays,
+  ShoppingCart,
+  Zap,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getRevenueLinks } from '@/lib/revenue-links';
 
 type Status = 'ok' | 'warn' | 'fail' | 'unknown';
 
