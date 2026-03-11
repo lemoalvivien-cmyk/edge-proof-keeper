@@ -19,6 +19,7 @@ import {
   Wand2,
   FlaskConical,
   Gauge,
+  Users,
 } from 'lucide-react';
 import {
   Sidebar,
