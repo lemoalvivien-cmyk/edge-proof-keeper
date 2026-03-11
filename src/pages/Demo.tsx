@@ -23,6 +23,7 @@ import {
   Wifi,
   Mail,
   Cloud,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { DemoBanner } from '@/components/ui/DemoBanner';
+import { DemoRequestDialog } from '@/components/ui/DemoRequestDialog';
 import {
   DEMO_SUMMARY,
   DEMO_ASSETS,
@@ -160,6 +162,7 @@ type Tab = 'overview' | 'executive' | 'technical';
 export default function Demo() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('overview');
+  const [demoContactOpen, setDemoContactOpen] = useState(false);
   const riskCfg = RISK_LEVEL_CONFIG[DEMO_EXECUTIVE_REPORT.risk_level] ?? RISK_LEVEL_CONFIG.medium;
 
   return (
@@ -462,15 +465,28 @@ export default function Demo() {
                 <p className="text-sm text-muted-foreground">
                   Importez vos propres résultats d'outils de sécurité et générez ce rapport instantanément.
                 </p>
-                <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
-                  <Shield className="h-4 w-4" />
-                  Démarrer gratuitement
-                </Button>
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="outline" onClick={() => setDemoContactOpen(true)} className="gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Demander une démo
+                  </Button>
+                  <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
+                    <Shield className="h-4 w-4" />
+                    Démarrer gratuitement
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      <DemoRequestDialog
+        open={demoContactOpen}
+        onOpenChange={setDemoContactOpen}
+        ctaOrigin="demo_page_bottom"
+        sourcePage="/demo"
+      />
     </div>
   );
 }
