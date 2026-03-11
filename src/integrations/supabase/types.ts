@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_analyses: {
+        Row: {
+          analysis_type: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          input_fact_pack: Json
+          model_name: string
+          organization_id: string
+          output_json: Json
+          prompt_version: string
+        }
+        Insert: {
+          analysis_type: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          input_fact_pack?: Json
+          model_name: string
+          organization_id: string
+          output_json?: Json
+          prompt_version: string
+        }
+        Update: {
+          analysis_type?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          input_fact_pack?: Json
+          model_name?: string
+          organization_id?: string
+          output_json?: Json
+          prompt_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_analyses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_type: string
@@ -243,6 +290,56 @@ export type Database = {
           },
           {
             foreignKeyName: "control_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_sources: {
+        Row: {
+          category: string
+          confidence_score: number | null
+          config: Json
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          name: string
+          organization_id: string
+          source_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          confidence_score?: number | null
+          config?: Json
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          name: string
+          organization_id: string
+          source_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          confidence_score?: number | null
+          config?: Json
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          name?: string
+          organization_id?: string
+          source_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_sources_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -641,6 +738,69 @@ export type Database = {
           },
         ]
       }
+      remediation_actions: {
+        Row: {
+          action_type: string
+          created_at: string
+          due_date: string | null
+          expected_gain: string
+          id: string
+          implementation_notes: string
+          organization_id: string
+          owner: string | null
+          priority: string
+          risk_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          due_date?: string | null
+          expected_gain?: string
+          id?: string
+          implementation_notes?: string
+          organization_id: string
+          owner?: string | null
+          priority?: string
+          risk_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          due_date?: string | null
+          expected_gain?: string
+          id?: string
+          implementation_notes?: string
+          organization_id?: string
+          owner?: string | null
+          priority?: string
+          risk_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remediation_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remediation_actions_risk_id_fkey"
+            columns: ["risk_id"]
+            isOneToOne: false
+            referencedRelation: "risk_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       remediation_tasks: {
         Row: {
           closed_at: string | null
@@ -808,6 +968,75 @@ export type Database = {
           },
         ]
       }
+      risk_register: {
+        Row: {
+          asset_id: string | null
+          business_impact: string
+          created_at: string
+          description: string
+          due_date: string | null
+          id: string
+          organization_id: string
+          owner: string | null
+          risk_level: string
+          score: number
+          source_signal_ids: Json
+          status: string
+          technical_impact: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          business_impact?: string
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          organization_id: string
+          owner?: string | null
+          risk_level?: string
+          score?: number
+          source_signal_ids?: Json
+          status?: string
+          technical_impact?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          business_impact?: string
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          organization_id?: string
+          owner?: string | null
+          risk_level?: string
+          score?: number
+          source_signal_ids?: Json
+          status?: string
+          technical_impact?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_register_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "risk_register_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scans: {
         Row: {
           asset_id: string | null
@@ -924,6 +1153,148 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signals: {
+        Row: {
+          asset_id: string | null
+          category: string
+          confidence_score: number | null
+          created_at: string
+          dedupe_key: string | null
+          description: string
+          detected_at: string
+          evidence: Json
+          id: string
+          organization_id: string
+          raw_payload: Json
+          severity: string
+          signal_refs: Json
+          signal_type: string
+          source_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          category: string
+          confidence_score?: number | null
+          created_at?: string
+          dedupe_key?: string | null
+          description?: string
+          detected_at?: string
+          evidence?: Json
+          id?: string
+          organization_id: string
+          raw_payload?: Json
+          severity?: string
+          signal_refs?: Json
+          signal_type: string
+          source_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          category?: string
+          confidence_score?: number | null
+          created_at?: string
+          dedupe_key?: string | null
+          description?: string
+          detected_at?: string
+          evidence?: Json
+          id?: string
+          organization_id?: string
+          raw_payload?: Json
+          severity?: string
+          signal_refs?: Json
+          signal_type?: string
+          source_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signals_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signals_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_sync_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          items_normalized: number
+          items_received: number
+          organization_id: string
+          raw_summary: Json
+          source_id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          items_normalized?: number
+          items_received?: number
+          organization_id: string
+          raw_summary?: Json
+          source_id: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          items_normalized?: number
+          items_received?: number
+          organization_id?: string
+          raw_summary?: Json
+          source_id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_sync_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_sync_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
             referencedColumns: ["id"]
           },
         ]
@@ -1190,6 +1561,10 @@ export type Database = {
         Args: { _auth_id: string; _org_id: string }
         Returns: boolean
       }
+      calculate_risk_score: {
+        Args: { confidence_score?: number; severity: string }
+        Returns: number
+      }
       ensure_permanent_authorization: {
         Args: { _org_id: string; _user_id: string }
         Returns: string
@@ -1199,6 +1574,7 @@ export type Database = {
         Returns: string
       }
       get_my_org_id: { Args: never; Returns: string }
+      get_platform_health: { Args: { _org_id: string }; Returns: Json }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_consent_proof: { Args: { _auth_id: string }; Returns: boolean }
       has_org_access: {
@@ -1222,6 +1598,7 @@ export type Database = {
         Args: { _auth_id: string; _target: string }
         Returns: boolean
       }
+      normalize_severity: { Args: { input_severity: string }; Returns: string }
       normalize_target: { Args: { _target: string }; Returns: string }
       sha256_hex: { Args: { input: string }; Returns: string }
       verify_evidence_chain: {
