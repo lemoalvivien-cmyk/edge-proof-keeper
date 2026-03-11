@@ -246,7 +246,7 @@ export default function Demo() {
         {/* Tab switcher */}
         <div className="flex gap-1 p-1 rounded-xl bg-muted/30 border border-border w-fit">
           {([
-            { key: 'overview',   label: 'Vue d'ensemble',   icon: <BarChart3 className="h-4 w-4" /> },
+            { key: 'overview',   label: "Vue d'ensemble",   icon: <BarChart3 className="h-4 w-4" /> },
             { key: 'executive',  label: 'Rapport DG / PDG', icon: <TrendingUp className="h-4 w-4" /> },
             { key: 'technical',  label: 'Rapport DSI',      icon: <FileText className="h-4 w-4" /> },
           ] as { key: Tab; label: string; icon: React.ReactNode }[]).map(t => (
