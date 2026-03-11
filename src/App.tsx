@@ -48,6 +48,7 @@ import RemediationPatchBridge from "./pages/offres/RemediationPatchBridge";
 import ContinuousGovernance from "./pages/offres/ContinuousGovernance";
 import EasmOsintSignals from "./pages/offres/EasmOsintSignals";
 import PlansAddons from "./pages/PlansAddons";
+import Demo from "./pages/Demo";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
               {/* Public landing pages */}
               <Route path="/" element={<Landing />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/demo" element={<Demo />} />
               
               {/* Auth route - redirect to dashboard in SOLO_MODE */}
               <Route path="/auth" element={SOLO_MODE ? <Navigate to="/dashboard" replace /> : <Auth />} />
