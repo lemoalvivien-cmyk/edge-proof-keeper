@@ -216,6 +216,53 @@ export type Database = {
           },
         ]
       }
+      commercial_config: {
+        Row: {
+          booking_url: string | null
+          created_at: string
+          enterprise_checkout_url: string | null
+          id: string
+          organization_id: string
+          pro_checkout_url: string | null
+          sales_enabled: boolean
+          starter_checkout_url: string | null
+          support_email: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_url?: string | null
+          created_at?: string
+          enterprise_checkout_url?: string | null
+          id?: string
+          organization_id: string
+          pro_checkout_url?: string | null
+          sales_enabled?: boolean
+          starter_checkout_url?: string | null
+          support_email?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_url?: string | null
+          created_at?: string
+          enterprise_checkout_url?: string | null
+          id?: string
+          organization_id?: string
+          pro_checkout_url?: string | null
+          sales_enabled?: boolean
+          starter_checkout_url?: string | null
+          support_email?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_controls: {
         Row: {
           category: string | null
@@ -1075,8 +1122,12 @@ export type Database = {
           id: string
           interest_type: string | null
           last_activity_at: string
+          last_contact_at: string | null
           lead_score: number
           message: string | null
+          next_action_at: string | null
+          owner: string | null
+          priority: string
           role: string | null
           source_page: string | null
           status: string
@@ -1095,8 +1146,12 @@ export type Database = {
           id?: string
           interest_type?: string | null
           last_activity_at?: string
+          last_contact_at?: string | null
           lead_score?: number
           message?: string | null
+          next_action_at?: string | null
+          owner?: string | null
+          priority?: string
           role?: string | null
           source_page?: string | null
           status?: string
@@ -1115,8 +1170,12 @@ export type Database = {
           id?: string
           interest_type?: string | null
           last_activity_at?: string
+          last_contact_at?: string | null
           lead_score?: number
           message?: string | null
+          next_action_at?: string | null
+          owner?: string | null
+          priority?: string
           role?: string | null
           source_page?: string | null
           status?: string
