@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Shield, ArrowRight, Sparkles, FlaskConical, Upload, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
+import { trackEvent } from "@/lib/tracking";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
