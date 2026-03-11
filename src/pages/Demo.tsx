@@ -469,8 +469,15 @@ export default function Demo() {
                   Importez vos propres résultats d'outils de sécurité et générez ce rapport instantanément.
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                  <Button variant="outline" onClick={() => setDemoContactOpen(true)} className="gap-2">
-                    <Calendar className="h-4 w-4" />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      trackEvent('cta_demander_demo', { source_page: '/demo', cta_origin: 'demo_technical_cta' });
+                      openBookingOrFallback(() => setDemoContactOpen(true));
+                    }}
+                    className="gap-2"
+                  >
+                    <CalendarDays className="h-4 w-4" />
                     Demander une démo
                   </Button>
                   <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
