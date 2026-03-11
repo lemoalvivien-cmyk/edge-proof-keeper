@@ -23,6 +23,7 @@ const offresLinks = [
 export function LandingNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
