@@ -17,6 +17,7 @@ import {
   CreditCard,
   AlertTriangle,
   Wand2,
+  FlaskConical,
 } from 'lucide-react';
 import {
   Sidebar,
