@@ -147,7 +147,7 @@ export default function AdminReadiness() {
           label: 'IA moteur interne (Lovable API)',
           description: 'Analyse de signaux et remédiation IA',
           status: 'ok',
-          detail: 'LOVABLE_API_KEY présent — prêt à l'emploi',
+          detail: "LOVABLE_API_KEY present -- pret a l'emploi",
         },
       ],
     },
