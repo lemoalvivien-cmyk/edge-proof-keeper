@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -25,8 +26,14 @@ import {
   Calendar,
   Globe,
   MousePointerClick,
+  Copy,
+  Check,
+  ThumbsUp,
+  Trophy,
+  XCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getBookingUrl } from '@/lib/revenue-links';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -93,6 +100,38 @@ const INTEREST_LABELS: Record<string, string> = {
   other:       'Autre',
 };
 
+// ── Quick action button ───────────────────────────────────────────────────────
+
+function QuickAction({
+  icon,
+  label,
+  onClick,
+  variant = 'outline',
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: (e: React.MouseEvent) => void;
+  variant?: 'outline' | 'default' | 'ghost' | 'secondary';
+}) {
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={variant}
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            onClick={e => { e.stopPropagation(); onClick(e); }}
+          >
+            {icon}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function AdminLeads() {
@@ -103,6 +142,9 @@ export default function AdminLeads() {
   const [filterCta, setFilterCta] = useState('all');
   const [selectedLead, setSelectedLead] = useState<SalesLead | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const bookingUrl = getBookingUrl();
 
   // ── Fetch leads ────────────────────────────────────────────────────────────
   const { data: leads = [], isLoading } = useQuery<SalesLead[]>({
@@ -127,9 +169,9 @@ export default function AdminLeads() {
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['admin-leads'] });
-      if (selectedLead) setSelectedLead(l => l ? { ...l, status: selectedLead.status } : null);
+      setSelectedLead(l => l && l.id === vars.id ? { ...l, status: vars.status } : l);
       toast({ title: 'Statut mis à jour' });
     },
     onError: () => toast({ title: 'Erreur', variant: 'destructive' }),
@@ -155,6 +197,33 @@ export default function AdminLeads() {
     return matchSearch && matchStatus && matchCta;
   });
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const copyEmail = (lead: SalesLead) => {
+    navigator.clipboard.writeText(lead.email).then(() => {
+      setCopiedId(lead.id);
+      setTimeout(() => setCopiedId(null), 2000);
+      toast({ title: `Email copié : ${lead.email}` });
+    });
+  };
+
+  const openMail = (lead: SalesLead) => {
+    window.open(
+      `mailto:${lead.email}?subject=Cyber Serenity — Suite à votre demande de ${lead.company}`,
+      '_blank',
+    );
+  };
+
+  const openBooking = (lead: SalesLead) => {
+    if (bookingUrl) {
+      window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      window.open(
+        `mailto:${lead.email}?subject=Planifier une démonstration Cyber Serenity`,
+        '_blank',
+      );
+    }
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6 max-w-7xl mx-auto">
@@ -179,10 +248,10 @@ export default function AdminLeads() {
         {/* KPI row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Total leads', value: kpis.total, icon: <Users className="h-5 w-5 text-primary" />, cls: '' },
-            { label: 'Nouveaux', value: kpis.new, icon: <Mail className="h-5 w-5 text-primary" />, cls: 'text-primary' },
-            { label: 'Qualifiés', value: kpis.qualified, icon: <TrendingUp className="h-5 w-5 text-warning" />, cls: 'text-warning' },
-            { label: 'Gagnés', value: kpis.won, icon: <Star className="h-5 w-5 text-success" />, cls: 'text-success' },
+            { label: 'Total leads', value: kpis.total,     icon: <Users className="h-5 w-5 text-primary" />,            cls: '' },
+            { label: 'Nouveaux',    value: kpis.new,       icon: <Mail className="h-5 w-5 text-primary" />,             cls: 'text-primary' },
+            { label: 'Qualifiés',   value: kpis.qualified, icon: <TrendingUp className="h-5 w-5 text-warning" />,        cls: 'text-warning' },
+            { label: 'Gagnés',      value: kpis.won,       icon: <Star className="h-5 w-5 text-success" />,             cls: 'text-success' },
           ].map(k => (
             <Card key={k.label}>
               <CardContent className="pt-4 pb-4">
@@ -255,10 +324,9 @@ export default function AdminLeads() {
                     <TableHead>Entreprise</TableHead>
                     <TableHead>Score</TableHead>
                     <TableHead>Intérêt</TableHead>
-                    <TableHead>Origine</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead className="w-10" />
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -287,11 +355,6 @@ export default function AdminLeads() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs font-mono text-muted-foreground">
-                          {lead.cta_origin ?? '—'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(lead.created_at), 'dd MMM yyyy', { locale: fr })}
                         </span>
@@ -312,6 +375,42 @@ export default function AdminLeads() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </TableCell>
+
+                      {/* Quick actions */}
+                      <TableCell className="text-right" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          <QuickAction
+                            icon={copiedId === lead.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                            label="Copier email"
+                            onClick={() => copyEmail(lead)}
+                          />
+                          <QuickAction
+                            icon={<Mail className="h-3.5 w-3.5" />}
+                            label="Contacter par email"
+                            onClick={() => openMail(lead)}
+                          />
+                          <QuickAction
+                            icon={<Calendar className="h-3.5 w-3.5" />}
+                            label={bookingUrl ? 'Planifier démo (lien booking)' : 'Planifier démo (email)'}
+                            onClick={() => openBooking(lead)}
+                          />
+                          <QuickAction
+                            icon={<ThumbsUp className="h-3.5 w-3.5 text-warning" />}
+                            label="Marquer qualifié"
+                            onClick={() => updateStatus.mutate({ id: lead.id, status: 'qualified' })}
+                          />
+                          <QuickAction
+                            icon={<Trophy className="h-3.5 w-3.5 text-success" />}
+                            label="Marquer gagné"
+                            onClick={() => updateStatus.mutate({ id: lead.id, status: 'won' })}
+                          />
+                          <QuickAction
+                            icon={<XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
+                            label="Marquer perdu"
+                            onClick={() => updateStatus.mutate({ id: lead.id, status: 'lost' })}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -405,15 +504,9 @@ export default function AdminLeads() {
                     <div>
                       <p className="text-xs text-muted-foreground mb-2">Tracking UTM</p>
                       <div className="flex flex-wrap gap-2">
-                        {selectedLead.utm_source && (
-                          <Badge variant="outline" className="text-xs font-mono">source: {selectedLead.utm_source}</Badge>
-                        )}
-                        {selectedLead.utm_medium && (
-                          <Badge variant="outline" className="text-xs font-mono">medium: {selectedLead.utm_medium}</Badge>
-                        )}
-                        {selectedLead.utm_campaign && (
-                          <Badge variant="outline" className="text-xs font-mono">campaign: {selectedLead.utm_campaign}</Badge>
-                        )}
+                        {selectedLead.utm_source   && <Badge variant="outline" className="text-xs font-mono">source: {selectedLead.utm_source}</Badge>}
+                        {selectedLead.utm_medium   && <Badge variant="outline" className="text-xs font-mono">medium: {selectedLead.utm_medium}</Badge>}
+                        {selectedLead.utm_campaign && <Badge variant="outline" className="text-xs font-mono">campaign: {selectedLead.utm_campaign}</Badge>}
                       </div>
                     </div>
                   </>
@@ -421,36 +514,90 @@ export default function AdminLeads() {
 
                 <Separator />
 
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Changer le statut</p>
-                    <Select
-                      value={selectedLead.status}
-                      onValueChange={status => {
-                        updateStatus.mutate({ id: selectedLead.id, status });
-                        setSelectedLead(l => l ? { ...l, status } : null);
-                      }}
-                    >
-                      <SelectTrigger className="w-44">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUSES.map(s => (
-                          <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Status changer */}
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Changer le statut</p>
+                  <Select
+                    value={selectedLead.status}
+                    onValueChange={status => {
+                      updateStatus.mutate({ id: selectedLead.id, status });
+                      setSelectedLead(l => l ? { ...l, status } : null);
+                    }}
+                  >
+                    <SelectTrigger className="w-44">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUSES.map(s => (
+                        <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Action buttons */}
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      window.open(`mailto:${selectedLead.email}?subject=Cyber Serenity — Suite à votre demande`, '_blank');
-                    }}
                     className="gap-2"
+                    onClick={() => openMail(selectedLead)}
                   >
                     <Mail className="h-4 w-4" />
                     Contacter
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => copyEmail(selectedLead)}
+                  >
+                    {copiedId === selectedLead.id ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                    Copier email
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => openBooking(selectedLead)}
+                  >
+                    <Calendar className="h-4 w-4" />
+                    {bookingUrl ? 'Planifier démo' : 'Planifier (email)'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      updateStatus.mutate({ id: selectedLead.id, status: 'qualified' });
+                      setSelectedLead(l => l ? { ...l, status: 'qualified' } : null);
+                    }}
+                  >
+                    <ThumbsUp className="h-4 w-4 text-warning" />
+                    Marquer qualifié
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="gap-2 bg-success/20 text-success hover:bg-success/30 border border-success/30"
+                    onClick={() => {
+                      updateStatus.mutate({ id: selectedLead.id, status: 'won' });
+                      setSelectedLead(l => l ? { ...l, status: 'won' } : null);
+                    }}
+                  >
+                    <Trophy className="h-4 w-4" />
+                    Marquer gagné
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 text-muted-foreground"
+                    onClick={() => {
+                      updateStatus.mutate({ id: selectedLead.id, status: 'lost' });
+                      setSelectedLead(l => l ? { ...l, status: 'lost' } : null);
+                    }}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Marquer perdu
                   </Button>
                 </div>
               </div>
