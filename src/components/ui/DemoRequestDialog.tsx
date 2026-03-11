@@ -49,9 +49,14 @@ export function DemoRequestDialog({ open, onOpenChange, ctaOrigin = 'unknown', s
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.full_name.trim()) e.full_name = 'Nom requis';
+    if (!form.full_name.trim() || form.full_name.trim().length < 2) e.full_name = 'Nom requis (min. 2 caractères)';
+    if (form.full_name.trim().length > 100) e.full_name = 'Nom trop long (max. 100 caractères)';
     if (!form.email.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) e.email = 'Email valide requis';
-    if (!form.company.trim()) e.company = 'Entreprise requise';
+    if (form.email.trim().length > 255) e.email = 'Email trop long (max. 255 caractères)';
+    if (!form.company.trim() || form.company.trim().length < 2) e.company = 'Entreprise requise (min. 2 caractères)';
+    if (form.company.trim().length > 150) e.company = 'Nom d\'entreprise trop long (max. 150 caractères)';
+    if (form.role.length > 100) e.role = 'Fonction trop longue (max. 100 caractères)';
+    if (form.message.length > 2000) e.message = 'Message trop long (max. 2000 caractères)';
     return e;
   };
 
