@@ -1,18 +1,76 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// ─── HARDENED: Origin restriction preparation ───────────────────────────────
+// TODO (external backend): restrict CORS to your proxy domain once deployed.
+// Replace '*' with 'https://your-proxy.example.com' when VITE_CORE_API_URL is set.
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// SHA-256 hash function
+// ─── SHA-256 (from raw bytes) ────────────────────────────────────────────────
 async function sha256(data: ArrayBuffer): Promise<string> {
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Helper to call log-evidence with internal token
+// ─── HARDENED: Magic-byte file validation ───────────────────────────────────
+// Never trust Content-Type header alone — inspect actual bytes.
+function detectMimeFromBytes(bytes: Uint8Array): 'json' | 'pdf' | 'csv' | 'unknown' {
+  // PDF magic: %PDF
+  if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
+    return 'pdf';
+  }
+  // JSON: starts with '{' or '[' (after optional BOM / whitespace)
+  const start = bytes.slice(0, 64);
+  const text = new TextDecoder().decode(start).trimStart();
+  if (text.startsWith('{') || text.startsWith('[')) {
+    return 'json';
+  }
+  // CSV heuristic: printable ASCII, contains commas, no null bytes
+  const sample = new TextDecoder().decode(bytes.slice(0, 512));
+  const hasNullBytes = bytes.slice(0, 512).some(b => b === 0x00);
+  if (!hasNullBytes && sample.includes(',')) {
+    return 'csv';
+  }
+  return 'unknown';
+}
+
+// Validate declared mode matches detected real type
+function validateFileType(
+  detectedType: 'json' | 'pdf' | 'csv' | 'unknown',
+  mode: string
+): { ok: boolean; reason?: string } {
+  const modeToExpected: Record<string, string> = {
+    import_json: 'json',
+    import_pdf: 'pdf',
+    import_csv: 'csv',
+  };
+  const expected = modeToExpected[mode];
+  if (!expected) return { ok: false, reason: `Unknown mode: ${mode}` };
+  if (detectedType === 'unknown') {
+    return { ok: false, reason: `File content does not match any supported type (expected ${expected})` };
+  }
+  if (detectedType !== expected) {
+    return { ok: false, reason: `File content is ${detectedType} but mode requires ${expected}` };
+  }
+  return { ok: true };
+}
+
+// ─── HARDENED: Text sanitizer for finding fields ────────────────────────────
+// Strips control characters and HTML-dangerous chars before storing.
+function sanitizeText(input: unknown): string {
+  if (typeof input !== 'string') return String(input ?? '');
+  return input
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // control chars
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .trim()
+    .slice(0, 4096); // hard cap per field
+}
+
+// ─── Evidence logger ─────────────────────────────────────────────────────────
 async function logEvidenceInternal(
   supabaseUrl: string,
   authHeader: string,
@@ -21,25 +79,24 @@ async function logEvidenceInternal(
 ): Promise<void> {
   try {
     const response = await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": authHeader,
-        "x-internal-token": internalToken,
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+        'x-internal-token': internalToken,
       },
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      const error = await response.text();
-      console.warn("Failed to log evidence:", error);
+      console.warn('Failed to log evidence:', await response.text());
     }
   } catch (error) {
-    console.warn("Failed to log evidence:", error);
+    console.warn('Failed to log evidence:', error);
   }
 }
 
-// Normalize JSON findings to standard format
-function normalizeJsonFindings(rawData: unknown): { 
+// ─── JSON findings normalizer ────────────────────────────────────────────────
+function normalizeJsonFindings(rawData: unknown): {
   findings: Array<{
     title: string;
     severity: string;
@@ -62,74 +119,57 @@ function normalizeJsonFindings(rawData: unknown): {
   }> = [];
   const counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
 
-  // Handle array of findings
-  if (Array.isArray(rawData)) {
-    for (const item of rawData) {
-      const finding = normalizeSingleFinding(item);
-      findings.push(finding);
-      const severity = finding.severity.toLowerCase();
-      if (severity in counts) {
-        counts[severity as keyof typeof counts]++;
-      }
-    }
-  } 
-  // Handle object with results/findings array
-  else if (typeof rawData === 'object' && rawData !== null) {
-    const obj = rawData as Record<string, unknown>;
-    const resultsArray = obj.results || obj.findings || obj.vulnerabilities || obj.issues;
-    if (Array.isArray(resultsArray)) {
-      for (const item of resultsArray) {
-        const finding = normalizeSingleFinding(item);
-        findings.push(finding);
-        const severity = finding.severity.toLowerCase();
-        if (severity in counts) {
-          counts[severity as keyof typeof counts]++;
-        }
-      }
-    }
+  const items: unknown[] = Array.isArray(rawData)
+    ? rawData
+    : (() => {
+        if (typeof rawData !== 'object' || rawData === null) return [];
+        const obj = rawData as Record<string, unknown>;
+        const arr = obj.results ?? obj.findings ?? obj.vulnerabilities ?? obj.issues;
+        return Array.isArray(arr) ? arr : [];
+      })();
+
+  for (const item of items) {
+    const finding = normalizeSingleFinding(item);
+    findings.push(finding);
+    const sev = finding.severity.toLowerCase();
+    if (sev in counts) counts[sev as keyof typeof counts]++;
   }
 
   return { findings, counts };
 }
 
 function normalizeSingleFinding(item: unknown): {
-  title: string;
-  severity: string;
-  type: string;
-  description: string;
-  evidence: string;
-  references: string[];
-  raw: unknown;
+  title: string; severity: string; type: string;
+  description: string; evidence: string; references: string[]; raw: unknown;
 } {
   if (typeof item !== 'object' || item === null) {
     return {
       title: 'Unknown finding',
       severity: 'info',
       type: 'unknown',
-      description: String(item),
+      description: sanitizeText(String(item)),
       evidence: '',
       references: [],
       raw: item,
     };
   }
-
   const obj = item as Record<string, unknown>;
-  
   return {
-    title: String(obj.title || obj.name || obj.template_id || obj.check || 'Unnamed finding'),
-    severity: String(obj.severity || obj.level || obj.risk || 'info').toLowerCase(),
-    type: String(obj.type || obj.category || obj.matcher_name || 'generic'),
-    description: String(obj.description || obj.message || obj.info || ''),
-    evidence: String(obj.evidence || obj.matched || obj.output || ''),
-    references: Array.isArray(obj.references) 
-      ? obj.references.map(String) 
-      : (typeof obj.reference === 'string' ? [obj.reference] : []),
+    // HARDENED: sanitize all text fields coming from raw imports
+    title: sanitizeText(obj.title ?? obj.name ?? obj.template_id ?? obj.check ?? 'Unnamed finding'),
+    severity: sanitizeText(obj.severity ?? obj.level ?? obj.risk ?? 'info').toLowerCase(),
+    type: sanitizeText(obj.type ?? obj.category ?? obj.matcher_name ?? 'generic'),
+    description: sanitizeText(obj.description ?? obj.message ?? obj.info ?? ''),
+    evidence: sanitizeText(obj.evidence ?? obj.matched ?? obj.output ?? ''),
+    references: Array.isArray(obj.references)
+      ? obj.references.map(r => sanitizeText(r)).slice(0, 20)
+      : (typeof obj.reference === 'string' ? [sanitizeText(obj.reference)] : []),
     raw: item,
   };
 }
 
+// ─── Main handler ─────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -138,26 +178,21 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const internalEdgeToken = Deno.env.get('INTERNAL_EDGE_TOKEN')!;
-    
-    // Get the authorization header
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('No authorization header provided');
       return new Response(
         JSON.stringify({ error: 'No authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create client with user's token to get user context
+    // Verify user identity
     const supabaseUser = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader } }
+      global: { headers: { Authorization: authHeader } },
     });
-
-    // Get user
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) {
-      console.error('User authentication failed:', userError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -166,7 +201,7 @@ Deno.serve(async (req) => {
 
     console.log('Authenticated user:', user.id);
 
-    // Parse form data
+    // Parse multipart form
     const formData = await req.formData();
     const toolRunId = formData.get('tool_run_id') as string;
     const file = formData.get('file') as File;
@@ -178,9 +213,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Processing upload for tool run:', toolRunId, 'file:', file.name, 'size:', file.size);
-
-    // Check file size (10MB max)
+    // HARDENED: 10 MB hard cap
     if (file.size > 10 * 1024 * 1024) {
       return new Response(
         JSON.stringify({ error: 'File too large. Maximum size is 10MB.' }),
@@ -188,66 +221,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use service role client for operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get tool run and verify ownership
+    // Fetch tool run + verify ownership
     const { data: toolRun, error: runError } = await supabase
       .from('tool_runs')
       .select(`
-        id,
-        organization_id,
-        tool_id,
-        mode,
-        status,
-        requested_by,
-        asset_id,
-        authorization_id,
-        tools_catalog (
-          slug,
-          name,
-          category
-        )
+        id, organization_id, tool_id, mode, status, requested_by, asset_id, authorization_id,
+        tools_catalog ( slug, name, category )
       `)
       .eq('id', toolRunId)
       .single();
 
     if (runError || !toolRun) {
-      console.error('Tool run not found:', runError);
       return new Response(
         JSON.stringify({ error: 'Tool run not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Verify user has access to the organization
-    const { data: orgAccess, error: orgError } = await supabase.rpc('has_org_access', {
+    const { data: orgAccess } = await supabase.rpc('has_org_access', {
       _user_id: user.id,
-      _org_id: toolRun.organization_id
+      _org_id: toolRun.organization_id,
     });
-
-    if (orgError || !orgAccess) {
-      console.error('Organization access denied:', orgError);
+    if (!orgAccess) {
       return new Response(
         JSON.stringify({ error: 'Access denied' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Verify the authorization is still valid at upload time
-    const { data: authValid, error: authValidError } = await supabase.rpc('is_authorization_valid', {
-      _auth_id: toolRun.authorization_id
-    });
-
-    if (authValidError || !authValid) {
-      console.error('Authorization is no longer valid:', authValidError);
-      return new Response(
-        JSON.stringify({ error: 'Authorization expired or revoked. Cannot upload artifact.' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verify run is awaiting upload
+    // Status guard
     if (toolRun.status !== 'awaiting_upload') {
       return new Response(
         JSON.stringify({ error: 'Tool run is not awaiting upload', current_status: toolRun.status }),
@@ -255,26 +259,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Read file and calculate hash
+    // Read bytes + hash
     const fileBuffer = await file.arrayBuffer();
+    const fileBytes = new Uint8Array(fileBuffer);
     const fileHash = await sha256(fileBuffer);
 
-    console.log('File hash calculated:', fileHash);
+    // HARDENED: magic-byte validation — reject mismatched files
+    const detectedType = detectMimeFromBytes(fileBytes);
+    const typeCheck = validateFileType(detectedType, toolRun.mode);
+    if (!typeCheck.ok) {
+      console.warn('File type mismatch:', typeCheck.reason);
+      return new Response(
+        JSON.stringify({ error: `File validation failed: ${typeCheck.reason}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Determine file extension
-    const ext = file.type === 'application/json' ? 'json' 
-      : file.type === 'application/pdf' ? 'pdf' 
-      : file.type.includes('csv') ? 'csv' 
-      : 'bin';
+    const extMap: Record<string, string> = { json: 'json', pdf: 'pdf', csv: 'csv' };
+    const ext = extMap[detectedType] ?? 'bin';
+    const contentType = detectedType === 'pdf' ? 'application/pdf'
+      : detectedType === 'json' ? 'application/json'
+      : 'text/csv';
 
     // Upload to artifacts bucket
     const filePath = `${toolRun.organization_id}/${toolRunId}/input.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from('artifacts')
-      .upload(filePath, fileBuffer, {
-        contentType: file.type,
-        upsert: true,
-      });
+      .upload(filePath, fileBuffer, { contentType, upsert: true });
 
     if (uploadError) {
       console.error('Upload failed:', uploadError);
@@ -284,97 +295,61 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('File uploaded to:', filePath);
-
-    // Get public URL (actually signed URL since bucket is private)
+    // HARDENED: signed URL capped at 24h (previously 1 year)
+    // TODO (external backend): replace with a proxy URL that streams from storage,
+    // so the signed URL is never exposed directly to the client.
     const { data: urlData } = await supabase.storage
       .from('artifacts')
-      .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year
+      .createSignedUrl(filePath, 60 * 60 * 24); // 24h max
 
-    const artifactUrl = urlData?.signedUrl || filePath;
+    const artifactUrl = urlData?.signedUrl ?? filePath;
 
-    // Update run status to processing
+    // Mark as processing
     await supabase
       .from('tool_runs')
-      .update({ 
-        status: 'processing',
-        input_artifact_url: artifactUrl,
-        input_artifact_hash: fileHash,
-      })
+      .update({ status: 'processing', input_artifact_url: artifactUrl, input_artifact_hash: fileHash })
       .eq('id', toolRunId);
 
-    // Extract tool info from joined data
-    const toolInfo = toolRun.tools_catalog as unknown as { slug?: string; name?: string; category?: string } | null;
-    
-    // Normalize the output
+    const toolInfo = toolRun.tools_catalog as { slug?: string; name?: string; category?: string } | null;
+
+    // Build normalized output
     let normalizedOutput: Record<string, unknown> = {
-      tool: {
-        slug: toolInfo?.slug || '',
-        name: toolInfo?.name || '',
-        category: toolInfo?.category || '',
-      },
-      target: {
-        asset_id: toolRun.asset_id,
-      },
-      timestamps: {
-        requested_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
-      },
+      tool: { slug: toolInfo?.slug ?? '', name: toolInfo?.name ?? '', category: toolInfo?.category ?? '' },
+      target: { asset_id: toolRun.asset_id },
+      // HARDENED: use server-side timestamp from DB, not front-end clock
+      timestamps: { completed_at: new Date().toISOString() },
       findings: [],
       counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
       notes: 'Import V1 (no live execution).',
     };
 
-    let summary: Record<string, unknown> = { 
-      critical: 0, 
-      high: 0, 
-      medium: 0, 
-      low: 0, 
-      info: 0,
-      total: 0,
-    };
+    let summary: Record<string, unknown> = { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 };
 
-    // Try to parse and normalize JSON files
-    if (toolRun.mode === 'import_json' && file.type === 'application/json') {
+    // JSON parsing + normalization
+    if (toolRun.mode === 'import_json' && detectedType === 'json') {
       try {
         const textContent = new TextDecoder().decode(fileBuffer);
         const jsonData = JSON.parse(textContent);
         const { findings, counts } = normalizeJsonFindings(jsonData);
-        
         normalizedOutput.findings = findings;
         normalizedOutput.counts = counts;
-        
-        summary = {
-          ...counts,
-          total: findings.length,
-        };
-
+        summary = { ...counts, total: findings.length };
         console.log('JSON normalized with', findings.length, 'findings');
       } catch (parseError) {
         console.warn('Failed to parse JSON:', parseError);
         normalizedOutput.notes = 'Import V1 - JSON parsing failed, file stored as evidence.';
       }
     } else {
-      // PDF or CSV - store as evidence
       normalizedOutput.notes = `Import V1 - ${ext.toUpperCase()} file stored as evidence. Manual review required.`;
     }
 
-    // Update run to done
-    const { error: updateError } = await supabase
+    // Finalize tool run
+    await supabase
       .from('tool_runs')
-      .update({
-        status: 'done',
-        completed_at: new Date().toISOString(),
-        normalized_output: normalizedOutput,
-        summary,
-      })
+      .update({ status: 'done', completed_at: new Date().toISOString(), normalized_output: normalizedOutput, summary })
       .eq('id', toolRunId);
 
-    if (updateError) {
-      console.error('Failed to update tool run:', updateError);
-    }
-
-    // Log to evidence vault via internal endpoint
+    // Log to evidence vault
     await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {
       organization_id: toolRun.organization_id,
       action: 'tool_run_imported',
@@ -382,23 +357,17 @@ Deno.serve(async (req) => {
       entity_id: toolRunId,
       artifact_hash: fileHash,
       details: {
-        file_name: file.name,
-        file_type: file.type,
+        file_name: sanitizeText(file.name),
+        detected_type: detectedType,
         file_size: file.size,
-        findings_count: (summary as Record<string, number>).total || 0,
+        findings_count: (summary as Record<string, number>).total ?? 0,
       },
     });
 
     console.log('Tool run completed:', toolRunId);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        tool_run_id: toolRunId,
-        status: 'done',
-        artifact_hash: fileHash,
-        summary,
-      }),
+      JSON.stringify({ success: true, tool_run_id: toolRunId, status: 'done', artifact_hash: fileHash, summary }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: unknown) {

@@ -33,6 +33,7 @@ import Proofs from "./pages/Proofs";
 import Risks from "./pages/Risks";
 import Findings from "./pages/Findings";
 import NotFound from "./pages/NotFound";
+import ReportStudio from "./pages/ReportStudio";
 // Legal pages
 import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
@@ -127,6 +128,7 @@ const App = () => (
               <Route path="/runs" element={<ProtectedRoute><Runs /></ProtectedRoute>} />
               <Route path="/runs/:id" element={<ProtectedRoute><RunDetail /></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+              <Route path="/report-studio" element={<ProtectedRoute><ReportStudio /></ProtectedRoute>} />
               <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
               <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
               <Route path="/go-no-go" element={<ProtectedRoute requiredRoles={['admin']}><GoNoGo /></ProtectedRoute>} />

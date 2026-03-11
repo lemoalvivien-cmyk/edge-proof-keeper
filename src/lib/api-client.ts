@@ -1,11 +1,15 @@
 /**
- * External API Client — SENTINEL EDGE
- * Abstraction layer for future external backend integration.
- * If VITE_CORE_API_URL / VITE_AI_GATEWAY_URL are not set, functions throw a clear error.
+ * SENTINEL EDGE — External API Client
+ *
+ * All AI/report generation MUST go through VITE_CORE_API_URL (your backend proxy).
+ * The frontend NEVER calls AI providers directly.
+ *
+ * When VITE_CORE_API_URL is not configured, functions throw a clear error so
+ * the UI can surface "Backend externe non configuré".
  */
 
-const CORE_API_URL = import.meta.env.VITE_CORE_API_URL as string | undefined;
-const AI_GATEWAY_URL = import.meta.env.VITE_AI_GATEWAY_URL as string | undefined;
+const CORE_API_URL = (import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '');
+const AI_GATEWAY_URL = (import.meta.env.VITE_AI_GATEWAY_URL as string | undefined)?.replace(/\/$/, '');
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,10 +66,12 @@ function requireCoreApi(): string {
 }
 
 function requireAiGateway(): string {
-  if (!AI_GATEWAY_URL) {
+  // AI gateway falls back to core API if only one URL is configured
+  const base = AI_GATEWAY_URL ?? CORE_API_URL;
+  if (!base) {
     throw new Error('Backend externe non configuré (VITE_AI_GATEWAY_URL manquant)');
   }
-  return AI_GATEWAY_URL;
+  return base;
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -86,14 +92,14 @@ function authHeaders(token: string): HeadersInit {
 // ─── API Functions ────────────────────────────────────────────────────────────
 
 /**
- * Create a new tool run on the external core backend.
+ * Create a new tool run via the external core backend.
  */
 export async function createToolRun(
   payload: CreateToolRunPayload,
   token: string
 ): Promise<CreateToolRunResult> {
   const base = requireCoreApi();
-  const res = await fetch(`${base}/tool-runs`, {
+  const res = await fetch(`${base}/v1/tool-runs`, {
     method: 'POST',
     headers: authHeaders(token),
     body: JSON.stringify(payload),
@@ -114,42 +120,53 @@ export async function uploadToolRunArtifact(
   formData.append('tool_run_id', payload.tool_run_id);
   formData.append('organization_id', payload.organization_id);
 
-  const res = await fetch(`${base}/tool-runs/${payload.tool_run_id}/artifact`, {
+  const res = await fetch(`${base}/v1/tool-runs/${payload.tool_run_id}/artifact`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` }, // no Content-Type — let browser set multipart boundary
+    headers: { Authorization: `Bearer ${token}` }, // no Content-Type — browser sets multipart boundary
     body: formData,
   });
   return handleResponse<UploadArtifactResult>(res);
 }
 
 /**
- * Trigger executive report generation via the AI gateway.
+ * Trigger executive (DG/PDG) report generation.
+ * Calls POST VITE_CORE_API_URL/v1/reports/executive
+ * Payload: { tool_run_id }
+ *
+ * NOTE: The frontend NEVER calls an AI provider directly.
+ * Your backend proxy at VITE_CORE_API_URL is responsible for:
+ *  - validating the request
+ *  - building the fact_pack
+ *  - calling the AI (Qwen, GPT, etc.)
+ *  - storing the result
  */
 export async function generateExecutiveReport(
-  payload: GenerateReportPayload,
+  runId: string,
   token: string
 ): Promise<GenerateReportResult> {
   const base = requireAiGateway();
-  const res = await fetch(`${base}/reports/executive`, {
+  const res = await fetch(`${base}/v1/reports/executive`, {
     method: 'POST',
     headers: authHeaders(token),
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
   });
   return handleResponse<GenerateReportResult>(res);
 }
 
 /**
- * Trigger technical report generation via the AI gateway.
+ * Trigger technical (DSI) report generation.
+ * Calls POST VITE_CORE_API_URL/v1/reports/technical
+ * Payload: { tool_run_id }
  */
 export async function generateTechnicalReport(
-  payload: GenerateReportPayload,
+  runId: string,
   token: string
 ): Promise<GenerateReportResult> {
   const base = requireAiGateway();
-  const res = await fetch(`${base}/reports/technical`, {
+  const res = await fetch(`${base}/v1/reports/technical`, {
     method: 'POST',
     headers: authHeaders(token),
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
   });
   return handleResponse<GenerateReportResult>(res);
 }
@@ -162,7 +179,7 @@ export async function verifyEvidenceChain(
   token: string
 ): Promise<VerifyChainResult> {
   const base = requireCoreApi();
-  const res = await fetch(`${base}/evidence/verify-chain`, {
+  const res = await fetch(`${base}/v1/evidence/verify-chain`, {
     method: 'POST',
     headers: authHeaders(token),
     body: JSON.stringify(payload),
@@ -170,14 +187,14 @@ export async function verifyEvidenceChain(
   return handleResponse<VerifyChainResult>(res);
 }
 
-// ─── Config check ─────────────────────────────────────────────────────────────
+// ─── Config helpers ───────────────────────────────────────────────────────────
 
 /**
  * Returns true if the external backend is configured.
  * Use this to conditionally show "Backend externe non configuré" in the UI.
  */
 export function isExternalBackendConfigured(): boolean {
-  return Boolean(CORE_API_URL && AI_GATEWAY_URL);
+  return Boolean(CORE_API_URL);
 }
 
 export const apiClient = {
