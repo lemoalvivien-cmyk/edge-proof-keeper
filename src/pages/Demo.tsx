@@ -23,6 +23,7 @@ import {
   Wifi,
   Mail,
   Cloud,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { DemoBanner } from '@/components/ui/DemoBanner';
+import { DemoRequestDialog } from '@/components/ui/DemoRequestDialog';
 import {
   DEMO_SUMMARY,
   DEMO_ASSETS,

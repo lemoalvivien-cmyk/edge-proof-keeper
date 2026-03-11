@@ -112,11 +112,21 @@ export function PricingSection() {
                       asChild
                     >
                       <Link to="/auth">
-                        Se connecter
+                        Démarrer maintenant
                         <ArrowRight className="w-5 h-5 ml-2" />
                       </Link>
                     </Button>
                   )}
+
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full h-12 text-base border-primary/40 text-primary hover:bg-primary/10 gap-2"
+                    onClick={() => setDemoDialogOpen(true)}
+                  >
+                    <Calendar className="w-5 h-5" />
+                    Parler à un expert — démo personnalisée
+                  </Button>
                   
                   <div className="p-4 rounded-xl bg-primary/10 border border-primary/30 text-center">
                     <p className="text-sm text-foreground font-medium">
@@ -132,6 +142,13 @@ export function PricingSection() {
           </motion.div>
         </div>
       </div>
+
+      <DemoRequestDialog
+        open={demoDialogOpen}
+        onOpenChange={setDemoDialogOpen}
+        ctaOrigin="pricing_cta"
+        sourcePage="/pricing"
+      />
     </section>
   );
 }
