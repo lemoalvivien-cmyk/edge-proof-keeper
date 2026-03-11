@@ -7,6 +7,7 @@ import {
   Server,
   ArrowRight,
   ListTodo,
+  FlaskConical,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
