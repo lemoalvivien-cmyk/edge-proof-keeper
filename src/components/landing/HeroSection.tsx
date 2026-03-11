@@ -127,10 +127,10 @@ export function HeroSection() {
               className="h-13 px-6 text-base text-muted-foreground hover:text-foreground gap-2 w-full sm:w-auto"
               onClick={() => {
                 trackEvent('cta_demander_demo', { source_page: '/', cta_origin: 'hero_ghost' });
-                setDemoDialogOpen(true);
+                openBookingOrFallback(() => setDemoDialogOpen(true));
               }}
             >
-              <Calendar className="w-5 h-5" />
+              <CalendarDays className="w-5 h-5" />
               Demander une démo
             </Button>
           </motion.div>
