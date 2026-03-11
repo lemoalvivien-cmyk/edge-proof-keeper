@@ -42,3 +42,6 @@ verify_jwt = false
 
 [functions.platform-health]
 verify_jwt = false
+
+[functions.submit-sales-lead]
+verify_jwt = false
