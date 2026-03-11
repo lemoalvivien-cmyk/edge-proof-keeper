@@ -73,6 +73,8 @@ export default function AdminReadiness() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const coreApiConfigured = Boolean(import.meta.env.VITE_CORE_API_URL);
+  const revenue = getRevenueLinks();
+
 
   const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: ['platform-health-readiness', organization?.id, refreshKey],
