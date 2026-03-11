@@ -1037,6 +1037,51 @@ export type Database = {
           },
         ]
       }
+      sales_leads: {
+        Row: {
+          company: string
+          company_size: string | null
+          created_at: string
+          cta_origin: string | null
+          email: string
+          full_name: string
+          id: string
+          interest_type: string | null
+          message: string | null
+          role: string | null
+          source_page: string | null
+          status: string
+        }
+        Insert: {
+          company: string
+          company_size?: string | null
+          created_at?: string
+          cta_origin?: string | null
+          email: string
+          full_name: string
+          id?: string
+          interest_type?: string | null
+          message?: string | null
+          role?: string | null
+          source_page?: string | null
+          status?: string
+        }
+        Update: {
+          company?: string
+          company_size?: string | null
+          created_at?: string
+          cta_origin?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          interest_type?: string | null
+          message?: string | null
+          role?: string | null
+          source_page?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       scans: {
         Row: {
           asset_id: string | null

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SOLO_MODE } from "@/config/app";
+import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,11 +23,10 @@ const offresLinks = [
 export function LandingNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -52,7 +51,7 @@ export function LandingNav() {
             </span>
             <span className="hidden sm:flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-success" />
-              Preuve d'autorisation obligatoire
+              Preuve autorisation obligatoire
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-success" />
@@ -75,32 +74,33 @@ export function LandingNav() {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
               <Shield className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
-              <span className="text-lg font-bold text-foreground hidden sm:block">
-                SENTINEL EDGE
-              </span>
+              <span className="text-lg font-bold text-foreground hidden sm:block">SENTINEL EDGE</span>
             </Link>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-5">
               <button
                 onClick={() => scrollToSection("how-it-works")}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Comment ça marche
               </button>
-              
-              {/* Offres Dropdown */}
+
+              <Link
+                to="/demo"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Démo
+              </Link>
+
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Offres
-                  <ChevronDown className="w-4 h-4" />
+                  Offres <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center" className="w-56">
                   {offresLinks.map((link) => (
                     <DropdownMenuItem key={link.href} asChild>
-                      <Link to={link.href} className="cursor-pointer">
-                        {link.label}
-                      </Link>
+                      <Link to={link.href} className="cursor-pointer">{link.label}</Link>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -112,13 +112,16 @@ export function LandingNav() {
               >
                 Tarifs
               </Link>
-              <button
-                onClick={() => scrollToSection("faq")}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-primary/40 text-primary hover:bg-primary/10"
+                onClick={() => setDemoDialogOpen(true)}
               >
-                FAQ
-              </button>
-              
+                Demander une démo
+              </Button>
+
               <Button size="sm" className="neon-glow" asChild>
                 <Link to="/dashboard">Accéder au cockpit</Link>
               </Button>
@@ -149,8 +152,15 @@ export function LandingNav() {
               >
                 Comment ça marche
               </button>
-              
-              {/* Mobile Offres */}
+
+              <Link
+                to="/demo"
+                className="block text-muted-foreground hover:text-foreground py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Démo interactive
+              </Link>
+
               <div className="py-2">
                 <p className="text-sm font-medium text-foreground mb-2">Offres</p>
                 <div className="pl-4 space-y-2">
@@ -174,13 +184,15 @@ export function LandingNav() {
               >
                 Tarifs
               </Link>
-              <button
-                onClick={() => scrollToSection("faq")}
-                className="block w-full text-left text-muted-foreground hover:text-foreground py-2"
+
+              <Button
+                variant="outline"
+                className="w-full border-primary/40 text-primary"
+                onClick={() => { setIsMobileMenuOpen(false); setDemoDialogOpen(true); }}
               >
-                FAQ
-              </button>
-              
+                Demander une démo
+              </Button>
+
               <Button className="w-full neon-glow" asChild>
                 <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
                   Accéder au cockpit
@@ -190,6 +202,13 @@ export function LandingNav() {
           </motion.div>
         )}
       </motion.header>
+
+      <DemoRequestDialog
+        open={demoDialogOpen}
+        onOpenChange={setDemoDialogOpen}
+        ctaOrigin="nav_cta"
+        sourcePage="/"
+      />
     </>
   );
 }
