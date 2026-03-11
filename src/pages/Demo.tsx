@@ -162,6 +162,7 @@ type Tab = 'overview' | 'executive' | 'technical';
 export default function Demo() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('overview');
+  const [demoContactOpen, setDemoContactOpen] = useState(false);
   const riskCfg = RISK_LEVEL_CONFIG[DEMO_EXECUTIVE_REPORT.risk_level] ?? RISK_LEVEL_CONFIG.medium;
 
   return (
