@@ -93,9 +93,9 @@ export default function ReportStudio() {
 
         {/* Backend config warning */}
         {!backendConfigured && (
-          <Alert variant="default" className="border-yellow-500/40 bg-yellow-500/5">
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-            <AlertDescription className="text-yellow-600 dark:text-yellow-400">
+          <Alert variant="default" className="border-warning/40 bg-warning/5">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <AlertDescription className="text-warning-foreground">
               <strong>Backend externe non configuré.</strong> Définissez{' '}
               <code className="font-mono text-xs bg-muted px-1 rounded">VITE_CORE_API_URL</code> pour
               activer la génération de rapports via votre proxy IA.
