@@ -61,7 +61,7 @@ const adminItems = [
   { title: 'Paramètres', href: '/settings', icon: Settings },
   { title: 'Plans & Add-ons', href: '/plans', icon: CreditCard },
   { title: 'GO/NO-GO', href: '/go-no-go', icon: CheckSquare },
-  { title: 'Admin Readiness', href: '/admin-readiness', icon: CheckSquare },
+  { title: 'Admin Readiness', href: '/admin-readiness', icon: Gauge },
   { title: 'Test API', href: '/api-test', icon: FlaskConical },
 ];
 
