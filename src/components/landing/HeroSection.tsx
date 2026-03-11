@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, ArrowRight, Sparkles, FlaskConical, Upload, Calendar } from "lucide-react";
+import { Shield, ArrowRight, Sparkles, FlaskConical, Upload, Calendar, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import { trackEvent } from "@/lib/tracking";
+import { openBookingOrFallback } from "@/lib/revenue-links";
+
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
