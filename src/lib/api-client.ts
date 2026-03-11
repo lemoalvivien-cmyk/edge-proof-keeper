@@ -162,15 +162,16 @@ export async function uploadToolRunArtifact(
  */
 export async function generateExecutiveReport(
   runId: string,
-  token: string
-): Promise<GenerateReportResult> {
+  token?: string
+): Promise<ExecutiveReportResult> {
   const base = requireAiGateway();
+  const headers: HeadersInit = token ? authHeaders(token) : { 'Content-Type': 'application/json' };
   const res = await fetch(`${base}/v1/reports/executive`, {
     method: 'POST',
-    headers: authHeaders(token),
+    headers,
     body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
   });
-  return handleResponse<GenerateReportResult>(res);
+  return handleResponse<ExecutiveReportResult>(res);
 }
 
 /**
@@ -180,15 +181,16 @@ export async function generateExecutiveReport(
  */
 export async function generateTechnicalReport(
   runId: string,
-  token: string
-): Promise<GenerateReportResult> {
+  token?: string
+): Promise<TechnicalReportResult> {
   const base = requireAiGateway();
+  const headers: HeadersInit = token ? authHeaders(token) : { 'Content-Type': 'application/json' };
   const res = await fetch(`${base}/v1/reports/technical`, {
     method: 'POST',
-    headers: authHeaders(token),
+    headers,
     body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
   });
-  return handleResponse<GenerateReportResult>(res);
+  return handleResponse<TechnicalReportResult>(res);
 }
 
 /**
