@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Eye, Filter, Search, Plus } from 'lucide-react';
+import { Eye, Filter, Search, Plus, Upload, FileText, ArrowRight, FlaskConical } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,55 @@ const STATUS_COLORS: Record<ToolRunStatus, string> = {
   failed: 'bg-red-500/10 text-red-500',
 };
 
+function EmptyState({ onNew }: { onNew: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-6">
+      {/* Icon */}
+      <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20">
+        <Upload className="h-10 w-10 text-primary" />
+      </div>
+
+      {/* Copy */}
+      <div className="space-y-2 max-w-md">
+        <h3 className="text-xl font-semibold text-foreground">Aucun import pour l'instant</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Importez un rapport d'outil de sécurité (JSON, PDF, CSV) pour que Cyber Serenity 
+          analyse vos vulnérabilités, génère vos preuves et construise votre rapport.
+        </p>
+      </div>
+
+      {/* Steps */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 text-sm text-muted-foreground">
+        {[
+          { icon: <FileText className="h-4 w-4 text-primary" />, label: '1. Choisir l\'outil' },
+          { icon: <Upload className="h-4 w-4 text-primary" />, label: '2. Importer le fichier' },
+          { icon: <Eye className="h-4 w-4 text-primary" />, label: '3. Voir le résultat' },
+        ].map((s, i) => (
+          <div key={i} className="flex items-center gap-2">
+            {i > 0 && <ArrowRight className="h-3 w-3 hidden sm:block" />}
+            <div className="flex items-center gap-2 rounded-lg bg-muted/30 border border-border px-3 py-2">
+              {s.icon}
+              <span>{s.label}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* CTAs */}
+      <div className="flex gap-3 flex-wrap justify-center">
+        <Button onClick={onNew} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Créer mon premier import
+        </Button>
+        <Button variant="outline" onClick={() => window.open('/demo', '_blank')} className="gap-2">
+          <FlaskConical className="h-4 w-4 text-warning" />
+          Voir un exemple de résultat
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function Runs() {
   const navigate = useNavigate();
   const { data: runs, isLoading } = useToolRuns();
@@ -42,6 +91,8 @@ export default function Runs() {
     return matchesSearch && matchesStatus;
   }) || [];
 
+  const hasRuns = (runs?.length ?? 0) > 0;
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -51,7 +102,7 @@ export default function Runs() {
           <div>
             <h1 className="text-2xl font-bold">Imports & Runs</h1>
             <p className="text-muted-foreground">
-              Historique des imports de résultats
+              Importez vos rapports d'outils de sécurité pour analyse automatisée
             </p>
           </div>
           <Button onClick={() => navigate('/tools')}>
@@ -60,43 +111,45 @@ export default function Runs() {
           </Button>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher par outil..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
+        {/* Filters — only if there's data */}
+        {hasRuns && (
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par outil..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        )}
 
-        {/* Runs table */}
+        {/* Content */}
         <Card>
           <CardContent className="p-0">
             {isLoading ? (
               <div className="p-8 text-center text-muted-foreground">
                 Chargement...
               </div>
+            ) : !hasRuns ? (
+              <EmptyState onNew={() => navigate('/tools')} />
             ) : filteredRuns.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
-                Aucun import trouvé.
+                Aucun import correspondant aux filtres.
               </div>
             ) : (
               <Table>
@@ -130,24 +183,16 @@ export default function Runs() {
                         {run.summary ? (
                           <div className="flex gap-1 text-xs">
                             {(run.summary.critical ?? 0) > 0 && (
-                              <Badge variant="destructive" className="text-xs">
-                                {run.summary.critical} C
-                              </Badge>
+                              <Badge variant="destructive" className="text-xs">{run.summary.critical} C</Badge>
                             )}
                             {(run.summary.high ?? 0) > 0 && (
-                              <Badge className="bg-orange-500/10 text-orange-500 text-xs">
-                                {run.summary.high} H
-                              </Badge>
+                              <Badge className="bg-orange-500/10 text-orange-500 text-xs">{run.summary.high} H</Badge>
                             )}
                             {(run.summary.medium ?? 0) > 0 && (
-                              <Badge className="bg-yellow-500/10 text-yellow-500 text-xs">
-                                {run.summary.medium} M
-                              </Badge>
+                              <Badge className="bg-yellow-500/10 text-yellow-500 text-xs">{run.summary.medium} M</Badge>
                             )}
                             {(run.summary.low ?? 0) > 0 && (
-                              <Badge className="bg-blue-500/10 text-blue-500 text-xs">
-                                {run.summary.low} L
-                              </Badge>
+                              <Badge className="bg-blue-500/10 text-blue-500 text-xs">{run.summary.low} L</Badge>
                             )}
                             {run.summary.total === 0 && (
                               <span className="text-muted-foreground">—</span>
