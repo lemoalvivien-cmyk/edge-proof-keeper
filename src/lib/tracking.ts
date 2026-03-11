@@ -25,7 +25,8 @@ export async function trackEvent(
   options: TrackEventOptions = {},
 ): Promise<void> {
   try {
-    await supabase.from('conversion_events').insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('conversion_events').insert({
       event_name,
       source_page: options.source_page ?? (typeof window !== 'undefined' ? window.location.pathname : '/'),
       cta_origin: options.cta_origin ?? null,
