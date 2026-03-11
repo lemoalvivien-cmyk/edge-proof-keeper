@@ -17,6 +17,7 @@ import {
   CreditCard,
   AlertTriangle,
   Wand2,
+  FlaskConical,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -59,6 +60,7 @@ const adminItems = [
   { title: 'Paramètres', href: '/settings', icon: Settings },
   { title: 'Plans & Add-ons', href: '/plans', icon: CreditCard },
   { title: 'GO/NO-GO', href: '/go-no-go', icon: CheckSquare },
+  { title: 'Test API', href: '/api-test', icon: FlaskConical },
 ];
 
 export function AppSidebar() {
