@@ -86,10 +86,10 @@ function ExecutiveReport({ data }: { data: ExecutiveReportResult }) {
             <ShieldAlert className="h-4 w-4 text-primary" />
             Priorités immédiates
           </h3>
-          <ul className="space-y-1.5">
+      <ul className="space-y-1.5">
             {data.top_priorities.map((p, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <span className="mt-0.5 h-4 w-4 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
+                <span className="mt-0.5 h-4 w-4 rounded-full border border-primary/30 bg-primary/5 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
                 {p}
               </li>
             ))}
