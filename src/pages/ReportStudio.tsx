@@ -143,7 +143,7 @@ function FindingCard({ finding, index }: { finding: TechnicalFinding; index: num
         )}
         {finding.remediation && (
           <div className="flex items-start gap-2">
-            <Wrench className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+            <Wrench className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
             <span className="text-muted-foreground"><span className="font-medium text-foreground">Remédiation :</span> {finding.remediation}</span>
           </div>
         )}
