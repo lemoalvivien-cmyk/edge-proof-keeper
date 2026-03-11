@@ -39,9 +39,29 @@ export interface GenerateReportPayload {
   tool_run_id: string;
 }
 
-export interface GenerateReportResult {
-  report_id: string;
-  status: 'generating' | 'ready' | 'failed';
+// ─── Executive Report (DG / PDG) ──────────────────────────────────────────────
+
+export interface ExecutiveReportResult {
+  summary: string;
+  risk_level: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  business_impact: string;
+  top_priorities: string[];
+  recommendations: string[];
+}
+
+// ─── Technical Report (DSI) ───────────────────────────────────────────────────
+
+export interface TechnicalFinding {
+  title: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  asset: string;
+  evidence: string;
+  remediation: string;
+}
+
+export interface TechnicalReportResult {
+  summary: string;
+  findings: TechnicalFinding[];
 }
 
 export interface VerifyChainPayload {
