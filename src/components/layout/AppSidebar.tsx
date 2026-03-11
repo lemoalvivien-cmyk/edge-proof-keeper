@@ -50,6 +50,7 @@ const operationsItems = [
 
 const auditItems = [
   { title: 'Rapports', href: '/reports', icon: FileBarChart },
+  { title: 'Report Studio', href: '/report-studio', icon: Wand2 },
   { title: 'Journal de Preuves', href: '/evidence', icon: BookOpen },
   { title: 'Proof Packs', href: '/proofs', icon: Package },
 ];
