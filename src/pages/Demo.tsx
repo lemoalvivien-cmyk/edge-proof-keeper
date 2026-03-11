@@ -422,10 +422,23 @@ export default function Demo() {
                 <p className="text-sm text-muted-foreground">
                   Convaincu ? Lancez votre vrai audit en moins de 10 minutes.
                 </p>
-                <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
-                  <Shield className="h-4 w-4" />
-                  Démarrer gratuitement
-                </Button>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      trackEvent('cta_demander_demo', { source_page: '/demo', cta_origin: 'demo_executive_cta' });
+                      openBookingOrFallback(() => setDemoContactOpen(true));
+                    }}
+                    className="gap-2"
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                    Demander une démo
+                  </Button>
+                  <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
+                    <Shield className="h-4 w-4" />
+                    Démarrer gratuitement
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
