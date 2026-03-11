@@ -197,6 +197,22 @@ export function isExternalBackendConfigured(): boolean {
   return Boolean(CORE_API_URL);
 }
 
+/**
+ * Health check for the external backend.
+ * Calls GET VITE_CORE_API_URL/health
+ */
+export async function getHealth(): Promise<unknown> {
+  const base = import.meta.env.VITE_CORE_API_URL as string | undefined;
+  if (!base) {
+    throw new Error('Backend externe non configuré');
+  }
+  const response = await fetch(`${base}/health`);
+  if (!response.ok) {
+    throw new Error('API Cyber Serenity indisponible');
+  }
+  return response.json();
+}
+
 export const apiClient = {
   createToolRun,
   uploadToolRunArtifact,
@@ -204,4 +220,5 @@ export const apiClient = {
   generateTechnicalReport,
   verifyEvidenceChain,
   isExternalBackendConfigured,
+  getHealth,
 };
