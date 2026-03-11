@@ -23,7 +23,7 @@ import {
   Wifi,
   Mail,
   Cloud,
-  Calendar,
+  CalendarDays,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,8 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { DemoBanner } from '@/components/ui/DemoBanner';
 import { DemoRequestDialog } from '@/components/ui/DemoRequestDialog';
+import { openBookingOrFallback } from '@/lib/revenue-links';
+import { trackEvent } from '@/lib/tracking';
 import {
   DEMO_SUMMARY,
   DEMO_ASSETS,
@@ -39,6 +41,7 @@ import {
   DEMO_TECHNICAL_REPORT,
   type DemoFinding,
 } from '@/lib/demo-data';
+
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
