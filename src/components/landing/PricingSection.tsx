@@ -1,10 +1,11 @@
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Shield, ArrowRight, Sparkles } from "lucide-react";
+import { Check, Shield, ArrowRight, Sparkles, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
+import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 
 const features = [
   "Diagnostic cyber complet",

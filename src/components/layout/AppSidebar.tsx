@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Wand2,
   FlaskConical,
+  Gauge,
 } from 'lucide-react';
 import {
   Sidebar,
