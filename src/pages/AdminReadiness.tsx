@@ -135,7 +135,7 @@ export default function AdminReadiness() {
           label: 'Base de données Lovable Cloud',
           description: 'Connexion Supabase active',
           status: healthOk ? 'ok' : healthLoading ? 'unknown' : 'fail',
-          detail: healthOk ? `${health?.open_signals ?? 0} signaux · ${health?.open_risks ?? 0} risques ouverts` : undefined,
+          detail: healthOk ? `${health?.org_counts?.open_signals ?? 0} signaux · ${health?.org_counts?.open_risks ?? 0} risques ouverts` : undefined,
         },
         {
           label: 'Backend externe (VITE_CORE_API_URL)',
