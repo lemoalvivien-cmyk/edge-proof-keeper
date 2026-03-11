@@ -48,6 +48,7 @@ import RemediationPatchBridge from "./pages/offres/RemediationPatchBridge";
 import ContinuousGovernance from "./pages/offres/ContinuousGovernance";
 import EasmOsintSignals from "./pages/offres/EasmOsintSignals";
 import PlansAddons from "./pages/PlansAddons";
+import Demo from "./pages/Demo";
 
 const queryClient = new QueryClient();
 
