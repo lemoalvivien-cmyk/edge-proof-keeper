@@ -190,10 +190,14 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {topFindings.length === 0 ? (
+          {topFindings.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                <p>Aucun finding critique ou élevé à traiter</p>
+                <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-success" />
+                <p className="mb-4">Aucun finding critique ou élevé à traiter</p>
+                <Button variant="outline" size="sm" onClick={() => navigate('/demo')} className="gap-2">
+                  <FlaskConical className="h-4 w-4 text-warning" />
+                  Voir une démonstration
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
