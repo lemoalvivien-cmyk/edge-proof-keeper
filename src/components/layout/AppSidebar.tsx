@@ -20,6 +20,7 @@ import {
   FlaskConical,
   Gauge,
   Users,
+  DollarSign,
 } from 'lucide-react';
 import {
   Sidebar,
