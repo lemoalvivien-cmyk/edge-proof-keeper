@@ -33,6 +33,7 @@ import Proofs from "./pages/Proofs";
 import Risks from "./pages/Risks";
 import Findings from "./pages/Findings";
 import NotFound from "./pages/NotFound";
+import ApiTest from "./pages/ApiTest";
 import ReportStudio from "./pages/ReportStudio";
 // Legal pages
 import Terms from "./pages/legal/Terms";
