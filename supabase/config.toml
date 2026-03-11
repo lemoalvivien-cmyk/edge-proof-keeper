@@ -26,3 +26,19 @@ verify_jwt = true
 
 [functions.export-proof-pack]
 verify_jwt = true
+
+# ─── Core Engine Functions ──────────────────────────────────────────────────
+[functions.ingest-signals]
+verify_jwt = false
+
+[functions.correlate-risks]
+verify_jwt = false
+
+[functions.analyze-signal-with-gemini]
+verify_jwt = false
+
+[functions.generate-remediation-plan]
+verify_jwt = false
+
+[functions.platform-health]
+verify_jwt = false
