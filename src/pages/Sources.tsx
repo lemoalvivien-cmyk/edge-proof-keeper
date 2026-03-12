@@ -357,9 +357,9 @@ export default function Sources() {
     mutationFn: async (data: SourceFormData) => {
       if (!organization?.id || !user?.id) throw new Error('Non authentifié');
 
-      const config: Record<string, unknown> = {};
-      if (data.provider_type) config.provider_type = data.provider_type;
-      if (data.domain) config.domain = data.domain;
+      const configObj: Record<string, string> = {};
+      if (data.provider_type) configObj['provider_type'] = data.provider_type;
+      if (data.domain) configObj['domain'] = data.domain;
 
       const { error } = await supabase
         .from('data_sources')
@@ -369,7 +369,7 @@ export default function Sources() {
           source_type: data.source_type,
           category: data.category,
           status: 'not_configured',
-          config: config as Record<string, unknown>,
+          config: configObj,
         }]);
 
       if (error) throw error;
