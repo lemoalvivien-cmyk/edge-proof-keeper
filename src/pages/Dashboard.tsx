@@ -389,7 +389,109 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        {/* Live Proof Panel — Pipeline Produit */}
+        <Card className={`border-2 ${
+          pipelineState === 'done' ? 'border-success/50 bg-success/[0.02]' :
+          pipelineState === 'error' ? 'border-destructive/50 bg-destructive/[0.02]' :
+          pipelineState === 'running' ? 'border-primary/50' :
+          (pipelineProof?.runs ?? 0) > 0 ? 'border-success/30 bg-success/[0.015]' :
+          'border-primary/30'
+        }`}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Preuve Produit Live
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                {pipelineState === 'idle' && (pipelineProof?.runs ?? 0) === 0 && (
+                  <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted">NON LANCÉ</Badge>
+                )}
+                {pipelineState === 'idle' && (pipelineProof?.runs ?? 0) > 0 && (
+                  <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">✓ PIPELINE ACTIF</Badge>
+                )}
+                {pipelineState === 'running' && (
+                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">EN COURS…</Badge>
+                )}
+                {pipelineState === 'done' && (
+                  <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">✓ PROUVÉ</Badge>
+                )}
+                {pipelineState === 'error' && (
+                  <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30">ÉCHEC</Badge>
+                )}
+              </div>
+            </div>
+            <CardDescription>
+              État réel du pipeline : runs · findings · synthèse executive
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* DB state indicators */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Runs en DB</p>
+                <p className={`text-2xl font-black ${(pipelineProof?.runs ?? 0) > 0 ? 'text-success' : 'text-muted-foreground'}`}>
+                  {pipelineProof?.runs ?? 0}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Findings normalisés</p>
+                <p className={`text-2xl font-black ${(pipelineProof?.findings ?? 0) > 0 ? 'text-success' : 'text-muted-foreground'}`}>
+                  {pipelineProof?.findings ?? 0}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Synthèses IA</p>
+                <p className={`text-2xl font-black ${(pipelineProof?.summaries ?? 0) > 0 ? 'text-success' : 'text-muted-foreground'}`}>
+                  {pipelineProof?.summaries ?? 0}
+                </p>
+              </div>
+            </div>
+
+            {/* Pipeline result message */}
+            {pipelineMsg && (
+              <div className={`rounded-lg border px-3 py-2 text-xs font-mono ${
+                pipelineState === 'done' ? 'border-success/30 bg-success/5 text-success' :
+                pipelineState === 'error' ? 'border-destructive/30 bg-destructive/5 text-destructive' :
+                'border-primary/20 bg-primary/5 text-primary'
+              }`}>
+                {pipelineRunning && <Loader2 className="h-3 w-3 animate-spin inline mr-1.5" />}
+                {pipelineMsg}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={handleQuickPipeline}
+                disabled={!organization?.id || pipelineRunning}
+                className="gap-1.5"
+              >
+                {pipelineRunning
+                  ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
+                  : <><Play className="h-4 w-4" />Lancer la preuve live</>}
+              </Button>
+              {(pipelineProof?.summaries ?? 0) > 0 && (
+                <Button size="sm" variant="outline" asChild className="gap-1.5">
+                  <Link to="/report-studio">
+                    <BarChart3 className="h-4 w-4" />Voir la synthèse
+                  </Link>
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" asChild className="gap-1.5 text-xs">
+                <Link to="/admin-readiness">
+                  <FileText className="h-3.5 w-3.5" />Preuve complète →
+                </Link>
+              </Button>
+            </div>
+            {(pipelineProof?.runs ?? 0) === 0 && pipelineState === 'idle' && (
+              <p className="text-[10px] font-mono text-muted-foreground">
+                Aucun run en DB · Cliquez "Lancer la preuve live" pour exécuter le pipeline avec des données [DEMO] fictives et prouver la chaîne de valeur
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
       </div>
     </AppLayout>
   );
