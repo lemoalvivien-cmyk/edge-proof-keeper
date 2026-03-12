@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useBootstrapState } from '@/hooks/useBootstrapState';
 import { BootstrapBanner } from '@/components/ui/BootstrapBanner';
 import {
   DollarSign,
@@ -28,6 +30,8 @@ import {
   Server,
   Brain,
   Settings2,
+  Rocket,
+  ArrowRight,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -124,12 +128,160 @@ function ConfigField({
   );
 }
 
+// ── Quick Activation Block ────────────────────────────────────────────────────
+// Shown only when bootstrap is in config_missing or tenant_ready state.
+// Minimal single-field form: just booking_url to unblock the CTA pipeline.
+
+function QuickActivationBlock({
+  currentBookingUrl,
+  currentStarterUrl,
+  orgId,
+  onActivated,
+}: {
+  currentBookingUrl: string;
+  currentStarterUrl: string;
+  orgId: string;
+  onActivated: () => void;
+}) {
+  const { toast } = useToast();
+  const [bookingUrl, setBookingUrl] = useState(currentBookingUrl);
+  const [starterUrl, setStarterUrl] = useState(currentStarterUrl);
+  const [saving, setSaving] = useState(false);
+  const [urlError, setUrlError] = useState('');
+  const [starterError, setStarterError] = useState('');
+
+  const hasAtLeastOne = bookingUrl.trim() || starterUrl.trim();
+
+  const handleActivate = async () => {
+    // Validate
+    let valid = true;
+    if (bookingUrl && !isValidUrl(bookingUrl)) {
+      setUrlError('URL invalide (ex: https://calendly.com/...)');
+      valid = false;
+    } else {
+      setUrlError('');
+    }
+    if (starterUrl && !isValidUrl(starterUrl)) {
+      setStarterError('URL invalide (ex: https://buy.stripe.com/...)');
+      valid = false;
+    } else {
+      setStarterError('');
+    }
+    if (!hasAtLeastOne) {
+      setUrlError('Saisir au moins une URL pour activer les CTAs publics.');
+      return;
+    }
+    if (!valid) return;
+
+    setSaving(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('app_runtime_config')
+        .upsert({
+          organization_id: orgId,
+          booking_url: bookingUrl.trim() || null,
+          starter_checkout_url: starterUrl.trim() || null,
+          sales_mode: bookingUrl.trim() ? 'booking_first' : 'checkout_first',
+          reports_mode: 'internal_fallback',
+        }, { onConflict: 'organization_id' });
+
+      if (error) throw error;
+
+      toast({
+        title: '✅ Mode nominal activé',
+        description: 'Les CTAs publics utilisent désormais la config DB. Rechargez /pricing pour constater.',
+      });
+      onActivated();
+    } catch (err) {
+      toast({
+        title: 'Erreur',
+        description: (err as Error).message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="border-primary/40 bg-primary/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2 text-primary">
+          <Rocket className="h-4 w-4" />
+          Activation rapide — saisir au minimum une URL
+        </CardTitle>
+        <CardDescription>
+          Renseignez au moins un lien commercial pour que les CTAs publics sortent du mode "lead capture".
+          Un seul champ suffit. Vous pouvez compléter le reste ensuite.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="qa_booking_url" className="flex items-center gap-2 text-sm font-medium">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            URL de booking <span className="text-muted-foreground font-normal text-xs">(Calendly, Cal.com…)</span>
+          </Label>
+          <Input
+            id="qa_booking_url"
+            placeholder="https://calendly.com/votre-equipe/demo"
+            value={bookingUrl}
+            onChange={e => { setBookingUrl(e.target.value); setUrlError(''); }}
+            className={urlError ? 'border-destructive' : ''}
+            disabled={saving}
+          />
+          {urlError && <p className="text-xs text-destructive">{urlError}</p>}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Separator className="flex-1" />
+          <span className="text-xs text-muted-foreground">ou</span>
+          <Separator className="flex-1" />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="qa_starter_url" className="flex items-center gap-2 text-sm font-medium">
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            URL checkout Starter <span className="text-muted-foreground font-normal text-xs">(Stripe, LemonSqueezy…)</span>
+          </Label>
+          <Input
+            id="qa_starter_url"
+            placeholder="https://buy.stripe.com/..."
+            value={starterUrl}
+            onChange={e => { setStarterUrl(e.target.value); setStarterError(''); }}
+            className={starterError ? 'border-destructive' : ''}
+            disabled={saving}
+          />
+          {starterError && <p className="text-xs text-destructive">{starterError}</p>}
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <p className="text-xs text-muted-foreground">
+            Effet immédiat sur /pricing et /landing après sauvegarde.
+          </p>
+          <Button
+            onClick={handleActivate}
+            disabled={saving || !hasAtLeastOne}
+            className="gap-2"
+          >
+            {saving
+              ? <><Loader2 className="h-4 w-4 animate-spin" />Activation…</>
+              : <><Rocket className="h-4 w-4" />Activer le mode nominal<ArrowRight className="h-4 w-4" /></>
+            }
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function RevenueSettings() {
   const { organization } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const bs = useBootstrapState();
 
   const defaultForm: FormState = {
     core_api_url: '', ai_gateway_url: '',
@@ -248,6 +400,7 @@ export default function RevenueSettings() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['app-runtime-config'] });
       qc.invalidateQueries({ queryKey: ['commercial-config'] });
+      qc.invalidateQueries({ queryKey: ['public-tenant-config'] });
       setIsDirty(false);
       toast({ title: 'Configuration sauvegardée', description: 'Les paramètres runtime sont actifs immédiatement.' });
     },
@@ -292,6 +445,21 @@ export default function RevenueSettings() {
 
   const isLoading = rtLoading || ccLoading;
 
+  // Show quick-activation block when org exists but no commercial URLs yet
+  const showQuickActivation =
+    bs.phase === 'config_missing' || bs.phase === 'tenant_ready';
+
+  const handleQuickActivated = () => {
+    qc.invalidateQueries({ queryKey: ['app-runtime-config'] });
+    qc.invalidateQueries({ queryKey: ['commercial-config'] });
+    qc.invalidateQueries({ queryKey: ['public-tenant-config'] });
+    // Give DB a moment then refetch
+    setTimeout(() => {
+      qc.invalidateQueries({ queryKey: ['app-runtime-config'] });
+      qc.invalidateQueries({ queryKey: ['public-tenant-config'] });
+    }, 1500);
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6 max-w-2xl mx-auto">
@@ -312,8 +480,42 @@ export default function RevenueSettings() {
           {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
 
-        {/* Bootstrap state */}
+        {/* Bootstrap state banner */}
         <BootstrapBanner />
+
+        {/* ── Quick activation block — shown when config_missing or tenant_ready ── */}
+        {showQuickActivation && organization?.id && (
+          <QuickActivationBlock
+            currentBookingUrl={form.booking_url}
+            currentStarterUrl={form.starter_checkout_url}
+            orgId={organization.id}
+            onActivated={handleQuickActivated}
+          />
+        )}
+
+        {/* Nominal mode proof panel — shown when public_config_ready */}
+        {bs.phase === 'public_config_ready' && (
+          <Card className="border-success/40 bg-success/5">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-success">Mode nominal actif</p>
+                  <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono text-muted-foreground">
+                    <span>tenant_resolved: <span className="text-foreground">true</span></span>
+                    <span>source: <span className="text-foreground">{bs.publicConfigSource}</span></span>
+                    <span>hasCommercialUrls: <span className="text-foreground">true</span></span>
+                    <span>CTAs: <span className="text-foreground">DB-aware</span></span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Les CTAs publics consomment la config DB — pas les env vars.
+                    Vérifiable sur <span className="font-mono">/pricing</span>.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Status bar */}
         <Card>
