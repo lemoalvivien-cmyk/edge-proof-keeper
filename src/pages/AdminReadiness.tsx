@@ -1669,8 +1669,12 @@ function LiveProofPanel({ user, organization }: {
       { label: '⑤ portfolio summary', state: 'idle', result: null },
     ]);
 
-    const updateInlineStep = (idx: number, state: StepState, result: string) => {
-      setInlinePipeSteps(prev => prev.map((s, i) => i === idx ? { ...s, state, result } : i === idx + 1 && state !== 'error' ? { ...s, state: 'running' } : s));
+    const updateInlineStep = (idx: number, stepState: StepState, result: string) => {
+      setInlinePipeSteps(prev => prev.map((s, i) => {
+        if (i === idx) return { ...s, state: stepState, result };
+        if (i === idx + 1 && stepState === 'done') return { ...s, state: 'running' };
+        return s;
+      }));
     };
 
     let runId: string | null = null;
