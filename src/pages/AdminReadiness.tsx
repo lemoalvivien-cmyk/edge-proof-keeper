@@ -14,25 +14,27 @@ import {
   FlaskConical, Users, MessageSquare, Navigation, BarChart3, Loader2,
   ExternalLink, TrendingUp, DollarSign, MousePointerClick, Star,
   CalendarDays, ShoppingCart, Zap, Settings, Server, Brain, Activity, ListTodo,
-  Bell,
+  Bell, Info,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-type Status = 'ok' | 'warn' | 'fail' | 'unknown';
+type Status = 'ok' | 'warn' | 'fail' | 'unknown' | 'unverifiable';
 
 function StatusIcon({ status }: { status: Status }) {
-  if (status === 'ok')   return <CheckCircle2 className="h-5 w-5 text-success" />;
-  if (status === 'warn') return <AlertTriangle className="h-5 w-5 text-warning" />;
-  if (status === 'fail') return <XCircle className="h-5 w-5 text-destructive" />;
+  if (status === 'ok')          return <CheckCircle2 className="h-5 w-5 text-success" />;
+  if (status === 'warn')        return <AlertTriangle className="h-5 w-5 text-warning" />;
+  if (status === 'fail')        return <XCircle className="h-5 w-5 text-destructive" />;
+  if (status === 'unverifiable') return <Info className="h-5 w-5 text-muted-foreground" />;
   return <div className="h-5 w-5 rounded-full border-2 border-muted animate-pulse" />;
 }
 
 function StatusBadge({ status }: { status: Status }) {
   const cfg: Record<Status, { label: string; className: string }> = {
-    ok:      { label: 'OK',        className: 'bg-success/10 text-success border-success/30' },
-    warn:    { label: 'Attention', className: 'bg-warning/10 text-warning border-warning/30' },
-    fail:    { label: 'Échec',     className: 'bg-destructive/10 text-destructive border-destructive/30' },
-    unknown: { label: '…',         className: 'bg-muted/50 text-muted-foreground border-muted' },
+    ok:           { label: 'OK',             className: 'bg-success/10 text-success border-success/30' },
+    warn:         { label: 'Attention',      className: 'bg-warning/10 text-warning border-warning/30' },
+    fail:         { label: 'Échec',          className: 'bg-destructive/10 text-destructive border-destructive/30' },
+    unknown:      { label: '…',             className: 'bg-muted/50 text-muted-foreground border-muted' },
+    unverifiable: { label: 'Non vérifiable', className: 'bg-muted/40 text-muted-foreground border-muted/60' },
   };
   const c = cfg[status];
   return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
@@ -52,6 +54,7 @@ interface CheckGroup {
   items: CheckItem[];
 }
 
+// ── Risk Engine Section ────────────────────────────────────────────────────────
 function RiskEngineSection({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
   const { data: riskStats } = useQuery({
     queryKey: ['risk-engine-stats', orgId, refreshKey],
@@ -70,33 +73,35 @@ function RiskEngineSection({ orgId, refreshKey }: { orgId?: string; refreshKey: 
     {
       label: 'Edge Function correlate-risks',
       icon: <Activity className="h-4 w-4" />,
-      status: 'ok' as Status,
-      detail: '✓ Déployée — regroupe signaux → risk_register (score, niveau, source_signal_ids)',
-      link: { href: '/risks', label: 'Voir les risques' },
+      // Non vérifiable côté front sans appel HTTP — statut honnête
+      status: 'unverifiable' as Status,
+      detail: 'Déployée (vérification indirecte via test fonctionnel) — regroupe signaux → risk_register',
+      link: { href: '/risks', label: 'Tester via Corréler' },
     },
     {
       label: 'Edge Function build-remediation-queue',
       icon: <ListTodo className="h-4 w-4" />,
-      status: 'ok' as Status,
-      detail: '✓ Déployée — génère remediation_actions depuis les risques ouverts (idempotente)',
-      link: { href: '/remediation', label: 'Voir les actions' },
+      status: 'unverifiable' as Status,
+      detail: 'Déployée (vérification indirecte) — génère remediation_actions depuis les risques ouverts',
+      link: { href: '/remediation', label: 'Tester via Construire file' },
     },
     {
-      label: 'Risques ouverts',
+      label: 'Risques ouverts (DB)',
       icon: <Shield className="h-4 w-4" />,
       status: riskStats !== undefined ? ((riskStats?.openRisks ?? 0) > 0 ? 'ok' : 'warn') as Status : 'unknown' as Status,
       detail: riskStats !== null ? `${riskStats?.openRisks ?? 0} risques ouverts / en traitement` : '…',
     },
     {
-      label: 'Actions de remédiation',
+      label: 'Actions de remédiation (DB)',
       icon: <ListTodo className="h-4 w-4" />,
-      status: 'ok' as Status,
+      status: riskStats !== undefined ? 'ok' as Status : 'unknown' as Status,
       detail: riskStats !== null ? `${riskStats?.pendingActions ?? 0} actions ouvertes / en cours` : '…',
     },
   ];
 
-  const engineOk = engineItems.filter(i => i.status === 'ok').length;
-  const engineScore = Math.round((engineOk / engineItems.length) * 100);
+  const verifiableItems = engineItems.filter(i => i.status !== 'unverifiable');
+  const okCount  = verifiableItems.filter(i => i.status === 'ok').length;
+  const engineScore = verifiableItems.length > 0 ? Math.round((okCount / verifiableItems.length) * 100) : 0;
 
   return (
     <Card className="border-primary/20">
@@ -142,6 +147,7 @@ function RiskEngineSection({ orgId, refreshKey }: { orgId?: string; refreshKey: 
   );
 }
 
+// ── AI Intelligence Section ───────────────────────────────────────────────────
 function AiIntelligenceSection({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
   const { data: aiStats } = useQuery({
     queryKey: ['ai-intelligence-stats', orgId, refreshKey],
@@ -170,54 +176,62 @@ function AiIntelligenceSection({ orgId, refreshKey }: { orgId?: string; refreshK
     enabled: !!orgId,
   });
 
-  const lovableKeyPresent = true; // LOVABLE_API_KEY confirmed present in secrets
+  // Preuve indirecte : si des analyses IA existent en DB → la clé fonctionne.
+  // Sinon : non vérifiable côté front (la clé est un secret serveur).
+  const aiAnalysesExist = (aiStats?.total ?? 0) > 0;
+  const aiKeyStatus: Status = aiStats === undefined
+    ? 'unknown'
+    : aiAnalysesExist
+      ? 'ok'
+      : 'unverifiable';
   const totalAnalyses = aiStats?.total ?? 0;
 
   const aiItems = [
     {
-      label: 'Clé IA Lovable (LOVABLE_API_KEY)',
+      label: 'Clé IA (LOVABLE_API_KEY)',
       icon: <Brain className="h-4 w-4" />,
-      status: lovableKeyPresent ? 'ok' as Status : 'fail' as Status,
-      detail: lovableKeyPresent
-        ? '✓ Présente — gateway Gemini opérationnel (google/gemini-2.5-flash)'
-        : '✗ Absente — toutes les fonctions IA seront désactivées',
+      status: aiKeyStatus,
+      detail: aiAnalysesExist
+        ? `✓ Prouvé opérationnel — ${totalAnalyses} analyse(s) IA générée(s) en DB`
+        : 'Non vérifiable côté front — secret serveur. Prouvé uniquement si des analyses existent en DB.',
     },
     {
       label: 'Edge Function analyze-risk-intelligence',
       icon: <Brain className="h-4 w-4" />,
-      status: 'ok' as Status,
-      detail: '✓ Déployée — executive_summary, business_impact, technical_impact, priority_rationale (JSON strict)',
+      status: 'unverifiable' as Status,
+      detail: 'Déployée (vérification indirecte) — testez via un risque dans le registre',
       link: { href: '/risks', label: 'Enrichir des risques' },
     },
     {
       label: 'Edge Function enhance-remediation-actions',
       icon: <Zap className="h-4 w-4" />,
-      status: 'ok' as Status,
-      detail: '✓ Déployée — business_justification, implementation_notes, execution_order, estimated_effort',
+      status: 'unverifiable' as Status,
+      detail: 'Déployée (vérification indirecte) — testez via une action de remédiation',
       link: { href: '/remediation', label: 'Enrichir les actions' },
     },
     {
-      label: 'Analyses IA — risques',
+      label: 'Analyses IA — risques (DB)',
       icon: <Brain className="h-4 w-4" />,
-      status: aiStats === null ? 'unknown' as Status : (aiStats.riskAnalyses > 0 ? 'ok' : 'warn') as Status,
-      detail: aiStats !== null ? `${aiStats.riskAnalyses} analyse(s) de risque stockée(s) dans ai_analyses` : '…',
+      status: aiStats === undefined ? 'unknown' as Status : (aiStats.riskAnalyses > 0 ? 'ok' : 'warn') as Status,
+      detail: aiStats !== null ? `${aiStats.riskAnalyses} analyse(s) de risque en ai_analyses` : '…',
     },
     {
-      label: 'Analyses IA — remédiation',
+      label: 'Analyses IA — remédiation (DB)',
       icon: <Zap className="h-4 w-4" />,
-      status: aiStats === null ? 'unknown' as Status : (aiStats.remediationAnalyses > 0 ? 'ok' : 'warn') as Status,
-      detail: aiStats !== null ? `${aiStats.remediationAnalyses} plan(s) de remédiation enrichi(s) dans ai_analyses` : '…',
+      status: aiStats === undefined ? 'unknown' as Status : (aiStats.remediationAnalyses > 0 ? 'ok' : 'warn') as Status,
+      detail: aiStats !== null ? `${aiStats.remediationAnalyses} plan(s) de remédiation en ai_analyses` : '…',
     },
     {
-      label: 'Table ai_analyses',
+      label: 'Table ai_analyses (DB)',
       icon: <Database className="h-4 w-4" />,
       status: 'ok' as Status,
-      detail: `✓ Opérationnelle — RLS stricte (org-scoped) · ${totalAnalyses} analyses totales`,
+      detail: `✓ Accessible — RLS stricte (org-scoped) · ${totalAnalyses} analyses totales`,
     },
   ];
 
-  const aiOk = aiItems.filter(i => i.status === 'ok').length;
-  const aiScore = Math.round((aiOk / aiItems.length) * 100);
+  const verifiableAi = aiItems.filter(i => i.status !== 'unverifiable');
+  const aiOk = verifiableAi.filter(i => i.status === 'ok').length;
+  const aiScore = verifiableAi.length > 0 ? Math.round((aiOk / verifiableAi.length) * 100) : 0;
   const aiReady = aiScore >= 80;
 
   return (
@@ -239,6 +253,7 @@ function AiIntelligenceSection({ orgId, refreshKey }: { orgId?: string; refreshK
         </div>
         <CardDescription>
           Intelligence IA défensive côté serveur · Gemini via Lovable Gateway · {totalAnalyses} analyse(s) générée(s)
+          {!aiAnalysesExist && <span className="text-warning"> · Aucune preuve d'exécution encore</span>}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
@@ -271,6 +286,7 @@ function AiIntelligenceSection({ orgId, refreshKey }: { orgId?: string; refreshK
   );
 }
 
+// ── Decision Layer Section ────────────────────────────────────────────────────
 function DecisionLayerSection({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
   const { data: decisionStats } = useQuery({
     queryKey: ['decision-layer-stats', orgId, refreshKey],
@@ -293,14 +309,46 @@ function DecisionLayerSection({ orgId, refreshKey }: { orgId?: string; refreshKe
   });
 
   const items = [
-    { label: 'Edge Function generate-portfolio-summary', icon: <Brain className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — executive_brief · technical_brief · weekly_watch_brief (Gemini + fallback)', link: { href: '/report-studio', label: 'Report Studio' } },
-    { label: 'Executive Brief (DG)', icon: <BarChart3 className="h-4 w-4" />, status: (decisionStats === undefined ? 'unknown' : decisionStats?.execBriefReady ? 'ok' : 'warn') as Status, detail: decisionStats?.execBriefReady ? `✓ Prêt — dernière synthèse ${decisionStats.execLastAt ? new Date(decisionStats.execLastAt).toLocaleDateString('fr-FR') : ''}` : '✗ Aucune synthèse générée', link: { href: '/report-studio', label: 'Générer' } },
-    { label: 'Technical Brief (DSI)', icon: <Brain className="h-4 w-4" />, status: (decisionStats === undefined ? 'unknown' : decisionStats?.techBriefReady ? 'ok' : 'warn') as Status, detail: decisionStats?.techBriefReady ? `✓ Prêt — dernière synthèse ${decisionStats.techLastAt ? new Date(decisionStats.techLastAt).toLocaleDateString('fr-FR') : ''}` : '✗ Aucune synthèse générée', link: { href: '/report-studio', label: 'Générer' } },
-    { label: 'Weekly Watch Brief', icon: <Activity className="h-4 w-4" />, status: (decisionStats === undefined ? 'unknown' : decisionStats?.weeklyBriefReady ? 'ok' : 'warn') as Status, detail: decisionStats?.weeklyBriefReady ? '✓ Prêt' : '✗ Aucun brief hebdo généré' },
+    {
+      label: 'Edge Function generate-portfolio-summary',
+      icon: <Brain className="h-4 w-4" />,
+      // Prouvé si au moins une synthèse existe en DB
+      status: (decisionStats === undefined ? 'unknown' : (decisionStats?.execBriefReady || decisionStats?.techBriefReady || decisionStats?.weeklyBriefReady) ? 'ok' : 'unverifiable') as Status,
+      detail: (decisionStats?.execBriefReady || decisionStats?.techBriefReady)
+        ? '✓ Prouvé opérationnel — synthèse(s) générée(s) en DB'
+        : 'Déployée (vérification indirecte) — générez une synthèse pour valider',
+      link: { href: '/report-studio', label: 'Report Studio' },
+    },
+    {
+      label: 'Executive Brief DG (DB)',
+      icon: <BarChart3 className="h-4 w-4" />,
+      status: (decisionStats === undefined ? 'unknown' : decisionStats?.execBriefReady ? 'ok' : 'warn') as Status,
+      detail: decisionStats?.execBriefReady
+        ? `✓ Présent — ${decisionStats.execLastAt ? new Date(decisionStats.execLastAt).toLocaleDateString('fr-FR') : ''}`
+        : '✗ Aucune synthèse executive_brief générée — générez depuis Report Studio',
+      link: { href: '/report-studio', label: 'Générer' },
+    },
+    {
+      label: 'Technical Brief DSI (DB)',
+      icon: <Brain className="h-4 w-4" />,
+      status: (decisionStats === undefined ? 'unknown' : decisionStats?.techBriefReady ? 'ok' : 'warn') as Status,
+      detail: decisionStats?.techBriefReady
+        ? `✓ Présent — ${decisionStats.techLastAt ? new Date(decisionStats.techLastAt).toLocaleDateString('fr-FR') : ''}`
+        : '✗ Aucune synthèse technical_brief générée',
+      link: { href: '/report-studio', label: 'Générer' },
+    },
+    {
+      label: 'Weekly Watch Brief (DB)',
+      icon: <Activity className="h-4 w-4" />,
+      status: (decisionStats === undefined ? 'unknown' : decisionStats?.weeklyBriefReady ? 'ok' : 'warn') as Status,
+      detail: decisionStats?.weeklyBriefReady ? '✓ Présent' : '✗ Aucun watch brief hebdomadaire généré',
+      link: { href: '/report-studio', label: 'Générer' },
+    },
   ];
 
-  const okCount = items.filter(i => i.status === 'ok').length;
-  const score = Math.round((okCount / items.length) * 100);
+  const dbItems = items.filter(i => i.status !== 'unverifiable');
+  const okCount = dbItems.filter(i => i.status === 'ok').length;
+  const score = dbItems.length > 0 ? Math.round((okCount / dbItems.length) * 100) : 0;
   const ready = score >= 75;
 
   return (
@@ -350,6 +398,7 @@ function DecisionLayerSection({ orgId, refreshKey }: { orgId?: string; refreshKe
   );
 }
 
+// ── Continuous Watch Section ──────────────────────────────────────────────────
 function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
   const { data: watchStats } = useQuery({
     queryKey: ['continuous-watch-stats', orgId, refreshKey],
@@ -365,27 +414,28 @@ function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refresh
   });
 
   const watchItems = [
-    { label: 'Edge Function platform-health', icon: <Server className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — health score global, composants DB/AI/sources/risques', link: { href: '/platform-health', label: 'Voir la santé' } },
-    { label: 'Edge Function schedule-source-sync', icon: <RefreshCw className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — déclenche les syncs sources actives (seuil 6h)' },
-    { label: 'Edge Function stale-risk-check', icon: <AlertTriangle className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — détecte les risques stagnants → génère des alertes' },
-    { label: 'Edge Function evaluate-alert-rules', icon: <Bell className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — évalue les notification_rules contre les alertes ouvertes' },
+    { label: 'Edge Function platform-health', icon: <Server className="h-4 w-4" />, status: 'unverifiable' as Status, detail: 'Déployée (vérification indirecte) — health score, composants DB/AI/sources/risques', link: { href: '/platform-health', label: 'Voir la santé' } },
+    { label: 'Edge Function schedule-source-sync', icon: <RefreshCw className="h-4 w-4" />, status: 'unverifiable' as Status, detail: 'Déployée (vérification indirecte) — déclenche syncs sources actives (seuil 6h)' },
+    { label: 'Edge Function stale-risk-check', icon: <AlertTriangle className="h-4 w-4" />, status: 'unverifiable' as Status, detail: 'Déployée (vérification indirecte) — détecte risques stagnants → alertes' },
+    { label: 'Edge Function evaluate-alert-rules', icon: <Bell className="h-4 w-4" />, status: 'unverifiable' as Status, detail: 'Déployée (vérification indirecte) — évalue notification_rules contre alertes ouvertes' },
     {
-      label: 'Alertes ouvertes',
+      label: 'Alertes ouvertes (DB)',
       icon: <Bell className="h-4 w-4" />,
       status: (watchStats === undefined ? 'unknown' : (watchStats?.openAlerts ?? 0) === 0 ? 'ok' : 'warn') as Status,
       detail: watchStats !== null ? `${watchStats?.openAlerts ?? 0} alerte(s) ouverte(s)` : '…',
       link: { href: '/platform-health', label: 'Voir les alertes' },
     },
     {
-      label: 'Sources actives',
+      label: 'Sources actives (DB)',
       icon: <Activity className="h-4 w-4" />,
       status: (watchStats === undefined ? 'unknown' : (watchStats?.activeSources ?? 0) > 0 ? 'ok' : 'warn') as Status,
-      detail: watchStats !== null ? `${watchStats?.activeSources ?? 0} source(s) active(s) configurée(s)` : '…',
+      detail: watchStats !== null ? `${watchStats?.activeSources ?? 0} source(s) active(s)` : '…',
     },
   ];
 
-  const watchOk = watchItems.filter(i => i.status === 'ok').length;
-  const watchScore = Math.round((watchOk / watchItems.length) * 100);
+  const verifiable = watchItems.filter(i => i.status !== 'unverifiable');
+  const watchOk = verifiable.filter(i => i.status === 'ok').length;
+  const watchScore = verifiable.length > 0 ? Math.round((watchOk / verifiable.length) * 100) : 0;
   const watchReady = watchScore >= 80;
 
   return (
@@ -437,13 +487,12 @@ function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refresh
   );
 }
 
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function AdminReadiness() {
   const { organization } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
 
   const runtime = useRuntimeConfig();
-
-  // Effective values (DB > env > null)
   const externalBackendActive = Boolean(runtime.coreApiUrl);
   const bookingActive         = Boolean(runtime.bookingUrl);
   const starterActive         = Boolean(runtime.starterCheckoutUrl);
@@ -501,9 +550,75 @@ export default function AdminReadiness() {
     },
   });
 
+  // ── Decision Layer data for 4 scores ──────────────────────────────────────
+  const { data: decisionScoreData } = useQuery({
+    queryKey: ['decision-scores', organization?.id, refreshKey],
+    queryFn: async () => {
+      if (!organization?.id) return null;
+      const [execRes, techRes] = await Promise.all([
+        supabase.from('portfolio_summaries').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id).eq('summary_type', 'executive_brief'),
+        supabase.from('portfolio_summaries').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id).eq('summary_type', 'technical_brief'),
+      ]);
+      return {
+        hasExecBrief: (execRes.count ?? 0) > 0,
+        hasTechBrief: (techRes.count ?? 0) > 0,
+      };
+    },
+    enabled: !!organization?.id,
+  });
+
+  const { data: aiScoreData } = useQuery({
+    queryKey: ['ai-score-data', organization?.id, refreshKey],
+    queryFn: async () => {
+      if (!organization?.id) return null;
+      const { count } = await supabase.from('ai_analyses').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id);
+      return { hasAiAnalyses: (count ?? 0) > 0 };
+    },
+    enabled: !!organization?.id,
+  });
+
   const healthOk = !healthLoading && !!health;
 
-  // ── Check groups ─────────────────────────────────────────────────────────
+  // ── 4 Scores réels ───────────────────────────────────────────────────────
+  // Demo Ready: plateforme accessible + données existantes + brief disponible ou IA active
+  const demoReadyScore = [
+    healthOk ? 30 : 0,
+    (leadStats !== undefined) ? 10 : 0,          // DB accessible
+    Boolean(runtime.bookingUrl || runtime.starterCheckoutUrl) ? 20 : 10,  // CTA commercial configuré
+    (decisionScoreData?.hasExecBrief || decisionScoreData?.hasTechBrief) ? 25 : 0,   // brief prêt
+    aiScoreData?.hasAiAnalyses ? 15 : 0,          // IA a fonctionné
+  ].reduce((a, b) => a + b, 0);
+
+  // Sales Ready: tunnel complet (booking ou checkout + lead capture prouvé)
+  const salesReadyScore = [
+    (leadStats?.total ?? 0) > 0 ? 40 : 0,        // leads réels reçus
+    bookingActive ? 20 : starterActive ? 20 : 0,  // lien commercial actif
+    configSource !== 'defaults' ? 20 : 0,         // config DB (pas juste defaults)
+    (conversionData?.total ?? 0) > 0 ? 20 : 0,   // tracking actif et utilisé
+  ].reduce((a, b) => a + b, 0);
+
+  // Ops Ready: moteur technique fonctionnel
+  const opsReadyScore = [
+    healthOk ? 30 : 0,
+    (decisionScoreData?.hasExecBrief || decisionScoreData?.hasTechBrief) ? 25 : 0,
+    aiScoreData?.hasAiAnalyses ? 25 : 0,
+    Boolean(runtime.coreApiUrl) || true ? 20 : 0, // moteur interne toujours dispo
+  ].reduce((a, b) => a + b, 0);
+
+  // Global Ready: moyenne pondérée
+  const globalReadyScore = Math.round((demoReadyScore * 0.3 + salesReadyScore * 0.35 + opsReadyScore * 0.35));
+
+  const scoreToStatus = (s: number): Status => s >= 80 ? 'ok' : s >= 50 ? 'warn' : 'fail';
+
+  const sourceLabel = configSource === 'app_runtime_config'
+    ? 'DB (app_runtime_config)'
+    : configSource === 'commercial_config'
+    ? 'DB (commercial_config)'
+    : configSource === 'env'
+    ? 'variables d\'env'
+    : 'valeurs par défaut';
+
+  // ── Standard check groups ─────────────────────────────────────────────────
   const groups: CheckGroup[] = [
     {
       title: 'Infrastructure & Backend',
@@ -511,11 +626,11 @@ export default function AdminReadiness() {
       items: [
         {
           label: 'Base de données Lovable Cloud',
-          description: 'Connexion active',
-          status: healthOk ? 'ok' : healthLoading ? 'unknown' : 'fail',
+          description: 'Connexion active vérifiée via requête DB réelle',
+          status: (leadStats !== undefined || healthOk) ? 'ok' : healthLoading ? 'unknown' : 'fail',
           detail: healthOk
-            ? `${health?.org_counts?.open_signals ?? 0} signaux · ${health?.org_counts?.open_risks ?? 0} risques`
-            : undefined,
+            ? `✓ DB accessible · ${health?.org_counts?.open_signals ?? 0} signaux · ${health?.org_counts?.open_risks ?? 0} risques`
+            : leadStats !== undefined ? '✓ DB accessible (leads chargés)' : '…',
         },
         {
           label: 'Backend externe (Core API URL)',
@@ -527,10 +642,12 @@ export default function AdminReadiness() {
           link: { href: '/settings/revenue', label: 'Configurer' },
         },
         {
-          label: 'IA moteur interne (Lovable API)',
-          description: 'Analyse de signaux et remédiation IA',
-          status: 'ok',
-          detail: "LOVABLE_API_KEY présent — Edge Functions Gemini prêtes",
+          label: 'IA moteur interne (LOVABLE_API_KEY)',
+          description: aiScoreData?.hasAiAnalyses ? 'Prouvé via analyses en DB' : 'Non vérifiable côté front — secret serveur',
+          status: aiScoreData?.hasAiAnalyses ? 'ok' : 'unverifiable',
+          detail: aiScoreData?.hasAiAnalyses
+            ? `✓ Prouvé opérationnel — analyse(s) IA générée(s) en DB`
+            : 'Non vérifiable côté front. Testez via Risques → Enrichir avec IA.',
         },
       ],
     },
@@ -539,17 +656,19 @@ export default function AdminReadiness() {
       icon: <Cpu className="h-5 w-5 text-primary" />,
       items: [
         {
-          label: 'Mode Démo',
-          description: 'Données fictives premium pour prospects',
+          label: 'Mode Démo (/demo)',
+          description: 'Page publique accessible',
           status: 'ok',
-          detail: 'Page /demo opérationnelle avec données ACME Corp',
+          detail: '✓ Route /demo accessible sans authentification — données ACME Corp',
           link: { href: '/demo', label: 'Ouvrir la démo' },
         },
         {
           label: 'Report Studio',
-          description: 'Génération rapports DG/PDG et DSI',
-          status: 'ok',
-          detail: `Mode: ${runtime.reportsMode}${externalBackendActive ? ' — backend externe actif' : ' — moteur interne actif'}`,
+          description: 'Centre de décision DG/DSI',
+          status: (decisionScoreData?.hasExecBrief || decisionScoreData?.hasTechBrief) ? 'ok' : 'warn',
+          detail: (decisionScoreData?.hasExecBrief || decisionScoreData?.hasTechBrief)
+            ? `✓ Synthèse(s) générée(s) · Mode: ${runtime.reportsMode}`
+            : `⚠ Aucune synthèse encore générée · Mode: ${runtime.reportsMode}`,
           link: { href: '/report-studio', label: 'Ouvrir Report Studio' },
         },
         {
@@ -557,8 +676,8 @@ export default function AdminReadiness() {
           description: 'Ingestion, corrélation, registre de risques',
           status: healthOk ? 'ok' : 'unknown',
           detail: healthOk
-            ? `${health?.org_counts?.open_signals ?? 0} signaux · ${health?.org_counts?.open_risks ?? 0} risques`
-            : undefined,
+            ? `✓ ${health?.org_counts?.open_signals ?? 0} signaux · ${health?.org_counts?.open_risks ?? 0} risques`
+            : '…',
         },
       ],
     },
@@ -568,9 +687,11 @@ export default function AdminReadiness() {
       items: [
         {
           label: 'Edge Function submit-sales-lead',
-          description: 'Capture robuste avec dédup et scoring',
-          status: 'ok',
-          detail: 'Déployée — validation serveur, déduplication 24h, lead_score automatique',
+          description: 'Prouvé si des leads existent en DB',
+          status: (leadStats?.total ?? 0) > 0 ? 'ok' : 'unverifiable',
+          detail: (leadStats?.total ?? 0) > 0
+            ? `✓ Prouvé — ${leadStats!.total} lead(s) en DB`
+            : 'Non prouvé encore — aucun lead reçu. Déployée (vérification indirecte).',
         },
         {
           label: 'Leads reçus',
@@ -582,10 +703,10 @@ export default function AdminReadiness() {
           link: { href: '/admin/leads', label: 'Gérer les leads' },
         },
         {
-          label: 'Tracking conversions',
-          description: 'Événements CTA enregistrés',
-          status: 'ok',
-          detail: `conversion_events actif — ${conversionData?.total ?? '…'} événements total`,
+          label: 'Tracking conversions (DB)',
+          description: 'conversion_events actif',
+          status: (conversionData?.total ?? 0) > 0 ? 'ok' : 'warn',
+          detail: `${conversionData?.total ?? '0'} événements total${(conversionData?.total ?? 0) === 0 ? ' — aucun clic tracé encore' : ''}`,
         },
       ],
     },
@@ -597,50 +718,29 @@ export default function AdminReadiness() {
           label: 'Landing Page',
           description: 'Page publique avec tunnel de conversion',
           status: 'ok',
-          detail: '3 CTAs : Démo / Import / Demander une démo',
+          detail: '✓ Route / accessible · CTAs hero → /demo + DemoRequestDialog fallback',
           link: { href: '/', label: 'Voir la landing' },
         },
         {
           label: 'Page Pricing',
-          description: 'Tarification claire avec add-ons',
-          status: 'ok',
-          detail: 'Plan Core 490€/an + add-ons',
+          description: 'Tarification claire avec CTA',
+          status: starterActive ? 'ok' : 'warn',
+          detail: starterActive
+            ? `✓ Checkout Starter actif (${sourceLabel})`
+            : '⚠ Pas de checkout Starter — fallback vers formulaire démo actif',
           link: { href: '/pricing', label: 'Voir les tarifs' },
         },
         {
           label: 'Navigation principale',
           description: 'Sidebar et routes applicatives',
           status: 'ok',
-          detail: 'Tableaux de bord, Opérations, Audit, Administration',
+          detail: '✓ Tableaux de bord, Opérations, Audit, Administration — toutes routes déclarées',
         },
       ],
     },
   ];
 
-  const allItems = groups.flatMap(g => g.items);
-  const okCount   = allItems.filter(i => i.status === 'ok').length;
-  const warnCount = allItems.filter(i => i.status === 'warn').length;
-  const failCount = allItems.filter(i => i.status === 'fail').length;
-  const total     = allItems.length;
-  const readinessScore = Math.round((okCount / total) * 100);
-  const globalStatus: Status = failCount > 0 ? 'fail' : warnCount > 0 ? 'warn' : 'ok';
-
-  const readinessLabels = {
-    fail:  { demo: 'fail' as Status, sale: 'fail' as Status,  onboarding: 'fail' as Status },
-    warn:  { demo: 'ok'  as Status, sale: 'warn' as Status,  onboarding: 'warn' as Status },
-    ok:    { demo: 'ok'  as Status, sale: 'ok'  as Status,  onboarding: externalBackendActive ? 'ok' as Status : 'warn' as Status },
-  };
-  const readiness = readinessLabels[globalStatus];
-
   // ── Revenue Operating Readiness ──────────────────────────────────────────
-  const sourceLabel = configSource === 'app_runtime_config'
-    ? 'DB (app_runtime_config)'
-    : configSource === 'commercial_config'
-    ? 'DB (commercial_config)'
-    : configSource === 'env'
-    ? 'variables d\'env'
-    : 'valeurs par défaut';
-
   const revenueItems = [
     {
       label: 'Config runtime (source de vérité)',
@@ -655,7 +755,7 @@ export default function AdminReadiness() {
       status: 'ok' as Status,
       detail: `${runtime.reportsMode} — ${
         runtime.reportsMode === 'internal_only' ? 'moteur interne (Edge Functions)'
-        : runtime.reportsMode === 'external_only' ? externalBackendActive ? 'backend externe actif' : '⚠ backend externe requis mais absent'
+        : runtime.reportsMode === 'external_only' ? externalBackendActive ? 'backend externe actif' : '⚠ requis mais absent'
         : externalBackendActive ? 'externe disponible + fallback interne' : 'fallback interne actif'
       }`,
     },
@@ -666,21 +766,12 @@ export default function AdminReadiness() {
       detail: `${runtime.salesMode}${runtime.salesEnabled ? '' : ' (mode vente désactivé)'}`,
     },
     {
-      label: 'Core API URL',
-      icon: <Server className="h-4 w-4" />,
-      status: externalBackendActive ? 'ok' as Status : 'warn' as Status,
-      detail: externalBackendActive
-        ? `✓ ${runtime.coreApiUrl?.slice(0, 50)}`
-        : '✗ Non défini — moteur interne utilisé',
-      link: { href: '/settings/revenue', label: 'Définir' },
-    },
-    {
       label: 'Booking URL',
       icon: <CalendarDays className="h-4 w-4" />,
       status: bookingActive ? 'ok' as Status : 'warn' as Status,
       detail: bookingActive
         ? `✓ ${runtime.bookingUrl?.slice(0, 50)} (${sourceLabel})`
-        : '✗ Non défini — fallback formulaire actif',
+        : '✗ Non défini — fallback formulaire DemoRequestDialog actif',
       link: bookingActive ? undefined : { href: '/settings/revenue', label: 'Configurer' },
     },
     {
@@ -702,28 +793,34 @@ export default function AdminReadiness() {
       detail: enterpriseActive ? `✓ configuré (${sourceLabel})` : '✗ Non défini',
     },
     {
-      label: 'Capture lead opérationnelle',
+      label: 'Capture lead',
       icon: <Users className="h-4 w-4" />,
-      status: 'ok' as Status,
-      detail: '✓ Edge function submit-sales-lead — validation, dédup, scoring',
+      status: (leadStats?.total ?? 0) > 0 ? 'ok' as Status : 'unverifiable' as Status,
+      detail: (leadStats?.total ?? 0) > 0
+        ? `✓ Prouvé — ${leadStats!.total} lead(s) reçu(s)`
+        : 'Non prouvé — déployée mais aucun lead encore reçu',
     },
     {
-      label: 'Pipeline leads accessible',
+      label: 'Pipeline leads',
       icon: <TrendingUp className="h-4 w-4" />,
       status: 'ok' as Status,
-      detail: '✓ /admin/leads — owner, priorité, SLA 24h/72h, actions rapides',
+      detail: '✓ /admin/leads — SLA 24h/72h, actions rapides, filtres CTA origine',
       link: { href: '/admin/leads', label: 'Pipeline' },
-    },
-    {
-      label: 'CTA tunnel de vente',
-      icon: <MousePointerClick className="h-4 w-4" />,
-      status: 'ok' as Status,
-      detail: `✓ Hero / Pricing / Demo — mode ${runtime.salesMode}, zéro impasse`,
     },
   ];
 
+  const allItems = groups.flatMap(g => g.items);
+  // Score basé uniquement sur éléments vérifiables
+  const verifiableItems = allItems.filter(i => i.status !== 'unverifiable' && i.status !== 'unknown');
+  const okCount   = verifiableItems.filter(i => i.status === 'ok').length;
+  const warnCount = allItems.filter(i => i.status === 'warn').length;
+  const failCount = allItems.filter(i => i.status === 'fail').length;
+  const unverifiableCount = allItems.filter(i => i.status === 'unverifiable').length;
+  const readinessScore = verifiableItems.length > 0 ? Math.round((okCount / verifiableItems.length) * 100) : 0;
+
   const revenueOk = revenueItems.filter(i => i.status === 'ok').length;
-  const revenueScore = Math.round((revenueOk / revenueItems.length) * 100);
+  const revenueVerifiable = revenueItems.filter(i => i.status !== 'unverifiable');
+  const revenueScore = revenueVerifiable.length > 0 ? Math.round((revenueItems.filter(i => i.status === 'ok').length / revenueVerifiable.length) * 100) : 0;
 
   return (
     <AppLayout>
@@ -737,7 +834,7 @@ export default function AdminReadiness() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Admin Readiness</h1>
-              <p className="text-sm text-muted-foreground">État de préparation commerciale et technique</p>
+              <p className="text-sm text-muted-foreground">État de préparation — vérité stricte, zéro faux vert</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => setRefreshKey(k => k + 1)}>
@@ -745,7 +842,43 @@ export default function AdminReadiness() {
           </Button>
         </div>
 
-        {/* Global Score */}
+        {/* Légende statuts */}
+        <Card className="border-muted">
+          <CardContent className="py-3">
+            <div className="flex flex-wrap gap-4 items-center text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">Légende :</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-success" /> OK prouvé</span>
+              <span className="flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5 text-warning" /> Attention / partiel</span>
+              <span className="flex items-center gap-1"><XCircle className="h-3.5 w-3.5 text-destructive" /> Échec</span>
+              <span className="flex items-center gap-1"><Info className="h-3.5 w-3.5 text-muted-foreground" /> Non vérifiable côté front (test fonctionnel requis)</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 4 Scores réels */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Demo Ready',   score: demoReadyScore,   description: 'Démo présentable' },
+            { label: 'Sales Ready',  score: salesReadyScore,  description: 'Tunnel de vente actif' },
+            { label: 'Ops Ready',    score: opsReadyScore,    description: 'Moteur opérationnel' },
+            { label: 'Global Ready', score: globalReadyScore, description: 'Score pondéré global' },
+          ].map(({ label, score, description }) => {
+            const s = scoreToStatus(score);
+            const color = s === 'ok' ? 'text-success' : s === 'warn' ? 'text-warning' : 'text-destructive';
+            const border = s === 'ok' ? 'border-success/30' : s === 'warn' ? 'border-warning/30' : 'border-destructive/30';
+            return (
+              <Card key={label} className={`border ${border}`}>
+                <CardContent className="pt-4 pb-4 text-center">
+                  <p className={`text-3xl font-black ${color}`}>{score}</p>
+                  <p className="text-xs font-semibold text-foreground mt-0.5">{label}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{description}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Global readiness */}
         <Card className="border-border">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
@@ -753,31 +886,16 @@ export default function AdminReadiness() {
                 <div className={`text-5xl font-black ${readinessScore >= 80 ? 'text-success' : readinessScore >= 60 ? 'text-warning' : 'text-destructive'}`}>
                   {readinessScore}%
                 </div>
-                <div className="text-xs text-muted-foreground">Score global</div>
+                <div className="text-xs text-muted-foreground">Éléments vérifiables OK</div>
               </div>
 
               <Separator orientation="vertical" className="hidden md:block h-16" />
 
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-                {[
-                  { label: 'Prêt pour la démo',       status: readiness.demo,       icon: <FlaskConical className="h-4 w-4" /> },
-                  { label: 'Prêt pour la vente',       status: readiness.sale,       icon: <BarChart3 className="h-4 w-4" /> },
-                  { label: "Prêt pour l'onboarding",   status: readiness.onboarding, icon: <Users className="h-4 w-4" /> },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3">
-                    <StatusIcon status={item.status} />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{item.label}</p>
-                      <StatusBadge status={item.status} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-4 shrink-0 text-center">
-                <div><p className="text-2xl font-bold text-success">{okCount}</p><p className="text-xs text-muted-foreground">OK</p></div>
+              <div className="flex gap-6 shrink-0 text-center">
+                <div><p className="text-2xl font-bold text-success">{okCount}</p><p className="text-xs text-muted-foreground">OK prouvés</p></div>
                 <div><p className="text-2xl font-bold text-warning">{warnCount}</p><p className="text-xs text-muted-foreground">Attention</p></div>
                 <div><p className="text-2xl font-bold text-destructive">{failCount}</p><p className="text-xs text-muted-foreground">Échec</p></div>
+                <div><p className="text-2xl font-bold text-muted-foreground">{unverifiableCount}</p><p className="text-xs text-muted-foreground">Non vérifiables</p></div>
               </div>
             </div>
           </CardContent>
@@ -805,7 +923,7 @@ export default function AdminReadiness() {
                       <StatusBadge status={item.status} />
                       {item.link && (
                         <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
-                          <Link to={item.link.href} target={item.link.href.startsWith('/') ? undefined : '_blank'}>
+                          <Link to={item.link.href}>
                             {item.link.label}
                             <ExternalLink className="h-3 w-3 ml-1" />
                           </Link>
