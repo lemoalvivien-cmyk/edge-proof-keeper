@@ -704,8 +704,9 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
   };
 
   // Vérification déterministe : nuclei doit exister en tools_catalog
-  const { data: nucleiTool, isLoading: nucleiLoading } = useQuery({
-    queryKey: ['tools-catalog-nuclei-check'],
+  // tools_catalog est accessible à tout utilisateur authentifié (RLS: auth.uid() IS NOT NULL)
+  const { data: nucleiTool, isLoading: nucleiLoading, error: nucleiError } = useQuery({
+    queryKey: ['tools-catalog-nuclei-check', !!orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tools_catalog')
@@ -716,11 +717,14 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
       if (error) throw error;
       return data;
     },
+    // Ne lancer la query que si l'org est connue (session active)
+    enabled: !!orgId,
+    retry: 1,
   });
 
   // Nombre total d'outils actifs pour la surface de preuve
   const { data: catalogCount } = useQuery({
-    queryKey: ['tools-catalog-count'],
+    queryKey: ['tools-catalog-count', !!orgId],
     queryFn: async () => {
       const { count } = await supabase
         .from('tools_catalog')
@@ -728,6 +732,7 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
         .eq('status', 'active');
       return count ?? 0;
     },
+    enabled: !!orgId,
   });
 
   const handleRunRealPipeline = async () => {
