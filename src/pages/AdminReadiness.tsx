@@ -3205,12 +3205,29 @@ export default function AdminReadiness() {
           return res.json().catch(() => ({}));
         };
 
-        // Run all 6 pipeline steps silently
+        // ① Seed structural data — always via internal EF (no sensitive routing)
         await callEF('seed-minimal-data', { organization_id: orgId });
         await callEF('seed-demo-run', { organization_id: orgId });
-        await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'executive_brief' });
-        await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'technical_brief' });
-        await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'weekly_watch_brief' });
+
+        // ② Portfolio summaries — respect sovereign routing
+        //    PROD: Core API mandatory (uses generatePortfolioSummary from api-client which enforces IS_PROD)
+        //    DEV: direct internal EF call allowed
+        const { IS_PROD: prodMode } = await import('@/lib/api-client');
+        if (!prodMode) {
+          // DEV only: call internal EF directly
+          await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'executive_brief' });
+          await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'technical_brief' });
+          await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'weekly_watch_brief' });
+        } else {
+          // PROD: attempt via Core API using the sovereign-aware function
+          // Errors are swallowed at auto-seed level — user must trigger manually if Core API not configured
+          const { generatePortfolioSummary: genSummary } = await import('@/lib/api-client');
+          await genSummary(orgId, 'executive_brief', undefined, tok).catch(() => {});
+          await genSummary(orgId, 'technical_brief', undefined, tok).catch(() => {});
+          await genSummary(orgId, 'weekly_watch_brief', undefined, tok).catch(() => {});
+        }
+
+        // ③ Alert rules — always internal (monitoring EF, not a "report")
         await callEF('evaluate-alert-rules', { organization_id: orgId });
 
         // Persist flag — upsert app_runtime_config
@@ -3229,7 +3246,7 @@ export default function AdminReadiness() {
         qcMain.invalidateQueries({ queryKey: ['decision-layer-stats', orgId] });
         qcMain.invalidateQueries({ queryKey: ['core-proof-db', orgId] });
       } catch (_err) {
-        // Silent failure — user can manually trigger via button
+        // Silent failure — user can manually trigger via FullPipelineLauncher button
       } finally {
         setAutoSeedRunning(false);
       }
