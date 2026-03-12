@@ -526,12 +526,30 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
     return session.access_token;
   };
 
-  // Find nuclei tool slug
-  const { data: tools } = useQuery({
-    queryKey: ['tools-catalog-nuclei'],
+  // Vérification déterministe : nuclei doit exister en tools_catalog
+  const { data: nucleiTool, isLoading: nucleiLoading } = useQuery({
+    queryKey: ['tools-catalog-nuclei-check'],
     queryFn: async () => {
-      const { data } = await supabase.from('tools_catalog').select('id, slug, name').limit(10);
-      return data ?? [];
+      const { data, error } = await supabase
+        .from('tools_catalog')
+        .select('id, slug, name, status')
+        .eq('slug', 'nuclei')
+        .eq('status', 'active')
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Nombre total d'outils actifs pour la surface de preuve
+  const { data: catalogCount } = useQuery({
+    queryKey: ['tools-catalog-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('tools_catalog')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'active');
+      return count ?? 0;
     },
   });
 
@@ -546,7 +564,9 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
 
     try {
       const tok = await getToken();
-      const toolSlug = tools?.[0]?.slug ?? 'nuclei';
+      // DÉTERMINISTE : toujours utiliser nuclei (outil du fixture get-demo-fixture)
+      // Ne plus dépendre du premier résultat d'une query non ordonnée
+      const toolSlug = nucleiTool?.slug ?? 'nuclei';
 
       // ── ÉTAPE 1 : create-tool-run ─────────────────────────────────────────
       updateStep('create_run', { state: 'running' });
