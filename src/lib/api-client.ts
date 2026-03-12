@@ -442,12 +442,20 @@ export async function generateRemediationPlan(
 export async function getSignalById(signalId: string): Promise<Signal | null> {
   const { data, error } = await supabase
     .from('signals')
-    .select('*, source_id!fk_signals_source_id(name, source_type, category), asset_id!fk_signals_asset_id(name, asset_type, identifier)')
+    .select(`
+      *,
+      data_sources:source_id(name, source_type, category),
+      assets:asset_id(name, asset_type, identifier)
+    `)
     .eq('id', signalId)
     .maybeSingle();
 
   if (error) throw new Error(`getSignalById error: ${error.message}`);
-  return data as unknown as Signal | null;
+  if (!data) return null;
+  return {
+    ...data,
+    references: (data as Record<string, unknown>).signal_refs ?? [],
+  } as unknown as Signal;
 }
 
 export async function getSignalEntities(
