@@ -1385,6 +1385,9 @@ export default function AdminReadiness() {
         {/* ── PREUVE DU CŒUR PRODUIT — matrice live ──────────────────────── */}
         <CoreProofPanel orgId={organization?.id} refreshKey={refreshKey} />
 
+        {/* ── RLS SECURITY PANEL — politique organizations durcie ──────────── */}
+        <RlsSecurityPanel orgId={organization?.id} />
+
         {/* ── Risk Engine ─────────────────────────────────────────────────── */}
         <RiskEngineSection orgId={organization?.id} refreshKey={refreshKey} />
 
