@@ -1,10 +1,11 @@
 /**
  * revenue-links.ts
- * Centralised access to commercial URLs (booking, checkout).
- * All values come from Vite env variables — never hardcoded.
+ * Single source of truth for all commercial URLs (booking, checkout).
+ * Values come from Vite env variables — never hardcoded.
+ * DB-level overrides are handled by useCommercialConfig (takes priority at runtime).
  *
  * Usage:
- *   import { getBookingUrl, getCheckoutUrl, openBookingOrDialog } from '@/lib/revenue-links';
+ *   import { getBookingUrl, getCheckoutUrl, openBookingOrFallback } from '@/lib/revenue-links';
  */
 
 export interface RevenueLinks {
@@ -29,21 +30,34 @@ export function getBookingUrl(): string | null {
   return import.meta.env.VITE_BOOKING_URL || null;
 }
 
+/** Whether booking URL is configured */
+export function hasBookingUrl(): boolean {
+  return Boolean(import.meta.env.VITE_BOOKING_URL);
+}
+
 /** Convenience: checkout by plan */
 export type PlanKey = 'starter' | 'pro' | 'enterprise';
 export function getCheckoutUrl(plan: PlanKey = 'starter'): string | null {
   const map: Record<PlanKey, string> = {
-    starter:    import.meta.env.VITE_STARTER_CHECKOUT_URL   || '',
-    pro:        import.meta.env.VITE_PRO_CHECKOUT_URL        || '',
-    enterprise: import.meta.env.VITE_ENTERPRISE_CHECKOUT_URL || '',
+    starter:    import.meta.env.VITE_STARTER_CHECKOUT_URL    || '',
+    pro:        import.meta.env.VITE_PRO_CHECKOUT_URL         || '',
+    enterprise: import.meta.env.VITE_ENTERPRISE_CHECKOUT_URL  || '',
   };
   return map[plan] || null;
 }
 
-/** Whether any checkout is configured */
+/** Whether a specific plan's checkout URL is configured */
+export function hasCheckoutUrl(plan: PlanKey): boolean {
+  return Boolean(getCheckoutUrl(plan));
+}
+
+/** Whether any checkout URL is configured */
 export function hasAnyCheckout(): boolean {
-  const { starterCheckoutUrl, proCheckoutUrl, enterpriseCheckoutUrl } = getRevenueLinks();
-  return !!(starterCheckoutUrl || proCheckoutUrl || enterpriseCheckoutUrl);
+  return !!(
+    import.meta.env.VITE_STARTER_CHECKOUT_URL ||
+    import.meta.env.VITE_PRO_CHECKOUT_URL ||
+    import.meta.env.VITE_ENTERPRISE_CHECKOUT_URL
+  );
 }
 
 /**
