@@ -1591,6 +1591,372 @@ function CoreProofPanel({ orgId, refreshKey }: { orgId?: string; refreshKey: num
   );
 }
 
+// ── Live Proof Panel — capture automatique de la preuve finale ────────────────
+// Distingue explicitement :
+//   - PRÊT POUR EXÉCUTION LIVE  (session + org résolus, aucun run live encore)
+//   - EXÉCUTION EN COURS         (run détecté, pipeline en cours)
+//   - PREUVE LIVE OBTENUE        (tool_run requested_by réel + findings pipeline + synthèse)
+//   - ÉCHEC LIVE                 (run trouvé mais étapes critiques absentes)
+//
+// DIFFÉRENCE CRITIQUE AVEC SEED/DEMO :
+//   Un run est qualifié "live authentifié" uniquement si :
+//   - requested_by = auth.uid() du premier OwnerSetup (non seedé, non injecté)
+//   - findings présents via normalize (count > 0 pour ce run)
+//   - au moins un portfolio_summary généré après ce run
+//
+// Ce panneau NE SE DONNE JAMAIS une apparence de victoire si les données manquent.
+// ─────────────────────────────────────────────────────────────────────────────
+function LiveProofPanel({ user, organization }: {
+  user: import('@supabase/supabase-js').User | null;
+  organization: { id: string; name: string } | null;
+}) {
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Preuve finale : dernier tool_run live avec ses métriques
+  const { data: liveProof, refetch: refetchLiveProof, isLoading } = useQuery({
+    queryKey: ['live-proof-final', organization?.id, user?.id],
+    queryFn: async () => {
+      if (!organization?.id || !user?.id) return null;
+
+      // 1. Cherche un tool_run avec requested_by = user courant (run live authentifié)
+      //    On exclut les runs seedés par service-role (requested_by null ou différent)
+      const { data: runs } = await supabase
+        .from('tool_runs' as 'tool_runs')
+        .select('id, status, requested_by, requested_at, organization_id')
+        .eq('organization_id', organization.id)
+        .eq('requested_by', user.id)
+        .order('requested_at', { ascending: false })
+        .limit(5);
+
+      // 2. Cherche TOUS les tool_runs (y compris seedés) pour comparer
+      const { data: allRuns } = await supabase
+        .from('tool_runs' as 'tool_runs')
+        .select('id, requested_by, status, requested_at')
+        .eq('organization_id', organization.id)
+        .order('requested_at', { ascending: false })
+        .limit(10);
+
+      // 3. Findings totaux et par run live
+      const { count: totalFindings } = await supabase
+        .from('findings')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', organization.id);
+
+      // 4. Portfolio summaries
+      const { data: portfolios } = await supabase
+        .from('portfolio_summaries')
+        .select('id, summary_type, model_name, created_at')
+        .eq('organization_id', organization.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      // 5. Si run live trouvé, vérifie ses findings spécifiques
+      let liveRunFindings = 0;
+      const liveRun = runs?.[0] ?? null;
+      if (liveRun) {
+        const { count } = await supabase
+          .from('findings')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organization.id)
+          .eq('tool_run_id', liveRun.id);
+        liveRunFindings = count ?? 0;
+      }
+
+      // 6. Détecte runs seedés (requested_by != user.id) pour la distinction
+      const seededRuns = (allRuns ?? []).filter(r => r.requested_by !== user.id);
+
+      return {
+        liveRun,
+        liveRunFindings,
+        allRuns: allRuns ?? [],
+        seededRuns,
+        totalFindings: totalFindings ?? 0,
+        portfolios: portfolios ?? [],
+        checkedAt: new Date().toISOString(),
+      };
+    },
+    enabled: !!organization?.id && !!user?.id,
+    refetchInterval: false,
+  });
+
+  // Auto-polling actif tant qu'aucune preuve n'est obtenue (toutes les 15s)
+  useEffect(() => {
+    if (!organization?.id || !user?.id) return;
+    const proofObtained = liveProof?.liveRun && (liveProof?.liveRunFindings ?? 0) > 0 && (liveProof?.portfolios?.length ?? 0) > 0;
+    if (proofObtained) {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      return;
+    }
+    pollingRef.current = setInterval(() => { refetchLiveProof(); }, 15000);
+    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
+  }, [organization?.id, user?.id, liveProof, refetchLiveProof]);
+
+  // ── Calcul de l'état global ──────────────────────────────────────────────
+  const sessionOk = !!user && !!organization?.id;
+  const hasLiveRun = !!liveProof?.liveRun;
+  const hasLiveFindings = (liveProof?.liveRunFindings ?? 0) > 0;
+  const hasPortfolio = (liveProof?.portfolios?.length ?? 0) > 0;
+  const hasSeededRuns = (liveProof?.seededRuns?.length ?? 0) > 0;
+
+  // PREUVE FINALE MINIMALE = session + run live + findings pipeline + synthèse
+  const proofObtained = sessionOk && hasLiveRun && hasLiveFindings && hasPortfolio;
+  const pipelineRunning = hasLiveRun && liveProof?.liveRun?.status === 'processing';
+
+  type LiveState = 'NO_SESSION' | 'READY' | 'RUNNING' | 'PROVEN' | 'PARTIAL';
+  const liveState: LiveState = !sessionOk ? 'NO_SESSION'
+    : proofObtained ? 'PROVEN'
+    : pipelineRunning ? 'RUNNING'
+    : hasLiveRun && !hasLiveFindings ? 'PARTIAL'
+    : 'READY';
+
+  const stateCfg: Record<LiveState, { label: string; cls: string; border: string; bg: string }> = {
+    NO_SESSION: { label: '✗ SESSION ABSENTE — IMPOSSIBLE D\'EXÉCUTER', cls: 'text-destructive border-destructive/30 bg-destructive/10', border: 'border-destructive/50', bg: 'bg-destructive/[0.015]' },
+    READY:      { label: '○ PRÊT — NON ENCORE PROUVÉ', cls: 'text-warning border-warning/30 bg-warning/10', border: 'border-warning/40', bg: 'bg-warning/[0.01]' },
+    RUNNING:    { label: '↻ PIPELINE EN COURS', cls: 'text-primary border-primary/30 bg-primary/10', border: 'border-primary/40', bg: 'bg-primary/[0.01]' },
+    PROVEN:     { label: '✓ PREUVE LIVE OBTENUE', cls: 'text-success border-success/30 bg-success/10', border: 'border-success/50', bg: 'bg-success/[0.015]' },
+    PARTIAL:    { label: '⚠ PARTIEL — RUN CRÉÉ, PIPELINE INCOMPLET', cls: 'text-warning border-warning/30 bg-warning/10', border: 'border-warning/40', bg: 'bg-warning/[0.01]' },
+  };
+  const cfg = stateCfg[liveState];
+
+  // Étapes de preuve avec statut honnête
+  type ProofItemState = 'proven' | 'ready' | 'absent' | 'loading' | 'na';
+  const proofItems: Array<{ id: string; label: string; detail: string; state: ProofItemState; note?: string }> = [
+    {
+      id: 'session',
+      label: 'Session auth réelle',
+      detail: sessionOk
+        ? `✓ user_id=${user?.id?.slice(0, 12)}… · org_id=${organization?.id?.slice(0, 12)}…`
+        : '✗ Aucune session — effectuez le OwnerSetup',
+      state: isLoading ? 'loading' : sessionOk ? 'proven' : 'absent',
+    },
+    {
+      id: 'requested_by',
+      label: 'tool_run avec requested_by réel',
+      detail: hasLiveRun
+        ? `✓ run_id=${liveProof!.liveRun!.id.slice(0, 12)}… · requested_by=${liveProof!.liveRun!.requested_by?.slice(0, 12)}… · status=${liveProof!.liveRun!.status} · ${new Date(liveProof!.liveRun!.requested_at).toLocaleString('fr-FR')}`
+        : sessionOk
+        ? `○ Aucun run live trouvé pour user_id=${user?.id?.slice(0, 12)}… · Lancez le pipeline réel ci-dessous${hasSeededRuns ? ` · ${liveProof!.seededRuns.length} run(s) seedé(s) détecté(s) — non comptabilisés` : ''}`
+        : '✗ Session requise',
+      state: isLoading ? 'loading' : hasLiveRun ? 'proven' : sessionOk ? 'ready' : 'absent',
+      note: hasSeededRuns && !hasLiveRun ? `${liveProof?.seededRuns.length} run(s) seedé(s) présent(s) mais exclus — requested_by ≠ user courant` : undefined,
+    },
+    {
+      id: 'findings',
+      label: 'Findings issus du pipeline réel (normalize)',
+      detail: hasLiveFindings
+        ? `✓ ${liveProof!.liveRunFindings} finding(s) pour ce run live · issus de normalize-tool-run · non injectés directement`
+        : hasLiveRun
+        ? '✗ 0 findings pour ce run live — normalize non exécuté ou artefact manquant · Étape critique absente'
+        : sessionOk ? '○ En attente d\'un run live' : '✗ Session requise',
+      state: isLoading ? 'loading' : hasLiveFindings ? 'proven' : hasLiveRun ? 'absent' : sessionOk ? 'ready' : 'na',
+    },
+    {
+      id: 'synthesis',
+      label: 'Synthèse portfolio générée',
+      detail: hasPortfolio
+        ? `✓ ${liveProof!.portfolios.length} synthèse(s) · dernière=${new Date(liveProof!.portfolios[0].created_at).toLocaleString('fr-FR')} · modèle=${liveProof!.portfolios[0].model_name ?? 'fallback'}`
+        : hasLiveFindings
+        ? '○ Findings présents mais synthèse non encore générée · Lancez generate-portfolio-summary'
+        : sessionOk ? '○ En attente de findings pipeline réel' : '✗ Session requise',
+      state: isLoading ? 'loading' : hasPortfolio ? 'proven' : hasLiveFindings ? 'ready' : sessionOk ? 'ready' : 'na',
+    },
+    {
+      id: 'business_output',
+      label: 'Sortie métier visible (Report Studio)',
+      detail: hasPortfolio
+        ? `✓ ${liveProof!.portfolios.map(p => p.summary_type).join(', ')} · visible dans Report Studio`
+        : '○ Non disponible — nécessite synthèse générée',
+      state: isLoading ? 'loading' : hasPortfolio ? 'proven' : 'ready',
+    },
+  ];
+
+  const provenCount = proofItems.filter(i => i.state === 'proven').length;
+
+  const itemStateCfg: Record<ProofItemState, { icon: React.ReactNode; cls: string; badge: string; badgeCls: string }> = {
+    proven:  { icon: <CheckCircle2 className="h-5 w-5 text-success" />, cls: '', badge: 'PROUVÉ', badgeCls: 'bg-success/10 text-success border-success/30' },
+    ready:   { icon: <div className="h-5 w-5 rounded-full border-2 border-warning/50" />, cls: '', badge: 'EN ATTENTE', badgeCls: 'bg-warning/10 text-warning border-warning/30' },
+    absent:  { icon: <XCircle className="h-5 w-5 text-destructive" />, cls: '', badge: 'ABSENT', badgeCls: 'bg-destructive/10 text-destructive border-destructive/30' },
+    loading: { icon: <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />, cls: '', badge: '…', badgeCls: 'bg-muted/50 text-muted-foreground border-muted' },
+    na:      { icon: <Info className="h-5 w-5 text-muted-foreground/50" />, cls: '', badge: 'N/A', badgeCls: 'bg-muted/40 text-muted-foreground/60 border-muted/40' },
+  };
+
+  return (
+    <Card className={`border-2 ${cfg.border} ${cfg.bg}`}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            PREUVE FINALE — Run Live Authentifié
+          </CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className={`text-xs font-bold px-3 py-1 ${cfg.cls}`}>
+              {cfg.label}
+            </Badge>
+            <span className="text-sm font-bold text-muted-foreground">{provenCount}/{proofItems.length}</span>
+          </div>
+        </div>
+        <CardDescription>
+          Capture automatique · polling 15s · distinct des scénarios seedés/demo · vérité stricte
+          {liveProof?.checkedAt && (
+            <span className="ml-2 font-mono text-[10px] text-muted-foreground/50">
+              vérifié {new Date(liveProof.checkedAt).toLocaleTimeString('fr-FR')}
+            </span>
+          )}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="p-0">
+
+        {/* Bannière d'état principale */}
+        {liveState === 'PROVEN' && (
+          <div className="mx-6 my-3 rounded-lg border border-success/40 bg-success/10 px-4 py-3">
+            <p className="text-sm font-bold text-success flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              PREUVE LIVE OBTENUE — Pipeline réel exécuté sous session authentifiée
+            </p>
+            <p className="text-xs text-success/70 font-mono mt-1">
+              requested_by={liveProof?.liveRun?.requested_by?.slice(0, 16)}… ·
+              {liveProof?.liveRunFindings} finding(s) pipeline réel ·
+              {liveProof?.portfolios.length} synthèse(s) · sortie métier disponible
+            </p>
+          </div>
+        )}
+
+        {liveState === 'READY' && (
+          <div className="mx-6 my-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
+            <p className="text-sm font-semibold text-warning flex items-center gap-2">
+              <Clock className="h-4 w-4 shrink-0" />
+              PRÊT — Aucun run live encore exécuté
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Session authentifiée ✓ · Org résolue ✓ · tools_catalog prêt ✓
+              <br/>
+              Action requise : Lancer le <strong>Pipeline Réel</strong> ci-dessous pour obtenir la preuve finale.
+            </p>
+            {hasSeededRuns && (
+              <p className="text-xs font-mono text-muted-foreground/60 mt-1.5 flex items-center gap-1">
+                <Info className="h-3 w-3 shrink-0" />
+                {liveProof?.seededRuns.length} run(s) seedé(s) détecté(s) — exclus de la preuve live (requested_by ≠ user courant)
+              </p>
+            )}
+          </div>
+        )}
+
+        {liveState === 'PARTIAL' && (
+          <div className="mx-6 my-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
+            <p className="text-sm font-semibold text-warning flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              PARTIEL — Run live créé mais pipeline incomplet
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              run_id={liveProof?.liveRun?.id?.slice(0, 12)}… · status={liveProof?.liveRun?.status}
+              · findings={liveProof?.liveRunFindings ?? 0} ← blocage principal
+            </p>
+          </div>
+        )}
+
+        {liveState === 'NO_SESSION' && (
+          <div className="mx-6 my-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+            <p className="text-sm font-semibold text-destructive flex items-center gap-2">
+              <XCircle className="h-4 w-4 shrink-0" />
+              BLOQUÉ — Session absente ou org non résolue
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Effectuez le OwnerSetup (premier écran à la connexion) pour créer une session authentifiée réelle.
+            </p>
+          </div>
+        )}
+
+        {/* Matrice de preuve par étape */}
+        <div className="divide-y divide-border">
+          {proofItems.map(item => {
+            const ic = itemStateCfg[item.state];
+            return (
+              <div key={item.id} className="flex items-start gap-4 px-6 py-3">
+                <div className="shrink-0 mt-0.5">{ic.icon}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium">{item.label}</p>
+                    {item.note && (
+                      <span className="text-[10px] font-mono text-warning/70 bg-warning/5 border border-warning/20 px-1.5 py-0.5 rounded">
+                        {item.note}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5 leading-relaxed">{item.detail}</p>
+                </div>
+                <Badge variant="outline" className={`text-[10px] font-bold shrink-0 ${ic.badgeCls}`}>{ic.badge}</Badge>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Distinction explicite seed vs live */}
+        {(liveProof?.allRuns?.length ?? 0) > 0 && (
+          <div className="mx-6 mb-3 mt-1 rounded-lg border border-muted/40 bg-muted/5 px-4 py-2.5">
+            <p className="text-xs font-semibold text-foreground mb-1 flex items-center gap-1.5">
+              <Fingerprint className="h-3.5 w-3.5" />
+              Distinction seed vs live — {liveProof!.allRuns.length} run(s) total en DB
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <span className="text-[10px] font-mono text-success">
+                Live (requested_by=user) : {liveProof?.allRuns.filter(r => r.requested_by === user?.id).length ?? 0}
+              </span>
+              <span className="text-[10px] font-mono text-warning">
+                Seedés (requested_by≠user) : {liveProof?.seededRuns?.length ?? 0}
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground">
+                Findings totaux org : {liveProof?.totalFindings ?? 0}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex flex-wrap gap-2 px-6 py-3 border-t border-border bg-muted/10">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => refetchLiveProof()}
+            disabled={isLoading}
+            className="gap-1.5 text-xs"
+          >
+            {isLoading
+              ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Vérification…</>
+              : <><RefreshCw className="h-3.5 w-3.5" />Actualiser la preuve</>}
+          </Button>
+          {liveProof?.liveRun && (
+            <Button size="sm" variant="ghost" asChild className="text-xs">
+              <Link to="/runs"><FileText className="h-3.5 w-3.5 mr-1" />Voir les runs<ExternalLink className="h-3 w-3 ml-1" /></Link>
+            </Button>
+          )}
+          {hasPortfolio && (
+            <Button size="sm" variant="ghost" asChild className="text-xs">
+              <Link to="/report-studio"><BarChart3 className="h-3.5 w-3.5 mr-1" />Report Studio<ExternalLink className="h-3 w-3 ml-1" /></Link>
+            </Button>
+          )}
+        </div>
+
+        {/* Ligne d'état finale — honnête, impossible à mal interpréter */}
+        <div className="px-6 py-2.5 border-t border-border">
+          <p className="text-[10px] font-mono text-muted-foreground">
+            {liveState === 'PROVEN'
+              ? `✓ PREUVE LIVE COMPLÈTE — session réelle · requested_by=${liveProof?.liveRun?.requested_by?.slice(0, 8)}… · ${liveProof?.liveRunFindings} findings pipeline · ${liveProof?.portfolios.length} synthèse(s) · sortie métier visible · RLS respectée · multi-tenant strict`
+              : liveState === 'PARTIAL'
+              ? `⚠ PARTIEL — run live créé (id=${liveProof?.liveRun?.id?.slice(0, 8)}…) · BLOCAGE : 0 findings pipeline réel · normalize non exécuté ou artefact manquant`
+              : liveState === 'READY'
+              ? `○ PRÊT POUR EXÉCUTION LIVE — session auth ✓ · org ✓ · tools_catalog ✓ · EN ATTENTE de la première exécution du pipeline réel par un humain`
+              : liveState === 'RUNNING'
+              ? `↻ RUN EN COURS — id=${liveProof?.liveRun?.id?.slice(0, 8)}… · status=${liveProof?.liveRun?.status} · polling actif`
+              : `✗ SESSION ABSENTE — effectuez le OwnerSetup pour obtenir la preuve finale`}
+          </p>
+        </div>
+
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── RLS Security Panel ────────────────────────────────────────────────────────
 // Shows the real state of critical RLS policies. Data-driven, no cosmetics.
 // Proofs:
