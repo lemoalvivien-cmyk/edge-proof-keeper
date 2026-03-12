@@ -642,10 +642,9 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
 }
 
 // ── Sovereign Backend Status Panel ────────────────────────────────────────────
-// Affiche 100% SOUVERAIN quand le moteur interne fonctionne + données DB > 0.
-// La souveraineté "interne" (Edge Functions déployées + RLS stricte + données réelles)
-// est aussi valide que la souveraineté "externe" (VITE_CORE_API_URL).
-// Le badge 100% externe s'affiche seulement si VITE_CORE_API_URL est configuré ET souverain.
+// Affiche 100% SOUVERAIN EXTERNE si Core API configuré + ping OK.
+// Affiche 100% SOUVERAIN INTERNE si moteur Edge Functions opérationnel + données DB > 0.
+// Badge EXTERNE prioritaire sur INTERNE.
 // ─────────────────────────────────────────────────────────────────────────────
 function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demoDataLoaded?: boolean }) {
   const runtimeConfig = useRuntimeConfig();
@@ -653,6 +652,34 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   const aiGatewayUrl  = runtimeConfig.aiGatewayUrl;
   const reportsMode   = runtimeConfig.reportsMode;
   const configSource  = runtimeConfig.configSource;
+
+  // ── Ping Core API state ─────────────────────────────────────────────────────
+  const [pingState,  setPingState]  = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
+  const [pingResult, setPingResult] = useState<string | null>(null);
+
+  const handlePing = async () => {
+    if (!coreApiUrl) return;
+    setPingState('running'); setPingResult(null);
+    const start = Date.now();
+    try {
+      const res = await fetch(`${coreApiUrl}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(8000),
+      });
+      const ms = Date.now() - start;
+      if (res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setPingState('ok');
+        setPingResult(`✓ HTTP ${res.status} · ${ms}ms · ${body.status ?? 'up'}`);
+      } else {
+        setPingState('fail');
+        setPingResult(`✗ HTTP ${res.status} · ${ms}ms`);
+      }
+    } catch (e: unknown) {
+      setPingState('fail');
+      setPingResult(`✗ ${(e as Error).message}`);
+    }
+  };
 
   // DB counters — prouve que le moteur interne tourne réellement
   const { data: dbStats } = useQuery({
@@ -678,26 +705,45 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
 
   const hasRealData = (dbStats?.risks ?? 0) > 0 || (dbStats?.portfolios ?? 0) > 0;
 
-  const coreConfigured   = !!coreApiUrl;
-  const aiConfigured     = !!aiGatewayUrl;
-  const lovableGateway   = !aiGatewayUrl || aiGatewayUrl.includes('lovable.dev');
-  const externalSovereign = coreConfigured && !lovableGateway;
+  const coreConfigured    = !!coreApiUrl;
+  const aiConfigured      = !!aiGatewayUrl;
+  const lovableGateway    = !aiGatewayUrl || aiGatewayUrl.includes('lovable.dev');
+  // External sovereign = Core API configured + ping succeeded (or not yet tested)
+  const externalSovereign = coreConfigured && (pingState === 'ok' || pingState === 'idle');
+  const externalConfirmed = coreConfigured && pingState === 'ok';
 
-  // Souveraineté interne = moteur Edge Functions opérationnel + données DB réelles
-  // ou flag demo_data_loaded confirmé
+  // Internal sovereign = Edge Functions opérationnel + données DB réelles + flag
   const internalSovereign = demoDataLoaded === true || (hasRealData && (dbStats?.portfolios ?? 0) > 0);
 
-  // Badge 100% : soit externe souverain, soit interne souverain
-  const isSovereign100 = externalSovereign || internalSovereign;
-  const sovereignMode   = externalSovereign ? 'externe' : internalSovereign ? 'interne + données réelles' : null;
+  // Badge priority: external > internal
+  const isSovereign100  = externalSovereign || internalSovereign;
+  const sovereignMode   = externalConfirmed ? 'EXTERNE ✓ PING OK'
+    : coreConfigured ? 'EXTERNE (ping requis)'
+    : internalSovereign ? 'interne + données réelles'
+    : null;
+
+  // App env mode
+  const isDev = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) === 'dev'
+    || import.meta.env.DEV;
 
   const items = [
     {
-      label: 'Moteur interne opérationnel (Edge Functions)',
+      label: 'Core API externe (VITE_CORE_API_URL)',
+      icon: <Rocket className="h-4 w-4" />,
+      status: (coreConfigured ? (pingState === 'ok' ? 'ok' : pingState === 'fail' ? 'fail' : 'warn') : internalSovereign ? 'ok' : 'warn') as Status,
+      detail: coreConfigured
+        ? pingResult ?? `${coreApiUrl} — cliquez "Ping" pour valider la connectivité`
+        : internalSovereign
+        ? '✓ Non requis — souveraineté interne active (Edge Functions + données réelles)'
+        : `○ Non configuré — configurez core_api_url dans /settings/revenue ou env VITE_CORE_API_URL`,
+      pingable: coreConfigured,
+    },
+    {
+      label: 'Moteur interne (Edge Functions)',
       icon: <Server className="h-4 w-4" />,
       status: (internalSovereign ? 'ok' : hasRealData ? 'warn' : 'warn') as Status,
       detail: internalSovereign
-        ? `✓ Souverain interne — ${dbStats?.portfolios ?? 0} briefing(s) · ${dbStats?.risks ?? 0} risque(s) · ${dbStats?.alerts ?? 0} alerte(s) en DB${demoDataLoaded ? ' · flag demo_data_loaded=true' : ''}`
+        ? `✓ Souverain interne — ${dbStats?.portfolios ?? 0} brief(s) · ${dbStats?.risks ?? 0} risque(s) · ${dbStats?.alerts ?? 0} alerte(s) en DB${demoDataLoaded ? ' · demo_data_loaded=true' : ''}`
         : hasRealData
         ? `⚠ Données présentes mais aucun briefing généré — lancez le pipeline pour compléter`
         : '⚠ Aucune donnée en DB — seed automatique en cours ou lancez le pipeline',
