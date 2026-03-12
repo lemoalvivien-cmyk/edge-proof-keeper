@@ -246,6 +246,16 @@ export interface CorrelateRisksResult {
   signals_processed: number;
   risks_created: number;
   risks_updated: number;
+  errors_count?: number;
+  message?: string;
+}
+
+export interface BuildRemediationQueueResult {
+  success: boolean;
+  risks_processed: number;
+  actions_created: number;
+  actions_updated: number;
+  errors_count: number;
   message?: string;
 }
 
