@@ -824,19 +824,26 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
       icon: <Rocket className="h-4 w-4" />,
       status: (coreConfigured
         ? (pingState === 'ok' ? 'ok' : pingState === 'fail' ? 'fail' : 'warn')
-        : internalSovereign ? 'ok' : 'warn') as Status,
+        : isProd ? 'fail' : 'warn') as Status,
       detail: coreConfigured
         ? pingResult ?? `${coreApiUrl} — cliquez "Ping Core API" pour valider`
-        : internalSovereign
-        ? '✓ Non requis — souveraineté interne active'
-        : '○ Non configuré — ajoutez core_api_url dans /settings/revenue',
+        : isProd
+        ? '🔒 OBLIGATOIRE EN PROD — configurez core_api_url dans /settings/revenue'
+        : '○ Non configuré (optionnel en dev) — ajoutez core_api_url dans /settings/revenue',
       pingable: coreConfigured,
     },
     {
       label: 'Moteur interne (Edge Functions)',
       icon: <Server className="h-4 w-4" />,
-      status: (internalSovereign ? 'ok' : 'warn') as Status,
-      detail: internalSovereign
+      // In prod: internal fallback is BLOCKED — show fail if core not configured
+      status: (isProd
+        ? coreConfigured ? 'ok' : 'fail'
+        : internalSovereign ? 'ok' : 'warn') as Status,
+      detail: isProd
+        ? coreConfigured
+          ? `✓ Edge Functions actives en support · Core API externe obligatoire pour portfolio-summary`
+          : '🔒 Fallback interne désactivé en prod — Core API externe requis'
+        : internalSovereign
         ? `✓ ${dbStats?.portfolios ?? 0} brief(s) · ${dbStats?.risks ?? 0} risque(s) · ${dbStats?.alerts ?? 0} alerte(s) en DB`
         : hasRealData
         ? '⚠ Données présentes mais aucun briefing — lancez le pipeline'
