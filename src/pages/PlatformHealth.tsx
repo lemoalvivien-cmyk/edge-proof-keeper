@@ -484,6 +484,9 @@ export default function PlatformHealth() {
           </CardContent>
         </Card>
 
+        {/* ── Watch Brief ──────────────────────────────────────────────── */}
+        <WatchBriefSection orgId={orgId} />
+
         {/* DB Component detail */}
         {health?.components?.tables?.detail && (
           <Card>
