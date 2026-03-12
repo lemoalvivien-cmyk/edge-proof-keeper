@@ -389,6 +389,8 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
         {/* Live Proof Panel — Pipeline Produit */}
         <Card className={`border-2 ${
           pipelineState === 'done' ? 'border-success/50 bg-success/[0.02]' :
