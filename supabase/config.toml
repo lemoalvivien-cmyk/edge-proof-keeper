@@ -59,3 +59,10 @@ verify_jwt = false
 # ─── Entity Graph Functions ─────────────────────────────────────────────────
 [functions.correlate-entities]
 verify_jwt = false
+
+# ─── AI Intelligence Functions ───────────────────────────────────────────────
+[functions.analyze-risk-intelligence]
+verify_jwt = false
+
+[functions.enhance-remediation-actions]
+verify_jwt = false
