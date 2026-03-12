@@ -51,6 +51,7 @@ import ContinuousGovernance from "./pages/offres/ContinuousGovernance";
 import EasmOsintSignals from "./pages/offres/EasmOsintSignals";
 import PlansAddons from "./pages/PlansAddons";
 import Demo from "./pages/Demo";
+import RevenueSettings from "./pages/RevenueSettings";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +122,7 @@ const App = () => (
               <Route path="/plans" element={<ProtectedRoute requiredRoles={['admin']}><PlansAddons /></ProtectedRoute>} />
               <Route path="/admin-readiness" element={<ProtectedRoute requiredRoles={['admin']}><AdminReadiness /></ProtectedRoute>} />
               <Route path="/admin/leads" element={<ProtectedRoute requiredRoles={['admin']}><AdminLeads /></ProtectedRoute>} />
+              <Route path="/settings/revenue" element={<ProtectedRoute requiredRoles={['admin']}><RevenueSettings /></ProtectedRoute>} />
               
               {/* Protected app routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

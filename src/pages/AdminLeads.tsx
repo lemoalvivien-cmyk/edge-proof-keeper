@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { formatDistanceToNow, differenceInHours, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   Users,
@@ -31,9 +31,13 @@ import {
   ThumbsUp,
   Trophy,
   XCircle,
+  AlertTriangle,
+  Clock,
+  UserCheck,
+  Flag,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getBookingUrl } from '@/lib/revenue-links';
+import { useCommercialConfig } from '@/hooks/useCommercialConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -56,6 +60,38 @@ interface SalesLead {
   utm_campaign: string | null;
   utm_content: string | null;
   last_activity_at: string;
+  owner: string | null;
+  priority: string;
+  next_action_at: string | null;
+  last_contact_at: string | null;
+}
+
+// ── SLA logic ─────────────────────────────────────────────────────────────────
+
+type SLALevel = 'ok' | 'warn' | 'critical';
+
+function getSLA(lead: SalesLead): SLALevel {
+  if (lead.status === 'won' || lead.status === 'lost') return 'ok';
+  const hoursOld = differenceInHours(new Date(), new Date(lead.created_at));
+  const hoursSinceActivity = differenceInHours(new Date(), new Date(lead.last_activity_at));
+  if (hoursOld > 72 || hoursSinceActivity > 72) return 'critical';
+  if (hoursOld > 24 || hoursSinceActivity > 24) return 'warn';
+  return 'ok';
+}
+
+function SLABadge({ lead }: { lead: SalesLead }) {
+  const sla = getSLA(lead);
+  if (sla === 'ok') return null;
+  return (
+    <Badge
+      variant="outline"
+      className={`text-xs ml-1 ${sla === 'critical'
+        ? 'bg-destructive/10 text-destructive border-destructive/30'
+        : 'bg-warning/10 text-warning border-warning/30'}`}
+    >
+      {sla === 'critical' ? '⚠ +72h' : '⏰ +24h'}
+    </Badge>
+  );
 }
 
 // ── Status config ─────────────────────────────────────────────────────────────
@@ -70,24 +106,27 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 
 const STATUSES = Object.keys(STATUS_CONFIG);
 
+const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
+  high:   { label: 'Haute',   className: 'bg-destructive/10 text-destructive border-destructive/30' },
+  normal: { label: 'Normale', className: 'bg-muted/50 text-muted-foreground border-muted' },
+  low:    { label: 'Basse',   className: 'bg-muted/30 text-muted-foreground/70 border-muted/50' },
+};
+
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.new;
-  return (
-    <Badge variant="outline" className={`text-xs ${cfg.className}`}>
-      {cfg.label}
-    </Badge>
-  );
+  return <Badge variant="outline" className={`text-xs ${cfg.className}`}>{cfg.label}</Badge>;
+}
+
+function PriorityBadge({ priority }: { priority: string }) {
+  const cfg = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG.normal;
+  return <Badge variant="outline" className={`text-xs ${cfg.className}`}>{cfg.label}</Badge>;
 }
 
 function ScoreBadge({ score }: { score: number }) {
-  const cls =
-    score >= 60 ? 'text-success' :
-    score >= 35 ? 'text-warning' :
-    'text-muted-foreground';
+  const cls = score >= 60 ? 'text-success' : score >= 35 ? 'text-warning' : 'text-muted-foreground';
   return (
     <span className={`flex items-center gap-1 text-sm font-bold ${cls}`}>
-      <Star className="h-3 w-3" />
-      {score}
+      <Star className="h-3 w-3" />{score}
     </span>
   );
 }
@@ -103,13 +142,9 @@ const INTEREST_LABELS: Record<string, string> = {
 // ── Quick action button ───────────────────────────────────────────────────────
 
 function QuickAction({
-  icon,
-  label,
-  onClick,
-  variant = 'outline',
+  icon, label, onClick, variant = 'outline',
 }: {
-  icon: React.ReactNode;
-  label: string;
+  icon: React.ReactNode; label: string;
   onClick: (e: React.MouseEvent) => void;
   variant?: 'outline' | 'default' | 'ghost' | 'secondary';
 }) {
@@ -118,9 +153,7 @@ function QuickAction({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant={variant}
-            size="icon"
-            className="h-7 w-7 shrink-0"
+            variant={variant} size="icon" className="h-7 w-7 shrink-0"
             onClick={e => { e.stopPropagation(); onClick(e); }}
           >
             {icon}
@@ -132,7 +165,7 @@ function QuickAction({
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function AdminLeads() {
   const { toast } = useToast();
@@ -140,13 +173,19 @@ export default function AdminLeads() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCta, setFilterCta] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
   const [selectedLead, setSelectedLead] = useState<SalesLead | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const bookingUrl = getBookingUrl();
+  // Detail form local state
+  const [detailOwner, setDetailOwner] = useState('');
+  const [detailPriority, setDetailPriority] = useState('normal');
+  const [detailNextAction, setDetailNextAction] = useState('');
 
-  // ── Fetch leads ────────────────────────────────────────────────────────────
+  const { config: commercialConfig } = useCommercialConfig();
+
+  // ── Fetch leads ──────────────────────────────────────────────────────────
   const { data: leads = [], isLoading } = useQuery<SalesLead[]>({
     queryKey: ['admin-leads', refreshKey],
     queryFn: async () => {
@@ -160,44 +199,62 @@ export default function AdminLeads() {
     },
   });
 
-  // ── Update status mutation ─────────────────────────────────────────────────
-  const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+  // ── Update status ────────────────────────────────────────────────────────
+  const updateLead = useMutation({
+    mutationFn: async (updates: { id: string } & Partial<SalesLead>) => {
+      const { id, ...rest } = updates;
       const { error } = await supabase
         .from('sales_leads')
-        .update({ status, last_activity_at: new Date().toISOString() })
+        .update({ ...rest, last_activity_at: new Date().toISOString() })
         .eq('id', id);
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['admin-leads'] });
-      setSelectedLead(l => l && l.id === vars.id ? { ...l, status: vars.status } : l);
-      toast({ title: 'Statut mis à jour' });
+      setSelectedLead(l => l && l.id === vars.id ? { ...l, ...vars } : l);
+      toast({ title: 'Lead mis à jour' });
     },
     onError: () => toast({ title: 'Erreur', variant: 'destructive' }),
   });
 
-  // ── KPIs ───────────────────────────────────────────────────────────────────
-  const kpis = {
+  // ── KPIs ─────────────────────────────────────────────────────────────────
+  const kpis = useMemo(() => ({
     total:     leads.length,
     new:       leads.filter(l => l.status === 'new').length,
     qualified: leads.filter(l => l.status === 'qualified').length,
     won:       leads.filter(l => l.status === 'won').length,
-  };
+    critical:  leads.filter(l => getSLA(l) === 'critical').length,
+  }), [leads]);
 
-  // ── CTA origins list ───────────────────────────────────────────────────────
-  const ctaOrigins = ['all', ...Array.from(new Set(leads.map(l => l.cta_origin ?? 'unknown').filter(Boolean)))];
+  const ctaOrigins = useMemo(() =>
+    ['all', ...Array.from(new Set(leads.map(l => l.cta_origin ?? 'unknown').filter(Boolean)))],
+    [leads],
+  );
 
-  // ── Filtered leads ─────────────────────────────────────────────────────────
-  const filtered = leads.filter(l => {
-    const q = search.toLowerCase();
-    const matchSearch = !q || [l.full_name, l.email, l.company, l.role].some(f => f?.toLowerCase().includes(q));
-    const matchStatus = filterStatus === 'all' || l.status === filterStatus;
-    const matchCta = filterCta === 'all' || (l.cta_origin ?? 'unknown') === filterCta;
-    return matchSearch && matchStatus && matchCta;
-  });
+  // ── Filtered + sorted leads ──────────────────────────────────────────────
+  const filtered = useMemo(() => {
+    return leads
+      .filter(l => {
+        const q = search.toLowerCase();
+        const matchSearch = !q || [l.full_name, l.email, l.company, l.role].some(f => f?.toLowerCase().includes(q));
+        const matchStatus = filterStatus === 'all' || l.status === filterStatus;
+        const matchCta = filterCta === 'all' || (l.cta_origin ?? 'unknown') === filterCta;
+        const matchPriority = filterPriority === 'all' || l.priority === filterPriority;
+        return matchSearch && matchStatus && matchCta && matchPriority;
+      })
+      .sort((a, b) => {
+        // Critical SLA first, then high priority, then date
+        const slaA = getSLA(a) === 'critical' ? 0 : getSLA(a) === 'warn' ? 1 : 2;
+        const slaB = getSLA(b) === 'critical' ? 0 : getSLA(b) === 'warn' ? 1 : 2;
+        if (slaA !== slaB) return slaA - slaB;
+        const prioOrder: Record<string, number> = { high: 0, normal: 1, low: 2 };
+        if ((prioOrder[a.priority] ?? 1) !== (prioOrder[b.priority] ?? 1))
+          return (prioOrder[a.priority] ?? 1) - (prioOrder[b.priority] ?? 1);
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+  }, [leads, search, filterStatus, filterCta, filterPriority]);
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const copyEmail = (lead: SalesLead) => {
     navigator.clipboard.writeText(lead.email).then(() => {
       setCopiedId(lead.id);
@@ -214,14 +271,29 @@ export default function AdminLeads() {
   };
 
   const openBooking = (lead: SalesLead) => {
-    if (bookingUrl) {
-      window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+    const url = commercialConfig.bookingUrl;
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
     } else {
-      window.open(
-        `mailto:${lead.email}?subject=Planifier une démonstration Cyber Serenity`,
-        '_blank',
-      );
+      window.open(`mailto:${lead.email}?subject=Planifier une démonstration Cyber Serenity`, '_blank');
     }
+  };
+
+  const openDetail = (lead: SalesLead) => {
+    setSelectedLead(lead);
+    setDetailOwner(lead.owner ?? '');
+    setDetailPriority(lead.priority ?? 'normal');
+    setDetailNextAction(lead.next_action_at ? lead.next_action_at.slice(0, 10) : '');
+  };
+
+  const saveDetailMeta = () => {
+    if (!selectedLead) return;
+    updateLead.mutate({
+      id: selectedLead.id,
+      owner: detailOwner || null,
+      priority: detailPriority,
+      next_action_at: detailNextAction ? new Date(detailNextAction).toISOString() : null,
+    });
   };
 
   return (
@@ -240,18 +312,18 @@ export default function AdminLeads() {
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => setRefreshKey(k => k + 1)}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Actualiser
+            <RefreshCw className="h-4 w-4 mr-2" />Actualiser
           </Button>
         </div>
 
         {/* KPI row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
-            { label: 'Total leads', value: kpis.total,     icon: <Users className="h-5 w-5 text-primary" />,            cls: '' },
-            { label: 'Nouveaux',    value: kpis.new,       icon: <Mail className="h-5 w-5 text-primary" />,             cls: 'text-primary' },
-            { label: 'Qualifiés',   value: kpis.qualified, icon: <TrendingUp className="h-5 w-5 text-warning" />,        cls: 'text-warning' },
-            { label: 'Gagnés',      value: kpis.won,       icon: <Star className="h-5 w-5 text-success" />,             cls: 'text-success' },
+            { label: 'Total leads', value: kpis.total,     icon: <Users className="h-5 w-5 text-primary" />,              cls: '' },
+            { label: 'Nouveaux',    value: kpis.new,       icon: <Mail className="h-5 w-5 text-primary" />,               cls: 'text-primary' },
+            { label: 'Qualifiés',   value: kpis.qualified, icon: <TrendingUp className="h-5 w-5 text-warning" />,          cls: 'text-warning' },
+            { label: 'Gagnés',      value: kpis.won,       icon: <Star className="h-5 w-5 text-success" />,               cls: 'text-success' },
+            { label: 'SLA critique',value: kpis.critical,  icon: <AlertTriangle className="h-5 w-5 text-destructive" />,   cls: 'text-destructive' },
           ].map(k => (
             <Card key={k.label}>
               <CardContent className="pt-4 pb-4">
@@ -281,24 +353,23 @@ export default function AdminLeads() {
             />
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Statut" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les statuts</SelectItem>
-              {STATUSES.map(s => (
-                <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>
-              ))}
+              {STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterPriority} onValueChange={setFilterPriority}>
+            <SelectTrigger className="w-36"><SelectValue placeholder="Priorité" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes priorités</SelectItem>
+              {Object.entries(PRIORITY_CONFIG).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterCta} onValueChange={setFilterCta}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Origine CTA" />
-            </SelectTrigger>
+            <SelectTrigger className="w-48"><SelectValue placeholder="Origine CTA" /></SelectTrigger>
             <SelectContent>
-              {ctaOrigins.map(c => (
-                <SelectItem key={c} value={c}>{c === 'all' ? 'Toutes origines' : c}</SelectItem>
-              ))}
+              {ctaOrigins.map(c => <SelectItem key={c} value={c}>{c === 'all' ? 'Toutes origines' : c}</SelectItem>)}
             </SelectContent>
           </Select>
           <span className="text-sm text-muted-foreground ml-auto">
@@ -323,8 +394,9 @@ export default function AdminLeads() {
                     <TableHead>Prospect</TableHead>
                     <TableHead>Entreprise</TableHead>
                     <TableHead>Score</TableHead>
-                    <TableHead>Intérêt</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead>Priorité</TableHead>
+                    <TableHead>Owner</TableHead>
+                    <TableHead>Ancienneté</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -334,11 +406,14 @@ export default function AdminLeads() {
                     <TableRow
                       key={lead.id}
                       className="cursor-pointer hover:bg-muted/30"
-                      onClick={() => setSelectedLead(lead)}
+                      onClick={() => openDetail(lead)}
                     >
                       <TableCell>
                         <div>
-                          <p className="font-medium text-sm">{lead.full_name}</p>
+                          <div className="flex items-center gap-1">
+                            <p className="font-medium text-sm">{lead.full_name}</p>
+                            <SLABadge lead={lead} />
+                          </div>
                           <p className="text-xs text-muted-foreground">{lead.email}</p>
                         </div>
                       </TableCell>
@@ -349,35 +424,39 @@ export default function AdminLeads() {
                         </div>
                       </TableCell>
                       <TableCell><ScoreBadge score={lead.lead_score} /></TableCell>
+                      <TableCell><PriorityBadge priority={lead.priority} /></TableCell>
                       <TableCell>
                         <span className="text-xs text-muted-foreground">
-                          {INTEREST_LABELS[lead.interest_type ?? ''] ?? lead.interest_type ?? '—'}
+                          {lead.owner ?? <span className="italic opacity-50">—</span>}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(lead.created_at), 'dd MMM yyyy', { locale: fr })}
-                        </span>
+                        <div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(lead.created_at), { locale: fr, addSuffix: true })}
+                          </span>
+                          {lead.next_action_at && (
+                            <p className={`text-xs flex items-center gap-1 mt-0.5 ${new Date(lead.next_action_at) < new Date() ? 'text-destructive' : 'text-muted-foreground'}`}>
+                              <Clock className="h-3 w-3" />
+                              {format(new Date(lead.next_action_at), 'dd/MM', { locale: fr })}
+                            </p>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell onClick={e => e.stopPropagation()}>
                         <Select
                           value={lead.status}
-                          onValueChange={status => updateStatus.mutate({ id: lead.id, status })}
+                          onValueChange={status => updateLead.mutate({ id: lead.id, status })}
                         >
                           <SelectTrigger className="h-7 text-xs w-36" onClick={e => e.stopPropagation()}>
                             <StatusBadge status={lead.status} />
                           </SelectTrigger>
                           <SelectContent>
-                            {STATUSES.map(s => (
-                              <SelectItem key={s} value={s}>
-                                <StatusBadge status={s} />
-                              </SelectItem>
-                            ))}
+                            {STATUSES.map(s => <SelectItem key={s} value={s}><StatusBadge status={s} /></SelectItem>)}
                           </SelectContent>
                         </Select>
                       </TableCell>
 
-                      {/* Quick actions */}
                       <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           <QuickAction
@@ -392,23 +471,23 @@ export default function AdminLeads() {
                           />
                           <QuickAction
                             icon={<Calendar className="h-3.5 w-3.5" />}
-                            label={bookingUrl ? 'Planifier démo (lien booking)' : 'Planifier démo (email)'}
+                            label={commercialConfig.bookingUrl ? 'Planifier démo (booking)' : 'Planifier démo (email)'}
                             onClick={() => openBooking(lead)}
                           />
                           <QuickAction
                             icon={<ThumbsUp className="h-3.5 w-3.5 text-warning" />}
                             label="Marquer qualifié"
-                            onClick={() => updateStatus.mutate({ id: lead.id, status: 'qualified' })}
+                            onClick={() => updateLead.mutate({ id: lead.id, status: 'qualified' })}
                           />
                           <QuickAction
                             icon={<Trophy className="h-3.5 w-3.5 text-success" />}
                             label="Marquer gagné"
-                            onClick={() => updateStatus.mutate({ id: lead.id, status: 'won' })}
+                            onClick={() => updateLead.mutate({ id: lead.id, status: 'won' })}
                           />
                           <QuickAction
                             icon={<XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
                             label="Marquer perdu"
-                            onClick={() => updateStatus.mutate({ id: lead.id, status: 'lost' })}
+                            onClick={() => updateLead.mutate({ id: lead.id, status: 'lost' })}
                           />
                         </div>
                       </TableCell>
@@ -423,18 +502,20 @@ export default function AdminLeads() {
 
       {/* Lead detail dialog */}
       <Dialog open={!!selectedLead} onOpenChange={v => !v && setSelectedLead(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           {selectedLead && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-primary" />
                   {selectedLead.full_name}
+                  <SLABadge lead={selectedLead} />
                 </DialogTitle>
                 <DialogDescription>{selectedLead.email}</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 mt-2">
+                {/* Core info grid */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex items-start gap-2">
                     <Building2 className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -470,7 +551,7 @@ export default function AdminLeads() {
                   <div className="flex items-start gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Date de demande</p>
+                      <p className="text-xs text-muted-foreground">Date</p>
                       <p className="text-sm">
                         {format(new Date(selectedLead.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
                       </p>
@@ -514,90 +595,103 @@ export default function AdminLeads() {
 
                 <Separator />
 
+                {/* ── CRM meta ── */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">CRM</p>
+
+                  {/* Owner */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                      <UserCheck className="h-3.5 w-3.5" />Owner
+                    </label>
+                    <Input
+                      placeholder="ex: alice@cyberserenity.fr"
+                      value={detailOwner}
+                      onChange={e => setDetailOwner(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+
+                  {/* Priority */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Flag className="h-3.5 w-3.5" />Priorité
+                    </label>
+                    <Select value={detailPriority} onValueChange={setDetailPriority}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PRIORITY_CONFIG).map(([k, v]) => (
+                          <SelectItem key={k} value={k}><PriorityBadge priority={k} /></SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Next action */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />Prochaine action (date)
+                    </label>
+                    <Input
+                      type="date"
+                      value={detailNextAction}
+                      onChange={e => setDetailNextAction(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+
+                  <Button size="sm" className="w-full gap-2" onClick={saveDetailMeta} disabled={updateLead.isPending}>
+                    <Check className="h-3.5 w-3.5" />
+                    Enregistrer
+                  </Button>
+                </div>
+
+                <Separator />
+
                 {/* Status changer */}
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">Changer le statut</p>
                   <Select
                     value={selectedLead.status}
                     onValueChange={status => {
-                      updateStatus.mutate({ id: selectedLead.id, status });
+                      updateLead.mutate({ id: selectedLead.id, status });
                       setSelectedLead(l => l ? { ...l, status } : null);
                     }}
                   >
-                    <SelectTrigger className="w-44">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {STATUSES.map(s => (
-                        <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>
-                      ))}
+                      {STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Action buttons */}
                 <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => openMail(selectedLead)}
-                  >
-                    <Mail className="h-4 w-4" />
-                    Contacter
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => openMail(selectedLead)}>
+                    <Mail className="h-4 w-4" />Contacter
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => copyEmail(selectedLead)}
-                  >
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => copyEmail(selectedLead)}>
                     {copiedId === selectedLead.id ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                     Copier email
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => openBooking(selectedLead)}
-                  >
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => openBooking(selectedLead)}>
                     <Calendar className="h-4 w-4" />
-                    {bookingUrl ? 'Planifier démo' : 'Planifier (email)'}
+                    {commercialConfig.bookingUrl ? 'Planifier démo' : 'Planifier (email)'}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => {
-                      updateStatus.mutate({ id: selectedLead.id, status: 'qualified' });
-                      setSelectedLead(l => l ? { ...l, status: 'qualified' } : null);
-                    }}
+                  <Button variant="outline" size="sm" className="gap-2"
+                    onClick={() => { updateLead.mutate({ id: selectedLead.id, status: 'qualified' }); setSelectedLead(l => l ? { ...l, status: 'qualified' } : null); }}
                   >
-                    <ThumbsUp className="h-4 w-4 text-warning" />
-                    Marquer qualifié
+                    <ThumbsUp className="h-4 w-4 text-warning" />Marquer qualifié
                   </Button>
-                  <Button
-                    size="sm"
-                    className="gap-2 bg-success/20 text-success hover:bg-success/30 border border-success/30"
-                    onClick={() => {
-                      updateStatus.mutate({ id: selectedLead.id, status: 'won' });
-                      setSelectedLead(l => l ? { ...l, status: 'won' } : null);
-                    }}
+                  <Button size="sm" className="gap-2 bg-success/20 text-success hover:bg-success/30 border border-success/30"
+                    onClick={() => { updateLead.mutate({ id: selectedLead.id, status: 'won' }); setSelectedLead(l => l ? { ...l, status: 'won' } : null); }}
                   >
-                    <Trophy className="h-4 w-4" />
-                    Marquer gagné
+                    <Trophy className="h-4 w-4" />Marquer gagné
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 text-muted-foreground"
-                    onClick={() => {
-                      updateStatus.mutate({ id: selectedLead.id, status: 'lost' });
-                      setSelectedLead(l => l ? { ...l, status: 'lost' } : null);
-                    }}
+                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground"
+                    onClick={() => { updateLead.mutate({ id: selectedLead.id, status: 'lost' }); setSelectedLead(l => l ? { ...l, status: 'lost' } : null); }}
                   >
-                    <XCircle className="h-4 w-4" />
-                    Marquer perdu
+                    <XCircle className="h-4 w-4" />Marquer perdu
                   </Button>
                 </div>
               </div>
