@@ -95,7 +95,7 @@ function AiEnhancementPanel({
     enabled: !!riskId && !!orgId,
   });
 
-  const enhanced = analysis?.output_json as EnhancedRemediationResult | undefined;
+  const enhanced = analysis?.output_json as unknown as EnhancedRemediationResult | undefined;
 
   const handleEnhance = async () => {
     setEnhancing(true);

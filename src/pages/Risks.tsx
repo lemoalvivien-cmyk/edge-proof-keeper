@@ -72,7 +72,7 @@ function AiIntelligencePanel({
     enabled: !!riskId && !!orgId,
   });
 
-  const intel = analysis?.output_json as RiskIntelligenceResult | undefined;
+  const intel = analysis?.output_json as unknown as RiskIntelligenceResult | undefined;
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
