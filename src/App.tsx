@@ -52,6 +52,7 @@ import EasmOsintSignals from "./pages/offres/EasmOsintSignals";
 import PlansAddons from "./pages/PlansAddons";
 import Demo from "./pages/Demo";
 import Sources from "./pages/Sources";
+import Signals from "./pages/Signals";
 import RevenueSettings from "./pages/RevenueSettings";
 
 const queryClient = new QueryClient();
