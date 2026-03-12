@@ -955,7 +955,7 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
         <div className="px-6 py-3 border-t border-border bg-muted/10">
           <p className="text-[10px] font-mono text-muted-foreground/70">
             {externalConfirmed
-              ? '✓ SOUVERAINETÉ EXTERNE CONFIRMÉE — Core API joignable · appels réseau vers votre backend · RLS stricte · multi-tenant'
+              ? `✓ SOUVERAINETÉ EXTERNE CONFIRMÉE${dbConfirmedAt ? ` · persisté le ${new Date(dbConfirmedAt).toLocaleString('fr-FR')}` : ''} · Core API joignable · RLS stricte · multi-tenant`
               : isSovereign100
               ? '✓ SOUVERAINETÉ CONFIRMÉE — moteur opérationnel · données réelles · RLS stricte · multi-tenant'
               : 'Seed automatique actif — données DB réelles en cours de chargement…'}
