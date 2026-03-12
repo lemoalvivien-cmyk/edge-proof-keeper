@@ -10,29 +10,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getPlatformHealth } from '@/lib/api-client';
 import { useRuntimeConfig } from '@/hooks/useRuntimeConfig';
 import {
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  RefreshCw,
-  Shield,
-  Database,
-  Cpu,
-  FlaskConical,
-  Users,
-  MessageSquare,
-  Navigation,
-  BarChart3,
-  Loader2,
-  ExternalLink,
-  TrendingUp,
-  DollarSign,
-  MousePointerClick,
-  Star,
-  CalendarDays,
-  ShoppingCart,
-  Zap,
-  Settings,
-  Server,
+  CheckCircle2, XCircle, AlertTriangle, RefreshCw, Shield, Database, Cpu,
+  FlaskConical, Users, MessageSquare, Navigation, BarChart3, Loader2,
+  ExternalLink, TrendingUp, DollarSign, MousePointerClick, Star,
+  CalendarDays, ShoppingCart, Zap, Settings, Server, Brain,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -74,10 +55,15 @@ export default function AdminReadiness() {
   const { organization } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const coreApiConfigured    = Boolean(import.meta.env.VITE_CORE_API_URL);
-  const bookingEnvConfigured = Boolean(import.meta.env.VITE_BOOKING_URL);
+  const runtime = useRuntimeConfig();
 
-  const { config: commercial } = useCommercialConfig();
+  // Effective values (DB > env > null)
+  const externalBackendActive = Boolean(runtime.coreApiUrl);
+  const bookingActive         = Boolean(runtime.bookingUrl);
+  const starterActive         = Boolean(runtime.starterCheckoutUrl);
+  const proActive             = Boolean(runtime.proCheckoutUrl);
+  const enterpriseActive      = Boolean(runtime.enterpriseCheckoutUrl);
+  const configSource          = runtime.configSource;
 
   const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: ['platform-health-readiness', organization?.id, refreshKey],
@@ -86,66 +72,45 @@ export default function AdminReadiness() {
     retry: 1,
   });
 
-  // Lead KPIs
   const { data: leadStats } = useQuery({
     queryKey: ['lead-stats', refreshKey],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sales_leads')
-        .select('status, lead_score, cta_origin, created_at');
+      const { data, error } = await supabase.from('sales_leads').select('status, lead_score, cta_origin, created_at');
       if (error) return null;
       const leads = data ?? [];
       const total     = leads.length;
       const newLeads  = leads.filter(l => l.status === 'new').length;
       const qualified = leads.filter(l => l.status === 'qualified').length;
-      const won       = leads.filter(l => l.status === 'won').length;
-      const avgScore  = total > 0
-        ? Math.round(leads.reduce((s, l) => s + (l.lead_score ?? 0), 0) / total)
-        : 0;
+      const avgScore  = total > 0 ? Math.round(leads.reduce((s, l) => s + (l.lead_score ?? 0), 0) / total) : 0;
       const ctaCounts: Record<string, number> = {};
-      leads.forEach(l => {
-        const k = l.cta_origin ?? 'unknown';
-        ctaCounts[k] = (ctaCounts[k] ?? 0) + 1;
-      });
-      const topCta = Object.entries(ctaCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([k, v]) => `${k} (${v})`);
-      return { total, newLeads, qualified, won, avgScore, topCta };
+      leads.forEach(l => { const k = l.cta_origin ?? 'unknown'; ctaCounts[k] = (ctaCounts[k] ?? 0) + 1; });
+      const topCta = Object.entries(ctaCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k} (${v})`);
+      return { total, newLeads, qualified, won: leads.filter(l => l.status === 'won').length, avgScore, topCta };
     },
   });
 
-  // Conversion events
   const { data: conversionData } = useQuery({
     queryKey: ['conversion-analytics', refreshKey],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
-        .from('conversion_events')
-        .select('event_name, cta_origin, source_page')
-        .limit(500);
+      const { data } = await (supabase as any).from('conversion_events').select('event_name, cta_origin, source_page').limit(500);
       if (!data) return null;
       type Row = { event_name: string; cta_origin: string | null; source_page: string | null };
       const rows = data as Row[];
-
       const eventCounts: Record<string, number> = {};
       const ctaCounts: Record<string, number> = {};
       const pageCounts: Record<string, number> = {};
-
       rows.forEach(r => {
         eventCounts[r.event_name] = (eventCounts[r.event_name] ?? 0) + 1;
         if (r.cta_origin) ctaCounts[r.cta_origin] = (ctaCounts[r.cta_origin] ?? 0) + 1;
         if (r.source_page) pageCounts[r.source_page] = (pageCounts[r.source_page] ?? 0) + 1;
       });
-
       const topEvents = Object.entries(eventCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
       const topCtaOrigins = Object.entries(ctaCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
       const topPages = Object.entries(pageCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
-      const dialogOpens    = eventCounts['demo_dialog_open']   ?? 0;
-      const dialogSubmits  = eventCounts['demo_dialog_submit'] ?? 0;
+      const dialogOpens   = eventCounts['demo_dialog_open']   ?? 0;
+      const dialogSubmits = eventCounts['demo_dialog_submit'] ?? 0;
       const conversionRate = dialogOpens > 0 ? Math.round((dialogSubmits / dialogOpens) * 100) : 0;
-
       return { topEvents, topCtaOrigins, topPages, dialogOpens, dialogSubmits, conversionRate, total: rows.length };
     },
   });
@@ -167,16 +132,19 @@ export default function AdminReadiness() {
             : undefined,
         },
         {
-          label: 'Backend externe (VITE_CORE_API_URL)',
-          description: 'Proxy IA pour Report Studio',
-          status: coreApiConfigured ? 'ok' : 'warn',
-          detail: coreApiConfigured ? 'Configuré' : 'Non configuré — Report Studio en lecture seule',
+          label: 'Backend externe (Core API URL)',
+          description: 'Proxy IA pour Report Studio — optionnel',
+          status: externalBackendActive ? 'ok' : 'warn',
+          detail: externalBackendActive
+            ? `✓ Configuré (source: ${configSource}) — ${runtime.coreApiUrl?.slice(0, 50)}`
+            : `✗ Non configuré — Report Studio utilise le moteur interne (mode: ${runtime.reportsMode})`,
+          link: { href: '/settings/revenue', label: 'Configurer' },
         },
         {
           label: 'IA moteur interne (Lovable API)',
           description: 'Analyse de signaux et remédiation IA',
           status: 'ok',
-          detail: "LOVABLE_API_KEY présent — prêt à l'emploi",
+          detail: "LOVABLE_API_KEY présent — Edge Functions Gemini prêtes",
         },
       ],
     },
@@ -194,8 +162,8 @@ export default function AdminReadiness() {
         {
           label: 'Report Studio',
           description: 'Génération rapports DG/PDG et DSI',
-          status: coreApiConfigured ? 'ok' : 'warn',
-          detail: coreApiConfigured ? 'Opérationnel' : 'Nécessite VITE_CORE_API_URL pour générer',
+          status: 'ok',
+          detail: `Mode: ${runtime.reportsMode}${externalBackendActive ? ' — backend externe actif' : ' — moteur interne actif'}`,
           link: { href: '/report-studio', label: 'Ouvrir Report Studio' },
         },
         {
@@ -269,67 +237,83 @@ export default function AdminReadiness() {
   const failCount = allItems.filter(i => i.status === 'fail').length;
   const total     = allItems.length;
   const readinessScore = Math.round((okCount / total) * 100);
-
   const globalStatus: Status = failCount > 0 ? 'fail' : warnCount > 0 ? 'warn' : 'ok';
 
   const readinessLabels = {
     fail:  { demo: 'fail' as Status, sale: 'fail' as Status,  onboarding: 'fail' as Status },
     warn:  { demo: 'ok'  as Status, sale: 'warn' as Status,  onboarding: 'warn' as Status },
-    ok:    { demo: 'ok'  as Status, sale: 'ok'  as Status,  onboarding: coreApiConfigured ? 'ok' as Status : 'warn' as Status },
+    ok:    { demo: 'ok'  as Status, sale: 'ok'  as Status,  onboarding: externalBackendActive ? 'ok' as Status : 'warn' as Status },
   };
   const readiness = readinessLabels[globalStatus];
 
-  // ── Revenue Operating Readiness items ─────────────────────────────────────
-  // Effective = DB override if present, else env var. Both layers shown explicitly.
+  // ── Revenue Operating Readiness ──────────────────────────────────────────
+  const sourceLabel = configSource === 'app_runtime_config'
+    ? 'DB (app_runtime_config)'
+    : configSource === 'commercial_config'
+    ? 'DB (commercial_config)'
+    : configSource === 'env'
+    ? 'variables d\'env'
+    : 'valeurs par défaut';
+
   const revenueItems = [
     {
-      label: 'Config commerciale (DB override)',
+      label: 'Config runtime (source de vérité)',
       icon: <Settings className="h-4 w-4" />,
-      status: commercial.fromDb ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.fromDb
-        ? 'Revenue Settings configurés en base — priorité sur env vars'
-        : 'Non configuré en base — env vars utilisées comme fallback',
+      status: configSource !== 'defaults' ? 'ok' as Status : 'warn' as Status,
+      detail: `Source active : ${sourceLabel}`,
       link: { href: '/settings/revenue', label: 'Configurer' },
+    },
+    {
+      label: 'Mode rapport (reports_mode)',
+      icon: <Brain className="h-4 w-4" />,
+      status: 'ok' as Status,
+      detail: `${runtime.reportsMode} — ${
+        runtime.reportsMode === 'internal_only' ? 'moteur interne (Edge Functions)'
+        : runtime.reportsMode === 'external_only' ? externalBackendActive ? 'backend externe actif' : '⚠ backend externe requis mais absent'
+        : externalBackendActive ? 'externe disponible + fallback interne' : 'fallback interne actif'
+      }`,
+    },
+    {
+      label: 'Mode vente (sales_mode)',
+      icon: <Zap className="h-4 w-4" />,
+      status: runtime.salesMode !== 'disabled' ? 'ok' as Status : 'warn' as Status,
+      detail: `${runtime.salesMode}${runtime.salesEnabled ? '' : ' (mode vente désactivé)'}`,
+    },
+    {
+      label: 'Core API URL',
+      icon: <Server className="h-4 w-4" />,
+      status: externalBackendActive ? 'ok' as Status : 'warn' as Status,
+      detail: externalBackendActive
+        ? `✓ ${runtime.coreApiUrl?.slice(0, 50)}`
+        : '✗ Non défini — moteur interne utilisé',
+      link: { href: '/settings/revenue', label: 'Définir' },
     },
     {
       label: 'Booking URL',
       icon: <CalendarDays className="h-4 w-4" />,
-      status: commercial.bookingUrl ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.bookingUrl
-        ? `✓ configurée (${commercial.fromDb ? 'DB' : 'env VITE_BOOKING_URL'}) — ${commercial.bookingUrl.slice(0, 40)}…`
-        : `✗ VITE_BOOKING_URL non défini${bookingEnvConfigured ? ' (incohérence détectée)' : ''} — fallback formulaire actif`,
+      status: bookingActive ? 'ok' as Status : 'warn' as Status,
+      detail: bookingActive
+        ? `✓ ${runtime.bookingUrl?.slice(0, 50)} (${sourceLabel})`
+        : '✗ Non défini — fallback formulaire actif',
+      link: bookingActive ? undefined : { href: '/settings/revenue', label: 'Configurer' },
     },
     {
-      label: 'Checkout Starter (VITE_STARTER_CHECKOUT_URL)',
+      label: 'Checkout Starter',
       icon: <ShoppingCart className="h-4 w-4" />,
-      status: commercial.starterCheckoutUrl ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.starterCheckoutUrl
-        ? `✓ configuré (${commercial.fromDb ? 'DB' : 'env'})`
-        : `✗ Non défini — CTA pricing utilise le fallback booking/formulaire`,
+      status: starterActive ? 'ok' as Status : 'warn' as Status,
+      detail: starterActive ? `✓ configuré (${sourceLabel})` : '✗ Non défini — fallback booking/formulaire',
     },
     {
-      label: 'Checkout Pro (VITE_PRO_CHECKOUT_URL)',
+      label: 'Checkout Pro',
       icon: <ShoppingCart className="h-4 w-4" />,
-      status: commercial.proCheckoutUrl ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.proCheckoutUrl
-        ? `✓ configuré (${commercial.fromDb ? 'DB' : 'env'})`
-        : '✗ Non défini',
+      status: proActive ? 'ok' as Status : 'warn' as Status,
+      detail: proActive ? `✓ configuré (${sourceLabel})` : '✗ Non défini',
     },
     {
-      label: 'Checkout Enterprise (VITE_ENTERPRISE_CHECKOUT_URL)',
+      label: 'Checkout Enterprise',
       icon: <ShoppingCart className="h-4 w-4" />,
-      status: commercial.enterpriseCheckoutUrl ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.enterpriseCheckoutUrl
-        ? `✓ configuré (${commercial.fromDb ? 'DB' : 'env'})`
-        : '✗ Non défini',
-    },
-    {
-      label: 'Backend externe (VITE_CORE_API_URL)',
-      icon: <Database className="h-4 w-4" />,
-      status: coreApiConfigured ? 'ok' as Status : 'warn' as Status,
-      detail: coreApiConfigured
-        ? '✓ Report Studio opérationnel — génération rapports IA active'
-        : '✗ Non défini — Report Studio en mode lecture seule, génération désactivée',
+      status: enterpriseActive ? 'ok' as Status : 'warn' as Status,
+      detail: enterpriseActive ? `✓ configuré (${sourceLabel})` : '✗ Non défini',
     },
     {
       label: 'Capture lead opérationnelle',
@@ -345,22 +329,10 @@ export default function AdminReadiness() {
       link: { href: '/admin/leads', label: 'Pipeline' },
     },
     {
-      label: 'Analytics conversions',
-      icon: <BarChart3 className="h-4 w-4" />,
-      status: (conversionData?.total ?? 0) > 0 ? 'ok' as Status : 'warn' as Status,
-      detail: `${conversionData?.total ?? 0} événements · taux formulaire ${conversionData?.conversionRate ?? 0}%`,
-    },
-    {
       label: 'CTA tunnel de vente',
       icon: <MousePointerClick className="h-4 w-4" />,
       status: 'ok' as Status,
-      detail: '✓ Hero / Pricing / Demo — booking ou formulaire, zéro impasse',
-    },
-    {
-      label: 'Mode vente',
-      icon: <Zap className="h-4 w-4" />,
-      status: commercial.salesEnabled ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.salesEnabled ? '✓ Activé' : '✗ Désactivé',
+      detail: `✓ Hero / Pricing / Demo — mode ${runtime.salesMode}, zéro impasse`,
     },
   ];
 
@@ -480,7 +452,7 @@ export default function AdminReadiness() {
                 </Button>
               </div>
             </div>
-            <CardDescription>Liens commerciaux, pipeline et tunnel de conversion</CardDescription>
+            <CardDescription>Liens commerciaux, pipeline et tunnel de conversion · Source active : {sourceLabel}</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
@@ -560,7 +532,6 @@ export default function AdminReadiness() {
             <CardDescription>Clics et comportement depuis la landing · {conversionData?.total ?? 0} événements</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Funnel KPIs */}
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-lg border border-border bg-muted/20 px-4 py-3 text-center">
                 <p className="text-xs text-muted-foreground mb-1">Ouvertures formulaire</p>
@@ -577,8 +548,6 @@ export default function AdminReadiness() {
                 </p>
               </div>
             </div>
-
-            {/* Top events */}
             {conversionData?.topEvents && conversionData.topEvents.length > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
@@ -594,50 +563,12 @@ export default function AdminReadiness() {
                 </div>
               </div>
             )}
-
-            {/* Top CTA origins */}
-            {conversionData?.topCtaOrigins && conversionData.topCtaOrigins.length > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5" />Top CTA origins
-                </p>
-                <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-                  {conversionData.topCtaOrigins.map(([cta, count]) => (
-                    <div key={cta} className="flex items-center justify-between px-4 py-2">
-                      <span className="text-xs font-mono text-muted-foreground">{cta}</span>
-                      <span className="text-sm font-bold">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Top pages */}
-            {conversionData?.topPages && conversionData.topPages.length > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <Navigation className="h-3.5 w-3.5" />Pages sources
-                </p>
-                <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-                  {conversionData.topPages.map(([page, count]) => (
-                    <div key={page} className="flex items-center justify-between px-4 py-2">
-                      <span className="text-xs font-mono text-muted-foreground">{page}</span>
-                      <span className="text-sm font-bold">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {!conversionData && (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Aucun événement de conversion enregistré pour l'instant.
-              </p>
+              <p className="text-sm text-muted-foreground text-center py-4">Aucun événement de conversion enregistré.</p>
             )}
           </CardContent>
         </Card>
 
-        {/* Lead alert */}
         {(leadStats?.newLeads ?? 0) > 0 && (
           <Card className="border-success/30 bg-success/5">
             <CardHeader className="pb-2">
@@ -651,9 +582,7 @@ export default function AdminReadiness() {
             </CardHeader>
             <CardContent>
               <Button size="sm" asChild>
-                <Link to="/admin/leads">
-                  <Users className="h-4 w-4 mr-2" />Gérer les leads
-                </Link>
+                <Link to="/admin/leads"><Users className="h-4 w-4 mr-2" />Gérer les leads</Link>
               </Button>
             </CardContent>
           </Card>
