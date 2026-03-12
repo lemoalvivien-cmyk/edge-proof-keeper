@@ -13,7 +13,7 @@ import {
   CheckCircle2, XCircle, AlertTriangle, RefreshCw, Shield, Database, Cpu,
   FlaskConical, Users, MessageSquare, Navigation, BarChart3, Loader2,
   ExternalLink, TrendingUp, DollarSign, MousePointerClick, Star,
-  CalendarDays, ShoppingCart, Zap, Settings, Server, Brain,
+  CalendarDays, ShoppingCart, Zap, Settings, Server, Brain, Activity, ListTodo,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
