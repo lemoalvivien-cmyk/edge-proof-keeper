@@ -562,6 +562,56 @@ export async function generateRemediationPlan(
   });
 }
 
+// ─── AI Intelligence Layer ────────────────────────────────────────────────────
+
+export async function analyzeRiskIntelligence(
+  orgId: string,
+  riskId: string
+): Promise<AnalyzeRiskIntelligenceResult> {
+  return callEdgeFunction<AnalyzeRiskIntelligenceResult>('analyze-risk-intelligence', {
+    organization_id: orgId,
+    risk_id: riskId,
+  });
+}
+
+export async function enhanceRemediationActions(
+  orgId: string,
+  riskId: string
+): Promise<EnhanceRemediationResult> {
+  return callEdgeFunction<EnhanceRemediationResult>('enhance-remediation-actions', {
+    organization_id: orgId,
+    risk_id: riskId,
+  });
+}
+
+export async function getRiskAiAnalysis(
+  orgId: string,
+  riskId: string,
+  analysisType: 'technical_analysis' | 'remediation_plan' = 'technical_analysis'
+): Promise<AiAnalysis | null> {
+  const { data, error } = await supabase
+    .from('ai_analyses')
+    .select('*')
+    .eq('organization_id', orgId)
+    .eq('entity_id', riskId)
+    .eq('entity_type', 'risk')
+    .eq('analysis_type', analysisType)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`getRiskAiAnalysis error: ${error.message}`);
+  return data as unknown as AiAnalysis | null;
+}
+
+export async function getAiAnalysisCount(orgId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('ai_analyses')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', orgId);
+  if (error) return 0;
+  return count ?? 0;
+}
+
 // ─── Entity Graph API ─────────────────────────────────────────────────────────
 
 export async function getSignalById(signalId: string): Promise<Signal | null> {
