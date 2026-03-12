@@ -1702,6 +1702,9 @@ export default function AdminReadiness() {
           </Card>
         ))}
 
+        {/* ── SCÉNARIO E2E — preuve de valeur opérationnelle ─────────────── */}
+        <DemoE2EPanel orgId={organization?.id} onRefresh={() => setRefreshKey(k => k + 1)} />
+
         {/* ── PREUVE DU CŒUR PRODUIT — matrice live ──────────────────────── */}
         <CoreProofPanel orgId={organization?.id} refreshKey={refreshKey} />
 
