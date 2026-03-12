@@ -1198,6 +1198,9 @@ export default function AdminReadiness() {
           </Card>
         ))}
 
+        {/* ── PREUVE DU CŒUR PRODUIT — matrice live ──────────────────────── */}
+        <CoreProofPanel orgId={organization?.id} refreshKey={refreshKey} />
+
         {/* ── Risk Engine ─────────────────────────────────────────────────── */}
         <RiskEngineSection orgId={organization?.id} refreshKey={refreshKey} />
 
