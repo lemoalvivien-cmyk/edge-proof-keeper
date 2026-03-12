@@ -1,0 +1,2 @@
+ALTER TABLE public.app_runtime_config ADD COLUMN IF NOT EXISTS demo_data_loaded boolean NOT NULL DEFAULT false;
+ALTER TABLE public.app_runtime_config ADD COLUMN IF NOT EXISTS demo_data_loaded_at timestamp with time zone;
