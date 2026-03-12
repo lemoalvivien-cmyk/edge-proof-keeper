@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPlatformHealth, generatePortfolioSummary, verifyEvidenceChain } from '@/lib/api-client';
+import { getPlatformHealth, generatePortfolioSummary, verifyEvidenceChain, IS_PROD } from '@/lib/api-client';
 import { useRuntimeConfig } from '@/hooks/useRuntimeConfig';
 import { BootstrapBanner } from '@/components/ui/BootstrapBanner';
 import {
