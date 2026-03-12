@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useBootstrapState } from '@/hooks/useBootstrapState';
 import { BootstrapBanner } from '@/components/ui/BootstrapBanner';
 import {
-  DollarSign,
   CalendarDays,
   ShoppingCart,
   Mail,
@@ -32,6 +30,8 @@ import {
   Settings2,
   Rocket,
   ArrowRight,
+  Activity,
+  ShieldCheck,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
