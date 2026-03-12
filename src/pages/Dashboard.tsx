@@ -203,9 +203,9 @@ export default function Dashboard() {
               <div className="text-center py-8 text-muted-foreground">
                 <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-success" />
                 <p className="mb-4">Aucun finding critique ou élevé à traiter</p>
-                <Button variant="outline" size="sm" onClick={() => navigate('/demo')} className="gap-2">
-                  <FlaskConical className="h-4 w-4 text-warning" />
-                  Voir une démonstration
+                <Button variant="outline" size="sm" onClick={() => navigate('/tools')} className="gap-2">
+                  <Zap className="h-4 w-4" />
+                  Importer un scan
                 </Button>
               </div>
             ) : (
