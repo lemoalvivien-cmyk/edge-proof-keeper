@@ -124,12 +124,13 @@ export function PricingSection() {
                     <Button
                       size="lg"
                       className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
-                      asChild
+                      onClick={() => {
+                        trackEvent('checkout_click', { source_page: '/pricing', cta_origin: 'pricing_starter_fallback' });
+                        openBookingOrFallback(() => setDemoDialogOpen(true));
+                      }}
                     >
-                      <Link to="/auth">
-                        Démarrer maintenant
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </Link>
+                      Obtenir l'accès
+                      <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
                   )}
 
