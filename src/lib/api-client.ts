@@ -543,13 +543,16 @@ export async function getRelatedSignals(
 
   const { data, error } = await supabase
     .from('signals')
-    .select('*, source_id!fk_signals_source_id(name, source_type, category)')
+    .select('*, data_sources:source_id(name, source_type, category)')
     .in('id', ids)
     .eq('organization_id', orgId)
     .order('detected_at', { ascending: false });
 
   if (error) throw new Error(`getRelatedSignals signals error: ${error.message}`);
-  return (data ?? []) as unknown as Signal[];
+  return (data ?? []).map(row => ({
+    ...row,
+    references: (row as Record<string, unknown>).signal_refs ?? [],
+  })) as unknown as Signal[];
 }
 
 export async function runEntityCorrelation(
