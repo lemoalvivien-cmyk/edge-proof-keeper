@@ -312,6 +312,9 @@ export default function RevenueSettings() {
           {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
 
+        {/* Bootstrap state */}
+        <BootstrapBanner />
+
         {/* Status bar */}
         <Card>
           <CardContent className="pt-4 pb-4">
