@@ -86,7 +86,6 @@ function requireCoreApi(): string {
 }
 
 function requireAiGateway(): string {
-  // AI gateway falls back to core API if only one URL is configured
   const base = AI_GATEWAY_URL ?? CORE_API_URL;
   if (!base) {
     throw new Error('Backend externe non configuré (VITE_AI_GATEWAY_URL manquant)');
@@ -109,11 +108,8 @@ function authHeaders(token: string): HeadersInit {
   };
 }
 
-// ─── API Functions ────────────────────────────────────────────────────────────
+// ─── External Backend Functions ───────────────────────────────────────────────
 
-/**
- * Create a new tool run via the external core backend.
- */
 export async function createToolRun(
   payload: CreateToolRunPayload,
   token: string
@@ -127,9 +123,6 @@ export async function createToolRun(
   return handleResponse<CreateToolRunResult>(res);
 }
 
-/**
- * Upload a scan artifact file for a given tool run.
- */
 export async function uploadToolRunArtifact(
   payload: UploadArtifactPayload,
   token: string
@@ -142,24 +135,12 @@ export async function uploadToolRunArtifact(
 
   const res = await fetch(`${base}/v1/tool-runs/${payload.tool_run_id}/artifact`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` }, // no Content-Type — browser sets multipart boundary
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
   return handleResponse<UploadArtifactResult>(res);
 }
 
-/**
- * Trigger executive (DG/PDG) report generation.
- * Calls POST VITE_CORE_API_URL/v1/reports/executive
- * Payload: { tool_run_id }
- *
- * NOTE: The frontend NEVER calls an AI provider directly.
- * Your backend proxy at VITE_CORE_API_URL is responsible for:
- *  - validating the request
- *  - building the fact_pack
- *  - calling the AI (Qwen, GPT, etc.)
- *  - storing the result
- */
 export async function generateExecutiveReport(
   runId: string,
   token?: string
@@ -174,11 +155,6 @@ export async function generateExecutiveReport(
   return handleResponse<ExecutiveReportResult>(res);
 }
 
-/**
- * Trigger technical (DSI) report generation.
- * Calls POST VITE_CORE_API_URL/v1/reports/technical
- * Payload: { tool_run_id }
- */
 export async function generateTechnicalReport(
   runId: string,
   token?: string
@@ -193,9 +169,6 @@ export async function generateTechnicalReport(
   return handleResponse<TechnicalReportResult>(res);
 }
 
-/**
- * Verify the integrity of the evidence chain for an organization.
- */
 export async function verifyEvidenceChain(
   payload: VerifyChainPayload,
   token: string
@@ -209,20 +182,10 @@ export async function verifyEvidenceChain(
   return handleResponse<VerifyChainResult>(res);
 }
 
-// ─── Config helpers ───────────────────────────────────────────────────────────
-
-/**
- * Returns true if the external backend is configured.
- * Use this to conditionally show "Backend externe non configuré" in the UI.
- */
 export function isExternalBackendConfigured(): boolean {
   return Boolean(CORE_API_URL);
 }
 
-/**
- * Health check for the external backend.
- * Calls GET VITE_CORE_API_URL/health
- */
 export async function getHealth(): Promise<unknown> {
   const base = import.meta.env.VITE_CORE_API_URL as string | undefined;
   if (!base) {
@@ -242,11 +205,17 @@ import type {
   PlatformHealthStatus,
   Signal,
   Risk,
+  DataSource,
+  SourceSyncRun,
   SignalInput,
   IngestSignalsResult,
   CorrelateRisksResult,
   AnalyzeSignalResult,
   GenerateRemediationPlanResult,
+  IngestSourcePayloadInput,
+  IngestSourcePayloadResult,
+  SyncPublicIntelResult,
+  SyncCustomerAuthorizedResult,
 } from '@/types/engine';
 
 async function getSupabaseToken(): Promise<string> {
@@ -256,26 +225,42 @@ async function getSupabaseToken(): Promise<string> {
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
-/**
- * Get platform health status. Does not require authentication.
- * Pass orgId to also get per-org counts (requires being logged in).
- */
+async function callEdgeFunction<T>(
+  functionName: string,
+  body: Record<string, unknown>
+): Promise<T> {
+  const token = await getSupabaseToken();
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (!res.ok && res.status !== 207) {
+    throw new Error(json?.error ?? `${functionName} error ${res.status}`);
+  }
+  return json as T;
+}
+
 export async function getPlatformHealth(orgId?: string): Promise<PlatformHealthStatus> {
   const url = orgId
     ? `${SUPABASE_URL}/functions/v1/platform-health?org_id=${orgId}`
     : `${SUPABASE_URL}/functions/v1/platform-health`;
 
-  const headers: HeadersInit = {
-    'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
-  };
+  const headers: HeadersInit = { 'apikey': SUPABASE_ANON_KEY };
 
   if (orgId) {
     try {
       const token = await getSupabaseToken();
       (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     } catch {
-      // proceed without auth — org_counts will be omitted
+      // proceed without auth
     }
   }
 
@@ -286,9 +271,6 @@ export async function getPlatformHealth(orgId?: string): Promise<PlatformHealthS
   return res.json() as Promise<PlatformHealthStatus>;
 }
 
-/**
- * Get signals for an organization, ordered by severity then detected_at.
- */
 export async function getSignals(
   orgId: string,
   options?: { status?: string; limit?: number }
@@ -306,13 +288,9 @@ export async function getSignals(
 
   const { data, error } = await query;
   if (error) throw new Error(`getSignals error: ${error.message}`);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []) as unknown as Signal[];
 }
 
-/**
- * Get risks from the risk register for an organization.
- */
 export async function getRisks(
   orgId: string,
   options?: { status?: string; limit?: number }
@@ -330,13 +308,76 @@ export async function getRisks(
 
   const { data, error } = await query;
   if (error) throw new Error(`getRisks error: ${error.message}`);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []) as unknown as Risk[];
 }
 
-/**
- * Ingest a batch of signals via the edge function.
- */
+// ─── Sources API ──────────────────────────────────────────────────────────────
+
+export async function getSources(orgId: string): Promise<DataSource[]> {
+  const { data, error } = await supabase
+    .from('data_sources')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`getSources error: ${error.message}`);
+  return (data ?? []) as unknown as DataSource[];
+}
+
+export async function getSourceSyncRuns(
+  orgId: string,
+  sourceId: string,
+  limit = 20
+): Promise<SourceSyncRun[]> {
+  const { data, error } = await supabase
+    .from('source_sync_runs')
+    .select('*')
+    .eq('organization_id', orgId)
+    .eq('source_id', sourceId)
+    .order('started_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`getSourceSyncRuns error: ${error.message}`);
+  return (data ?? []) as unknown as SourceSyncRun[];
+}
+
+export async function getSourceSignalCount(orgId: string, sourceId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('signals')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', orgId)
+    .eq('source_id', sourceId);
+
+  if (error) throw new Error(`getSourceSignalCount error: ${error.message}`);
+  return count ?? 0;
+}
+
+export async function ingestSourcePayload(
+  payload: IngestSourcePayloadInput
+): Promise<IngestSourcePayloadResult> {
+  return callEdgeFunction<IngestSourcePayloadResult>('ingest-source-payload', payload as unknown as Record<string, unknown>);
+}
+
+export async function syncPublicIntelSource(sourceId: string): Promise<SyncPublicIntelResult> {
+  return callEdgeFunction<SyncPublicIntelResult>('sync-public-intel-source', { source_id: sourceId });
+}
+
+export async function syncCustomerAuthorizedSource(
+  sourceId: string,
+  items: unknown[],
+  providerName?: string,
+  importContext?: Record<string, unknown>
+): Promise<SyncCustomerAuthorizedResult> {
+  return callEdgeFunction<SyncCustomerAuthorizedResult>('sync-customer-authorized-source', {
+    source_id: sourceId,
+    items,
+    provider_name: providerName,
+    import_context: importContext,
+  });
+}
+
+// ─── Legacy ingestion (kept for compatibility) ────────────────────────────────
+
 export async function ingestSignals(
   orgId: string,
   sourceId: string,
@@ -348,7 +389,7 @@ export async function ingestSignals(
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
+      'apikey': SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({ organization_id: orgId, source_id: sourceId, signals }),
   });
@@ -359,73 +400,32 @@ export async function ingestSignals(
   return json as IngestSignalsResult;
 }
 
-/**
- * Trigger risk correlation from open signals.
- */
 export async function correlateRisks(orgId: string): Promise<CorrelateRisksResult> {
-  const token = await getSupabaseToken();
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/correlate-risks`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
-    },
-    body: JSON.stringify({ organization_id: orgId }),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? `correlate-risks error ${res.status}`);
-  return json as CorrelateRisksResult;
+  return callEdgeFunction<CorrelateRisksResult>('correlate-risks', { organization_id: orgId });
 }
 
-/**
- * Analyze a signal with AI (server-side Gemini). Returns structured analysis.
- * Requires AI to be configured (LOVABLE_API_KEY is pre-configured).
- */
 export async function analyzeSignalWithAI(
   orgId: string,
   signalId: string
 ): Promise<AnalyzeSignalResult> {
-  const token = await getSupabaseToken();
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/analyze-signal-with-gemini`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
-    },
-    body: JSON.stringify({ organization_id: orgId, signal_id: signalId }),
+  return callEdgeFunction<AnalyzeSignalResult>('analyze-signal-with-gemini', {
+    organization_id: orgId,
+    signal_id: signalId,
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? `analyze-signal error ${res.status}`);
-  return json as AnalyzeSignalResult;
 }
 
-/**
- * Generate an AI-powered remediation plan for a risk.
- * Inserts actions into remediation_actions and stores analysis in ai_analyses.
- */
 export async function generateRemediationPlan(
   orgId: string,
   riskId: string
 ): Promise<GenerateRemediationPlanResult> {
-  const token = await getSupabaseToken();
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-remediation-plan`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
-    },
-    body: JSON.stringify({ organization_id: orgId, risk_id: riskId }),
+  return callEdgeFunction<GenerateRemediationPlanResult>('generate-remediation-plan', {
+    organization_id: orgId,
+    risk_id: riskId,
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? `generate-remediation-plan error ${res.status}`);
-  return json as GenerateRemediationPlanResult;
 }
 
 export const apiClient = {
-  // External backend (VITE_CORE_API_URL)
+  // External backend
   createToolRun,
   uploadToolRunArtifact,
   generateExecutiveReport,
@@ -433,12 +433,20 @@ export const apiClient = {
   verifyEvidenceChain,
   isExternalBackendConfigured,
   getHealth,
-  // Core Engine (Supabase Edge Functions)
+  // Platform
   getPlatformHealth,
+  // Signals & Risks
   getSignals,
   getRisks,
   ingestSignals,
   correlateRisks,
   analyzeSignalWithAI,
   generateRemediationPlan,
+  // Sources
+  getSources,
+  getSourceSyncRuns,
+  getSourceSignalCount,
+  ingestSourcePayload,
+  syncPublicIntelSource,
+  syncCustomerAuthorizedSource,
 };
