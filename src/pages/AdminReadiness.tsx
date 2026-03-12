@@ -488,6 +488,182 @@ function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refresh
   );
 }
 
+// ── Auth Live Diagnostic Panel ────────────────────────────────────────────────
+// Prouve qu'une session authentifiée réelle est active avant de lancer le pipeline.
+// Affiche : session, user_id, org_id, requested_by anticipé, token présent.
+// ─────────────────────────────────────────────────────────────────────────────
+function AuthLiveDiagPanel({ user, organization }: { user: import('@supabase/supabase-js').User | null; organization: { id: string; name: string } | null }) {
+  const [tokenPresent, setTokenPresent] = useState<boolean | null>(null);
+  const [checkingToken, setCheckingToken] = useState(false);
+  const [lastToolRunRequestedBy, setLastToolRunRequestedBy] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      setCheckingToken(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!cancelled) setTokenPresent(!!session?.access_token);
+      setCheckingToken(false);
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!organization?.id) return;
+    supabase
+      .from('tool_runs')
+      .select('id, requested_by, status')
+      .eq('organization_id', organization.id)
+      .order('requested_at' as 'id', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        setLastToolRunRequestedBy(data?.requested_by ?? null);
+      });
+  }, [organization?.id]);
+
+  const sessionOk = !!user && tokenPresent;
+  const orgOk = !!organization?.id;
+  const requestedByWillBe = user?.id;
+  const hasRealRun = lastToolRunRequestedBy !== undefined && lastToolRunRequestedBy !== null;
+
+  return (
+    <Card className={`border-2 ${sessionOk && orgOk ? 'border-success/50 bg-success/[0.015]' : 'border-destructive/50 bg-destructive/[0.015]'}`}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <LogIn className="h-5 w-5 text-primary" />
+            Session Auth Live — Prérequis Pipeline Réel
+          </CardTitle>
+          <Badge variant="outline" className={`text-xs font-bold ${
+            sessionOk && orgOk
+              ? 'bg-success/10 text-success border-success/30'
+              : 'bg-destructive/10 text-destructive border-destructive/30'
+          }`}>
+            {sessionOk && orgOk ? '✓ SESSION AUTHENTIFIÉE RÉELLE' : '✗ SESSION MANQUANTE — PIPELINE BLOQUÉ'}
+          </Badge>
+        </div>
+        <CardDescription>
+          Vérification live de la session · user_id · org_id · token JWT · requested_by anticipé
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+
+          {/* Session active */}
+          <div className="flex items-center justify-between gap-4 px-6 py-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <StatusIcon status={sessionOk ? 'ok' : 'fail'} />
+              <div>
+                <p className="text-sm font-medium">Session Supabase active</p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  {checkingToken ? 'Vérification…' : tokenPresent ? '✓ Token JWT présent en mémoire' : '✗ Aucune session — non authentifié'}
+                </p>
+              </div>
+            </div>
+            <StatusBadge status={sessionOk ? 'ok' : 'fail'} />
+          </div>
+
+          {/* User ID */}
+          <div className="flex items-center justify-between gap-4 px-6 py-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <StatusIcon status={user ? 'ok' : 'fail'} />
+              <div className="min-w-0">
+                <p className="text-sm font-medium">user_id (requested_by réel)</p>
+                <p className="text-xs text-muted-foreground font-mono truncate">
+                  {user?.id
+                    ? <>✓ {user.id} · <span className="text-muted-foreground/60">{user.email}</span></>
+                    : '✗ Aucun user_id — pipeline refusera requested_by'}
+                </p>
+              </div>
+            </div>
+            <StatusBadge status={user ? 'ok' : 'fail'} />
+          </div>
+
+          {/* Org ID */}
+          <div className="flex items-center justify-between gap-4 px-6 py-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <StatusIcon status={orgOk ? 'ok' : 'fail'} />
+              <div className="min-w-0">
+                <p className="text-sm font-medium">organization_id (scope multi-tenant)</p>
+                <p className="text-xs text-muted-foreground font-mono truncate">
+                  {organization?.id
+                    ? <>✓ {organization.id} · <span className="text-muted-foreground/60">{organization.name}</span></>
+                    : '✗ Aucune org résolue — bootstrap non complété'}
+                </p>
+              </div>
+            </div>
+            <StatusBadge status={orgOk ? 'ok' : 'fail'} />
+          </div>
+
+          {/* requested_by anticipé */}
+          <div className="flex items-center justify-between gap-4 px-6 py-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <StatusIcon status={requestedByWillBe ? 'ok' : 'fail'} />
+              <div className="min-w-0">
+                <p className="text-sm font-medium">requested_by anticipé (tool_run.requested_by)</p>
+                <p className="text-xs text-muted-foreground font-mono truncate">
+                  {requestedByWillBe
+                    ? <>✓ Sera = auth.uid() = {requestedByWillBe?.slice(0, 16)}… · RLS findings respectée</>
+                    : '✗ Non résolu — tool_run sera rejeté par la RLS findings'}
+                </p>
+              </div>
+            </div>
+            <StatusBadge status={requestedByWillBe ? 'ok' : 'fail'} />
+          </div>
+
+          {/* Dernier tool_run en DB */}
+          <div className="flex items-center justify-between gap-4 px-6 py-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <StatusIcon status={lastToolRunRequestedBy === undefined ? 'unknown' : hasRealRun ? 'ok' : 'warn'} />
+              <div className="min-w-0">
+                <p className="text-sm font-medium">Dernier tool_run en DB (preuve pipeline déjà lancé)</p>
+                <p className="text-xs text-muted-foreground font-mono truncate">
+                  {lastToolRunRequestedBy === undefined
+                    ? '…'
+                    : hasRealRun
+                    ? <>✓ PROUVÉ — requested_by = {lastToolRunRequestedBy?.slice(0, 16)}… · Pipeline réel déjà exécuté</>
+                    : '○ Aucun tool_run trouvé en DB — pipeline jamais lancé sous cette session'}
+                </p>
+              </div>
+            </div>
+            <StatusBadge status={lastToolRunRequestedBy === undefined ? 'unknown' : hasRealRun ? 'ok' : 'warn'} />
+          </div>
+
+        </div>
+
+        {/* Action si non authentifié */}
+        {(!sessionOk || !orgOk) && (
+          <div className="px-6 py-4 border-t border-destructive/20 bg-destructive/5">
+            <p className="text-xs font-semibold text-destructive mb-2">
+              ✗ BLOCAGE — Session absente ou org non résolue. Le pipeline réel ne peut pas s'exécuter.
+            </p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Action requise : connectez-vous via le formulaire <strong>Owner Setup</strong> (affiché en cas de session expirée)
+              ou rechargez la page si la session est en cours d'initialisation.
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => window.location.reload()} className="gap-1.5 text-xs">
+                <RefreshCw className="h-3.5 w-3.5" />Recharger la page
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {sessionOk && orgOk && (
+          <div className="px-6 py-3 border-t border-success/20 bg-success/5">
+            <p className="text-[10px] font-mono text-success/80">
+              ✓ PRÉREQUIS AUTH OK — Session réelle · user_id={user?.id?.slice(0, 8)}… · org_id={organization?.id?.slice(0, 8)}… ·
+              Le pipeline réel ci-dessous utilisera ce requested_by réel · RLS sera respectée
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Real Pipeline Panel ───────────────────────────────────────────────────────
 // Prouve le VRAI pipeline sans injection directe de findings :
 //   1. create-tool-run → tool_run en awaiting_upload
