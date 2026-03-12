@@ -696,16 +696,77 @@ export async function evaluateAlertRules(orgId: string): Promise<EvaluateAlertRu
 
 // ─── Portfolio Intelligence API ───────────────────────────────────────────────
 
+/** True when running in production mode (not dev/local). */
+export const IS_PROD =
+  (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) !== 'dev' &&
+  !import.meta.env.DEV;
+
+/**
+ * Generate a portfolio summary.
+ *
+ * Routing strategy:
+ *   PRODUCTION  → Core API external MANDATORY (no fallback).
+ *                 If core_api_url absent → throws with clear guidance.
+ *                 If Core API returns non-200 → throws (no silent retry).
+ *   DEVELOPMENT → Tries Core API first, falls back to internal Edge Function.
+ */
 export async function generatePortfolioSummary(
   orgId: string,
   summaryType: PortfolioSummaryType,
-  periodLabel?: string
+  periodLabel?: string,
+  token?: string
 ): Promise<GeneratePortfolioSummaryResult> {
-  return callEdgeFunction<GeneratePortfolioSummaryResult>('generate-portfolio-summary', {
+  const body = {
     organization_id: orgId,
-    summary_type:    summaryType,
+    summary_type: summaryType,
     ...(periodLabel ? { period_label: periodLabel } : {}),
-  });
+  };
+
+  const coreUrl = getCoreApiUrl();
+
+  if (IS_PROD) {
+    // PRODUCTION: Core API is mandatory — no internal fallback allowed
+    if (!coreUrl) {
+      throw new Error(
+        '🔒 Souveraineté externe requise en production — configurez core_api_url dans /settings/revenue ou définissez VITE_CORE_API_URL'
+      );
+    }
+    const tok = token ?? await getSupabaseToken();
+    const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(20_000),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(
+        `🔒 Core API externe inaccessible (HTTP ${res.status}) — souveraineté externe requise en prod. URL: ${coreUrl}`
+      );
+    }
+    return { ...json, _routed_to: 'external' } as GeneratePortfolioSummaryResult;
+  }
+
+  // DEVELOPMENT: try Core API first, fall back to internal Edge Function
+  if (coreUrl) {
+    try {
+      const tok = token ?? await getSupabaseToken();
+      const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return { ...json, _routed_to: 'external' } as GeneratePortfolioSummaryResult;
+      }
+    } catch {
+      // fallback to internal in dev only
+    }
+  }
+
+  return callEdgeFunction<GeneratePortfolioSummaryResult>('generate-portfolio-summary', body as unknown as Record<string, unknown>);
 }
 
 export async function getLatestPortfolioSummary(
