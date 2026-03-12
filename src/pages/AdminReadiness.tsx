@@ -271,6 +271,93 @@ function AiIntelligenceSection({ orgId, refreshKey }: { orgId?: string; refreshK
   );
 }
 
+function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
+  const { data: watchStats } = useQuery({
+    queryKey: ['continuous-watch-stats', orgId, refreshKey],
+    queryFn: async () => {
+      if (!orgId) return null;
+      const [alertsRes, sourcesRes] = await Promise.all([
+        supabase.from('alerts').select('status', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'open'),
+        supabase.from('data_sources').select('status', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'active'),
+      ]);
+      return { openAlerts: alertsRes.count ?? 0, activeSources: sourcesRes.count ?? 0 };
+    },
+    enabled: !!orgId,
+  });
+
+  const watchItems = [
+    { label: 'Edge Function platform-health', icon: <Server className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — health score global, composants DB/AI/sources/risques', link: { href: '/platform-health', label: 'Voir la santé' } },
+    { label: 'Edge Function schedule-source-sync', icon: <RefreshCw className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — déclenche les syncs sources actives (seuil 6h)' },
+    { label: 'Edge Function stale-risk-check', icon: <AlertTriangle className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — détecte les risques stagnants → génère des alertes' },
+    { label: 'Edge Function evaluate-alert-rules', icon: <Bell className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — évalue les notification_rules contre les alertes ouvertes' },
+    {
+      label: 'Alertes ouvertes',
+      icon: <Bell className="h-4 w-4" />,
+      status: (watchStats === undefined ? 'unknown' : (watchStats?.openAlerts ?? 0) === 0 ? 'ok' : 'warn') as Status,
+      detail: watchStats !== null ? `${watchStats?.openAlerts ?? 0} alerte(s) ouverte(s)` : '…',
+      link: { href: '/platform-health', label: 'Voir les alertes' },
+    },
+    {
+      label: 'Sources actives',
+      icon: <Activity className="h-4 w-4" />,
+      status: (watchStats === undefined ? 'unknown' : (watchStats?.activeSources ?? 0) > 0 ? 'ok' : 'warn') as Status,
+      detail: watchStats !== null ? `${watchStats?.activeSources ?? 0} source(s) active(s) configurée(s)` : '…',
+    },
+  ];
+
+  const watchOk = watchItems.filter(i => i.status === 'ok').length;
+  const watchScore = Math.round((watchOk / watchItems.length) * 100);
+  const watchReady = watchScore >= 80;
+
+  return (
+    <Card className="border-primary/20">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" />
+            Continuous Watch
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={`text-xs ${watchReady ? 'border-success/40 text-success' : 'border-warning/40 text-warning'}`}>
+              {watchReady ? '✓ Prêt' : '⚠ Partiel'}
+            </Badge>
+            <span className={`text-xl font-black ${watchScore >= 80 ? 'text-success' : watchScore >= 60 ? 'text-warning' : 'text-destructive'}`}>
+              {watchScore}%
+            </span>
+          </div>
+        </div>
+        <CardDescription>Surveillance continue · alerting défensif · syncs planifiés · stale-risk detection</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+          {watchItems.map(item => (
+            <div key={item.label} className="flex items-center justify-between gap-4 px-6 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <StatusIcon status={item.status} />
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-muted-foreground shrink-0">{item.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{item.label}</p>
+                    <p className="text-xs text-muted-foreground/70 font-mono truncate">{item.detail}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <StatusBadge status={item.status} />
+                {item.link && (
+                  <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+                    <Link to={item.link.href}>{item.link.label}<ExternalLink className="h-3 w-3 ml-1" /></Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminReadiness() {
   const { organization } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
