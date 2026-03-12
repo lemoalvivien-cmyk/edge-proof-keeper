@@ -850,12 +850,13 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   const score   = isSovereign100 ? 100 : Math.round((okCount / sovereignItems.length) * 100);
 
   const badgeLabel = externalConfirmed
-    ? '✓ 100% SOUVERAIN EXTERNE'
+    ? `✓ 100% SOUVERAIN EXTERNE${dbConfirmedAt ? ' (persisté)' : ''}`
     : coreConfigured
     ? '⚡ SOUVERAIN EXTERNE (ping requis)'
     : internalSovereign
     ? '✓ 100% SOUVERAIN INTERNE'
     : '⚠ SOUVERAINETÉ PARTIELLE';
+
 
   return (
     <Card className={`border-2 ${isSovereign100 ? 'border-success/50 bg-success/[0.01]' : 'border-primary/30 bg-primary/[0.01]'}`}>
