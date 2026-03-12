@@ -54,6 +54,7 @@ import Demo from "./pages/Demo";
 import Sources from "./pages/Sources";
 import Signals from "./pages/Signals";
 import RevenueSettings from "./pages/RevenueSettings";
+import Remediation from "./pages/Remediation";
 
 const queryClient = new QueryClient();
 
