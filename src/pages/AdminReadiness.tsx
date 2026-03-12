@@ -797,16 +797,25 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   // Internal sovereign = Edge Functions opérationnel + données DB réelles + flag
   const internalSovereign = demoDataLoaded === true || (hasRealData && (dbStats?.portfolios ?? 0) > 0);
 
+  // App env mode
+  const isDev = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) === 'dev'
+    || import.meta.env.DEV;
+  const isProd = !isDev;
+
+  // In PROD: external sovereign is MANDATORY — no internal fallback accepted
+  // In DEV: internal fallback is acceptable
+  const isSovereign100  = isProd
+    ? externalSovereign                         // prod: only external counts
+    : (externalSovereign || internalSovereign); // dev: either is ok
+
   // Badge priority: external > internal
-  const isSovereign100  = externalSovereign || internalSovereign;
   const sovereignMode   = externalConfirmed ? 'EXTERNE ✓ PING OK'
     : coreConfigured ? 'EXTERNE (ping requis)'
     : internalSovereign ? 'interne + données réelles'
     : null;
 
-  // App env mode
-  const isDev = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) === 'dev'
-    || import.meta.env.DEV;
+  // Prod blocking: Core API not configured at all
+  const prodFallbackBlocked = isProd && !coreConfigured;
 
   // Items definition (dedup — keep only the new version)
   const sovereignItems = [
