@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,7 @@ import {
   ExternalLink, TrendingUp, DollarSign, MousePointerClick, Star,
   CalendarDays, ShoppingCart, Zap, Settings, Server, Brain, Activity, ListTodo,
   Bell, Info, Link2, FileText, Play, Hash, Lock, Rocket, ArrowRight, LogIn,
+  Target, Clock, Fingerprint,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
