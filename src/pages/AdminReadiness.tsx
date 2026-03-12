@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPlatformHealth } from '@/lib/api-client';
 import { useRuntimeConfig } from '@/hooks/useRuntimeConfig';
+import { BootstrapBanner } from '@/components/ui/BootstrapBanner';
 import {
   CheckCircle2, XCircle, AlertTriangle, RefreshCw, Shield, Database, Cpu,
   FlaskConical, Users, MessageSquare, Navigation, BarChart3, Loader2,
@@ -841,6 +842,9 @@ export default function AdminReadiness() {
             <RefreshCw className="h-4 w-4 mr-2" />Actualiser
           </Button>
         </div>
+
+        {/* Bootstrap state — explicit, data-driven */}
+        <BootstrapBanner />
 
         {/* Légende statuts */}
         <Card className="border-muted">

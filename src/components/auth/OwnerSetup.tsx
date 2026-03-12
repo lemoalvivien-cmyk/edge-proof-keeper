@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SOLO_STORAGE_KEYS } from '@/config/app';
+import { bootstrapOwner } from '@/lib/bootstrap';
 
 interface OwnerSetupProps {
   onComplete: () => void;
@@ -13,12 +14,16 @@ interface OwnerSetupProps {
 
 /**
  * One-time owner setup screen for Solo Mode.
- * 
+ *
  * SECURITY NOTES:
  * - We do NOT store passwords in localStorage
  * - We only store email for display purposes
  * - Supabase handles session persistence securely
  * - If session expires, user re-authenticates here
+ *
+ * POST-AUTH:
+ * - Calls bootstrapOwner() to ensure org + profile + admin role + runtime config stub
+ *   are created, making tenant_resolved: true for public CTAs immediately.
  */
 export function OwnerSetup({ onComplete }: OwnerSetupProps) {
   const [email, setEmail] = useState('');
@@ -26,9 +31,29 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const runBootstrap = async (userId: string, userEmail: string) => {
+    try {
+      const result = await bootstrapOwner(userId, userEmail);
+      if (result.isFirstRun) {
+        toast({
+          title: 'Espace de travail créé',
+          description: 'Organisation initialisée. Configurez vos URLs dans Revenue Settings.',
+        });
+      }
+    } catch (err) {
+      // Non-fatal: user can still access the app, but tenant_resolved may be false until fixed
+      console.warn('Bootstrap warning (non-fatal):', err);
+      toast({
+        title: 'Setup partiel',
+        description: 'Authentifié. Allez dans Paramètres → Revenue pour finaliser la configuration.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         title: 'Champs requis',
@@ -51,24 +76,23 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
 
     try {
       // Try to sign in first (in case account already exists)
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (!signInError) {
-        // Sign in successful
-        // SECURITY: Only store email for display, NOT password
+      if (!signInError && signInData.user) {
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerEmail, email);
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
-        // Password is intentionally NOT stored - Supabase session handles auth
+        // Ensure org + runtime config exist
+        await runBootstrap(signInData.user.id, email);
         onComplete();
         return;
       }
 
-      // If sign in failed, try to sign up
-      if (signInError.message.includes('Invalid login credentials')) {
-        const { error: signUpError } = await supabase.auth.signUp({
+      // If sign in failed with invalid credentials, try to sign up
+      if (signInError?.message.includes('Invalid login credentials')) {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -80,16 +104,18 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
           throw signUpError;
         }
 
-        // SECURITY: Only store email for display, NOT password
-        localStorage.setItem(SOLO_STORAGE_KEYS.ownerEmail, email);
-        localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
-        // Password is intentionally NOT stored
-        
+        if (signUpData.user) {
+          localStorage.setItem(SOLO_STORAGE_KEYS.ownerEmail, email);
+          localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
+          // Bootstrap: create org, profile, admin role, runtime config stub
+          await runBootstrap(signUpData.user.id, email);
+        }
+
         toast({
           title: 'Accès initialisé',
           description: 'Votre accès a été configuré avec succès.',
         });
-        
+
         onComplete();
       } else {
         throw signInError;
@@ -148,7 +174,7 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Connexion...
+                Initialisation...
               </>
             ) : (
               'Se connecter'

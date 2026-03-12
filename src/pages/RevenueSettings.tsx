@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { BootstrapBanner } from '@/components/ui/BootstrapBanner';
 import {
   DollarSign,
   CalendarDays,
@@ -310,6 +311,9 @@ export default function RevenueSettings() {
           </div>
           {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
+
+        {/* Bootstrap state */}
+        <BootstrapBanner />
 
         {/* Status bar */}
         <Card>
