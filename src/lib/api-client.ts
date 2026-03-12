@@ -201,6 +201,7 @@ export async function getHealth(): Promise<unknown> {
 // ─── Core Engine API (Supabase Edge Functions) ────────────────────────────────
 
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeSignalRecord, normalizeSignalRows } from '@/lib/engine-normalizers';
 import type {
   PlatformHealthStatus,
   Signal,
