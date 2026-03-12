@@ -444,6 +444,28 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
     return json;
   };
 
+  // Route portfolio summary through Core API if configured, fallback to Edge Function
+  const callPortfolioSummary = async (body: Record<string, unknown>, tok: string) => {
+    const coreUrl = (import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '') || null;
+    if (coreUrl && import.meta.env.VITE_PUBLIC_APP_ENV !== 'dev' && !import.meta.env.DEV) {
+      try {
+        const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          return { ...json, _routed_to: 'external' };
+        }
+      } catch {
+        // fallback to internal Edge Function
+      }
+    }
+    return callEF('generate-portfolio-summary', body, tok);
+  };
+
   const handleLaunch = async () => {
     if (!orgId || running) return;
     setSteps(STEPS_INIT);
@@ -476,11 +498,12 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
         hasError = true;
       }
 
-      // ③ Executive Brief
+      // ③ Executive Brief — Core API si configuré, Edge Function sinon
       upd('exec_brief', { state: 'running' });
       try {
-        const r = await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'executive_brief' }, tok);
-        upd('exec_brief', { state: 'done', result: `✓ executive_brief · ${r.ai_used ? `IA: ${r.model_name}` : 'fallback'} · ${r.source_snapshot?.open_risks ?? 0} risques` });
+        const r = await callPortfolioSummary({ organization_id: orgId, summary_type: 'executive_brief' }, tok);
+        const via = r._routed_to === 'external' ? '🌐 EXTERNE' : (r.ai_used ? `IA: ${r.model_name}` : 'fallback');
+        upd('exec_brief', { state: 'done', result: `✓ executive_brief · ${via} · ${r.source_snapshot?.open_risks ?? 0} risques` });
       } catch (e) {
         upd('exec_brief', { state: 'error', result: `✗ ${(e as Error).message}` });
         hasError = true;
@@ -489,8 +512,9 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
       // ④ Technical Brief
       upd('tech_brief', { state: 'running' });
       try {
-        const r = await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'technical_brief' }, tok);
-        upd('tech_brief', { state: 'done', result: `✓ technical_brief · ${r.ai_used ? `IA: ${r.model_name}` : 'fallback'} · ${r.source_snapshot?.pending_actions ?? 0} actions` });
+        const r = await callPortfolioSummary({ organization_id: orgId, summary_type: 'technical_brief' }, tok);
+        const via = r._routed_to === 'external' ? '🌐 EXTERNE' : (r.ai_used ? `IA: ${r.model_name}` : 'fallback');
+        upd('tech_brief', { state: 'done', result: `✓ technical_brief · ${via} · ${r.source_snapshot?.pending_actions ?? 0} actions` });
       } catch (e) {
         upd('tech_brief', { state: 'error', result: `✗ ${(e as Error).message}` });
         hasError = true;
@@ -499,8 +523,9 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
       // ⑤ Weekly Watch Brief
       upd('weekly_brief', { state: 'running' });
       try {
-        const r = await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'weekly_watch_brief' }, tok);
-        upd('weekly_brief', { state: 'done', result: `✓ weekly_watch_brief · ${r.ai_used ? `IA: ${r.model_name}` : 'fallback'} · ${r.source_snapshot?.open_alerts ?? 0} alertes` });
+        const r = await callPortfolioSummary({ organization_id: orgId, summary_type: 'weekly_watch_brief' }, tok);
+        const via = r._routed_to === 'external' ? '🌐 EXTERNE' : (r.ai_used ? `IA: ${r.model_name}` : 'fallback');
+        upd('weekly_brief', { state: 'done', result: `✓ weekly_watch_brief · ${via} · ${r.source_snapshot?.open_alerts ?? 0} alertes` });
       } catch (e) {
         upd('weekly_brief', { state: 'error', result: `✗ ${(e as Error).message}` });
         hasError = true;
@@ -642,10 +667,9 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
 }
 
 // ── Sovereign Backend Status Panel ────────────────────────────────────────────
-// Affiche 100% SOUVERAIN quand le moteur interne fonctionne + données DB > 0.
-// La souveraineté "interne" (Edge Functions déployées + RLS stricte + données réelles)
-// est aussi valide que la souveraineté "externe" (VITE_CORE_API_URL).
-// Le badge 100% externe s'affiche seulement si VITE_CORE_API_URL est configuré ET souverain.
+// Affiche 100% SOUVERAIN EXTERNE si Core API configuré + ping OK.
+// Affiche 100% SOUVERAIN INTERNE si moteur Edge Functions opérationnel + données DB > 0.
+// Badge EXTERNE prioritaire sur INTERNE.
 // ─────────────────────────────────────────────────────────────────────────────
 function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demoDataLoaded?: boolean }) {
   const runtimeConfig = useRuntimeConfig();
@@ -653,6 +677,34 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   const aiGatewayUrl  = runtimeConfig.aiGatewayUrl;
   const reportsMode   = runtimeConfig.reportsMode;
   const configSource  = runtimeConfig.configSource;
+
+  // ── Ping Core API state ─────────────────────────────────────────────────────
+  const [pingState,  setPingState]  = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
+  const [pingResult, setPingResult] = useState<string | null>(null);
+
+  const handlePing = async () => {
+    if (!coreApiUrl) return;
+    setPingState('running'); setPingResult(null);
+    const start = Date.now();
+    try {
+      const res = await fetch(`${coreApiUrl}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(8000),
+      });
+      const ms = Date.now() - start;
+      if (res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setPingState('ok');
+        setPingResult(`✓ HTTP ${res.status} · ${ms}ms · ${body.status ?? 'up'}`);
+      } else {
+        setPingState('fail');
+        setPingResult(`✗ HTTP ${res.status} · ${ms}ms`);
+      }
+    } catch (e: unknown) {
+      setPingState('fail');
+      setPingResult(`✗ ${(e as Error).message}`);
+    }
+  };
 
   // DB counters — prouve que le moteur interne tourne réellement
   const { data: dbStats } = useQuery({
@@ -678,79 +730,103 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
 
   const hasRealData = (dbStats?.risks ?? 0) > 0 || (dbStats?.portfolios ?? 0) > 0;
 
-  const coreConfigured   = !!coreApiUrl;
-  const aiConfigured     = !!aiGatewayUrl;
-  const lovableGateway   = !aiGatewayUrl || aiGatewayUrl.includes('lovable.dev');
-  const externalSovereign = coreConfigured && !lovableGateway;
+  const coreConfigured    = !!coreApiUrl;
+  const aiConfigured      = !!aiGatewayUrl;
+  const lovableGateway    = !aiGatewayUrl || aiGatewayUrl.includes('lovable.dev');
+  // External sovereign = Core API configured + ping succeeded (or not yet tested)
+  const externalSovereign = coreConfigured && (pingState === 'ok' || pingState === 'idle');
+  const externalConfirmed = coreConfigured && pingState === 'ok';
 
-  // Souveraineté interne = moteur Edge Functions opérationnel + données DB réelles
-  // ou flag demo_data_loaded confirmé
+  // Internal sovereign = Edge Functions opérationnel + données DB réelles + flag
   const internalSovereign = demoDataLoaded === true || (hasRealData && (dbStats?.portfolios ?? 0) > 0);
 
-  // Badge 100% : soit externe souverain, soit interne souverain
-  const isSovereign100 = externalSovereign || internalSovereign;
-  const sovereignMode   = externalSovereign ? 'externe' : internalSovereign ? 'interne + données réelles' : null;
+  // Badge priority: external > internal
+  const isSovereign100  = externalSovereign || internalSovereign;
+  const sovereignMode   = externalConfirmed ? 'EXTERNE ✓ PING OK'
+    : coreConfigured ? 'EXTERNE (ping requis)'
+    : internalSovereign ? 'interne + données réelles'
+    : null;
 
-  const items = [
-    {
-      label: 'Moteur interne opérationnel (Edge Functions)',
-      icon: <Server className="h-4 w-4" />,
-      status: (internalSovereign ? 'ok' : hasRealData ? 'warn' : 'warn') as Status,
-      detail: internalSovereign
-        ? `✓ Souverain interne — ${dbStats?.portfolios ?? 0} briefing(s) · ${dbStats?.risks ?? 0} risque(s) · ${dbStats?.alerts ?? 0} alerte(s) en DB${demoDataLoaded ? ' · flag demo_data_loaded=true' : ''}`
-        : hasRealData
-        ? `⚠ Données présentes mais aucun briefing généré — lancez le pipeline pour compléter`
-        : '⚠ Aucune donnée en DB — seed automatique en cours ou lancez le pipeline',
-    },
+  // App env mode
+  const isDev = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) === 'dev'
+    || import.meta.env.DEV;
+
+  // Items definition (dedup — keep only the new version)
+  const sovereignItems = [
     {
       label: 'Core API externe (VITE_CORE_API_URL)',
       icon: <Rocket className="h-4 w-4" />,
-      status: (coreConfigured ? 'ok' : internalSovereign ? 'ok' : 'warn') as Status,
+      status: (coreConfigured
+        ? (pingState === 'ok' ? 'ok' : pingState === 'fail' ? 'fail' : 'warn')
+        : internalSovereign ? 'ok' : 'warn') as Status,
       detail: coreConfigured
-        ? `✓ Backend externe configuré — ${coreApiUrl}`
+        ? pingResult ?? `${coreApiUrl} — cliquez "Ping Core API" pour valider`
         : internalSovereign
-        ? '✓ Non requis — souveraineté interne active (Edge Functions + données réelles)'
-        : '○ Non configuré — moteur interne actif (Edge Functions). Optionnel si souveraineté interne OK.',
+        ? '✓ Non requis — souveraineté interne active'
+        : '○ Non configuré — ajoutez core_api_url dans /settings/revenue',
+      pingable: coreConfigured,
+    },
+    {
+      label: 'Moteur interne (Edge Functions)',
+      icon: <Server className="h-4 w-4" />,
+      status: (internalSovereign ? 'ok' : 'warn') as Status,
+      detail: internalSovereign
+        ? `✓ ${dbStats?.portfolios ?? 0} brief(s) · ${dbStats?.risks ?? 0} risque(s) · ${dbStats?.alerts ?? 0} alerte(s) en DB`
+        : hasRealData
+        ? '⚠ Données présentes mais aucun briefing — lancez le pipeline'
+        : '⚠ Aucune donnée en DB — lancez le pipeline',
+      pingable: false,
     },
     {
       label: 'AI Gateway',
       icon: <Brain className="h-4 w-4" />,
-      status: (aiConfigured ? (lovableGateway ? (internalSovereign ? 'ok' : 'warn') : 'ok') : (internalSovereign ? 'ok' : 'warn')) as Status,
+      status: (aiConfigured
+        ? (lovableGateway ? (internalSovereign ? 'ok' : 'warn') : 'ok')
+        : (internalSovereign ? 'ok' : 'warn')) as Status,
       detail: aiConfigured
         ? (lovableGateway
-          ? internalSovereign
-            ? `✓ Lovable Gateway — acceptable en mode interne souverain`
-            : `⚠ Lovable Gateway — dépendance externe (acceptable en mode interne souverain)`
+          ? `✓ Lovable Gateway — mode interne souverain`
           : `✓ Gateway souverain — ${aiGatewayUrl}`)
         : internalSovereign
-        ? '✓ LOVABLE_API_KEY côté Edge — opérationnel (prouvé par briefings en DB)'
-        : '⚠ Non configuré — LOVABLE_API_KEY côté Edge (acceptable en mode interne souverain)',
+        ? '✓ LOVABLE_API_KEY côté Edge — opérationnel'
+        : '⚠ Non configuré — LOVABLE_API_KEY côté Edge',
+      pingable: false,
     },
     {
       label: 'Mode rapports (reports_mode)',
       icon: <FileText className="h-4 w-4" />,
       status: (reportsMode === 'external_only' ? (coreConfigured ? 'ok' : 'fail') : 'ok') as Status,
       detail: {
-        external_only:     coreConfigured ? '✓ Backend externe obligatoire — Core API configuré' : '✗ external_only mais VITE_CORE_API_URL absent',
-        internal_fallback: '✓ Fallback interne actif',
-        internal_only:     '✓ Moteur interne — 100% Edge Functions',
+        external_only:     coreConfigured ? '✓ Core API obligatoire — configuré' : '✗ external_only mais Core API absent',
+        internal_fallback: `✓ Fallback interne actif${isDev ? ' · mode dev' : ''}`,
+        internal_only:     '✓ 100% Edge Functions',
       }[reportsMode],
+      pingable: false,
     },
     {
       label: 'Source de configuration',
       icon: <Settings className="h-4 w-4" />,
       status: (configSource === 'app_runtime_config' ? 'ok' : 'warn') as Status,
       detail: {
-        app_runtime_config: '✓ app_runtime_config (DB) — priorité max · sans redéploiement',
+        app_runtime_config: '✓ app_runtime_config (DB) — sans redéploiement',
         commercial_config:  '⚠ commercial_config (legacy)',
-        env:                '⚠ Variables d\'env uniquement',
+        env:                '⚠ Variables d\'env build-time',
         defaults:           '⚠ Valeurs par défaut',
       }[configSource],
+      pingable: false,
     },
   ];
 
-  const okCount = items.filter(i => i.status === 'ok').length;
-  const score   = isSovereign100 ? 100 : Math.round((okCount / items.length) * 100);
+  const okCount = sovereignItems.filter(i => i.status === 'ok').length;
+  const score   = isSovereign100 ? 100 : Math.round((okCount / sovereignItems.length) * 100);
+
+  const badgeLabel = externalConfirmed
+    ? '✓ 100% SOUVERAIN EXTERNE'
+    : coreConfigured
+    ? '⚡ SOUVERAIN EXTERNE (ping requis)'
+    : internalSovereign
+    ? '✓ 100% SOUVERAIN INTERNE'
+    : '⚠ SOUVERAINETÉ PARTIELLE';
 
   return (
     <Card className={`border-2 ${isSovereign100 ? 'border-success/50 bg-success/[0.01]' : 'border-primary/30 bg-primary/[0.01]'}`}>
@@ -761,14 +837,33 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
             Sovereign Backend Status
           </CardTitle>
           <div className="flex items-center gap-2">
+            {coreConfigured && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handlePing}
+                disabled={pingState === 'running'}
+                className={`h-7 text-xs gap-1.5 ${
+                  pingState === 'ok' ? 'border-success/50 text-success' :
+                  pingState === 'fail' ? 'border-destructive/50 text-destructive' : ''
+                }`}
+              >
+                {pingState === 'running'
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Activity className="h-3.5 w-3.5" />}
+                {pingState === 'ok' ? 'Ping OK ✓' : pingState === 'fail' ? 'Ping KO ✗' : 'Ping Core API'}
+              </Button>
+            )}
             <Badge variant="outline" className={`text-xs font-bold ${
-              isSovereign100
+              externalConfirmed
+                ? 'border-success/40 text-success bg-success/5'
+                : coreConfigured
+                ? 'border-primary/40 text-primary bg-primary/5'
+                : isSovereign100
                 ? 'border-success/40 text-success bg-success/5'
                 : 'border-warning/40 text-warning bg-warning/5'
             }`}>
-              {isSovereign100
-                ? `✓ 100% SOUVERAIN (${sovereignMode})`
-                : '⚠ SOUVERAINETÉ PARTIELLE — seed en cours…'}
+              {badgeLabel}
             </Badge>
             <span className={`text-xl font-black ${isSovereign100 ? 'text-success' : score >= 60 ? 'text-warning' : 'text-destructive'}`}>
               {score}%
@@ -776,15 +871,17 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
           </div>
         </div>
         <CardDescription>
-          Moteur interne (Edge Functions) · Core API externe optionnel · données DB réelles
-          {!isSovereign100 && (
+          {coreConfigured
+            ? `Core API externe configuré${externalConfirmed ? ' — ping OK · 100% souverain externe' : ' — cliquez Ping pour confirmer la connectivité'}`
+            : 'Moteur interne (Edge Functions) · Core API externe optionnel · données DB réelles'}
+          {!coreConfigured && !isSovereign100 && (
             <span className="ml-2 text-warning font-medium">· Seed automatique au chargement</span>
           )}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-border">
-          {items.map(item => (
+          {sovereignItems.map(item => (
             <div key={item.label} className="flex items-center justify-between gap-4 px-6 py-3">
               <div className="flex items-center gap-3 min-w-0">
                 <StatusIcon status={item.status} />
@@ -796,16 +893,41 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <StatusBadge status={item.status} />
-              </div>
+              <StatusBadge status={item.status} />
             </div>
           ))}
         </div>
+        {/* Ping Core API callout */}
+        {coreConfigured && (
+          <div className={`px-6 py-3 border-t ${
+            pingState === 'ok' ? 'border-success/20 bg-success/5' :
+            pingState === 'fail' ? 'border-destructive/20 bg-destructive/5' :
+            'border-primary/20 bg-primary/5'
+          }`}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-mono text-muted-foreground">
+                {pingState === 'ok'
+                  ? `✓ CORE API EXTERNE JOIGNABLE — ${pingResult}`
+                  : pingState === 'fail'
+                  ? `✗ Core API injoignable — ${pingResult} · vérifiez l'URL et la connectivité`
+                  : pingState === 'running'
+                  ? '⏳ Ping en cours…'
+                  : `○ Core API configuré (${coreApiUrl}) · cliquez "Ping Core API" pour valider`}
+              </p>
+              {pingState !== 'running' && (
+                <Button size="sm" variant="outline" onClick={handlePing} className="h-6 text-[10px] gap-1 shrink-0">
+                  <Activity className="h-3 w-3" />Ping
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
         <div className="px-6 py-3 border-t border-border bg-muted/10">
           <p className="text-[10px] font-mono text-muted-foreground/70">
-            {isSovereign100
-              ? `✓ SOUVERAINETÉ ${sovereignMode?.toUpperCase()} CONFIRMÉE — moteur opérationnel · données réelles · RLS stricte · multi-tenant · seed idempotent`
+            {externalConfirmed
+              ? '✓ SOUVERAINETÉ EXTERNE CONFIRMÉE — Core API joignable · appels réseau vers votre backend · RLS stricte · multi-tenant'
+              : isSovereign100
+              ? '✓ SOUVERAINETÉ CONFIRMÉE — moteur opérationnel · données réelles · RLS stricte · multi-tenant'
               : 'Seed automatique actif — données DB réelles en cours de chargement…'}
           </p>
         </div>
