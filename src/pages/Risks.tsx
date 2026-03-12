@@ -1,92 +1,154 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFindingCounts, useFindings } from "@/hooks/useFindings";
-import type { RiskLevel, FindingStatus } from "@/types/findings";
-import { 
-  AlertTriangle, 
-  ShieldAlert, 
-  Shield, 
-  Info, 
-  TrendingUp, 
-  Filter,
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useRisks, useRiskCounts } from "@/hooks/useRisks";
+import { useAuth } from "@/contexts/AuthContext";
+import { correlateRisks } from "@/lib/api-client";
+import { toast } from "@/hooks/use-toast";
+import type { Risk } from "@/types/engine";
+import {
+  AlertTriangle,
+  ShieldAlert,
+  Shield,
   RefreshCw,
-  ExternalLink,
-  AlertCircle
+  Filter,
+  AlertCircle,
+  ChevronDown,
+  ChevronRight,
+  Activity,
+  TrendingUp,
 } from "lucide-react";
 
-const SEVERITY_CONFIG = {
-  critical: { label: "Critique", color: "bg-red-500", icon: AlertCircle, textColor: "text-red-600" },
-  high: { label: "Élevé", color: "bg-orange-500", icon: ShieldAlert, textColor: "text-orange-600" },
-  medium: { label: "Moyen", color: "bg-yellow-500", icon: AlertTriangle, textColor: "text-yellow-600" },
-  low: { label: "Faible", color: "bg-blue-500", icon: Shield, textColor: "text-blue-600" },
-  info: { label: "Info", color: "bg-slate-400", icon: Info, textColor: "text-slate-600" },
+const LEVEL_CONFIG: Record<string, { label: string; variant: "destructive" | "default" | "secondary" | "outline" }> = {
+  critical: { label: "Critique", variant: "destructive" },
+  high:     { label: "Élevé",    variant: "default" },
+  medium:   { label: "Moyen",    variant: "secondary" },
+  low:      { label: "Faible",   variant: "outline" },
 };
 
-const STATUS_OPTIONS = [
-  { value: "all", label: "Tous les statuts" },
-  { value: "open", label: "Ouverts" },
-  { value: "acknowledged", label: "Acceptés" },
-  { value: "remediated", label: "Remédiés" },
-  { value: "false_positive", label: "Faux positifs" },
-];
+const STATUS_CONFIG: Record<string, string> = {
+  open:         "Ouvert",
+  in_treatment: "En traitement",
+  accepted:     "Accepté",
+  closed:       "Clôturé",
+};
+
+function RiskRow({ risk, expanded, onToggle }: { risk: Risk; expanded: boolean; onToggle: () => void }) {
+  const lvl = LEVEL_CONFIG[risk.risk_level] ?? LEVEL_CONFIG.low;
+  const isOverdue = risk.due_date && new Date(risk.due_date) < new Date() && risk.status !== 'closed';
+
+  return (
+    <>
+      <TableRow
+        className="cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={onToggle}
+      >
+        <TableCell className="w-8 text-muted-foreground">
+          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </TableCell>
+        <TableCell>
+          <div className="font-medium truncate max-w-xs">{risk.title}</div>
+          {risk.assets && (
+            <div className="text-xs text-muted-foreground mt-0.5">{risk.assets.name}</div>
+          )}
+        </TableCell>
+        <TableCell>
+          <Badge variant={lvl.variant}>{lvl.label}</Badge>
+        </TableCell>
+        <TableCell className="font-mono font-bold">{Math.round(risk.score)}</TableCell>
+        <TableCell>
+          <Badge variant="outline">{STATUS_CONFIG[risk.status] ?? risk.status}</Badge>
+        </TableCell>
+        <TableCell className="text-sm text-muted-foreground">{risk.owner ?? "—"}</TableCell>
+        <TableCell className={`text-sm ${isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+          {risk.due_date ? new Date(risk.due_date).toLocaleDateString("fr-FR") : "—"}
+          {isOverdue && " ⚠"}
+        </TableCell>
+      </TableRow>
+      {expanded && (
+        <TableRow className="bg-muted/30">
+          <TableCell />
+          <TableCell colSpan={6} className="pb-4">
+            <div className="grid md:grid-cols-2 gap-4 pt-2">
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Description</p>
+                <p className="text-sm">{risk.description || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Impact Business</p>
+                <p className="text-sm">{risk.business_impact || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Impact Technique</p>
+                <p className="text-sm">{risk.technical_impact || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Signaux sources</p>
+                <p className="text-sm font-mono">
+                  {Array.isArray(risk.source_signal_ids) ? risk.source_signal_ids.length : 0} signal(s)
+                </p>
+              </div>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+}
 
 export default function Risks() {
-  const [severityFilter, setSeverityFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  
-  const { data: counts, isLoading: countsLoading, refetch: refetchCounts } = useFindingCounts();
-  
-  const filters = useMemo(() => ({
-    severity: severityFilter !== "all" ? severityFilter as RiskLevel : undefined,
-    status: statusFilter !== "all" ? statusFilter as FindingStatus : undefined,
-  }), [severityFilter, statusFilter]);
-  
-  const { data: findings, isLoading: findingsLoading, refetch: refetchFindings } = useFindings(filters);
+  const { organization } = useAuth();
+  const [levelFilter, setLevelFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("open");
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [correlating, setCorrelating] = useState(false);
 
-  const handleRefresh = () => {
-    refetchCounts();
-    refetchFindings();
+  const { data: counts, isLoading: countsLoading, refetch: refetchCounts } = useRiskCounts();
+  const { data: risks, isLoading: risksLoading, refetch: refetchRisks } = useRisks({
+    status: statusFilter !== "all" ? statusFilter as Risk["status"] : undefined,
+    risk_level: levelFilter !== "all" ? levelFilter : undefined,
+  });
+
+  const filtered = useMemo(() => {
+    if (!risks) return [];
+    if (!search.trim()) return risks;
+    const q = search.toLowerCase();
+    return risks.filter(r =>
+      r.title.toLowerCase().includes(q) ||
+      r.description?.toLowerCase().includes(q) ||
+      r.owner?.toLowerCase().includes(q)
+    );
+  }, [risks, search]);
+
+  const handleCorrelate = async () => {
+    if (!organization?.id) return;
+    setCorrelating(true);
+    try {
+      const result = await correlateRisks(organization.id);
+      toast({
+        title: "Corrélation terminée",
+        description: `${result.risks_created} créés, ${result.risks_updated} mis à jour (${result.signals_processed} signaux traités)`,
+      });
+      refetchRisks();
+      refetchCounts();
+    } catch (e: unknown) {
+      toast({ title: "Erreur", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setCorrelating(false);
+    }
   };
 
-  const totalFindings = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : 0;
-  const openCriticalHigh = (counts?.critical || 0) + (counts?.high || 0);
-
-  // Group findings by category for top categories
-  const categoryCounts = useMemo(() => {
-    if (!findings) return [];
-    const categoryMap = new Map<string, number>();
-    findings.forEach(f => {
-      const cat = f.finding_type || 'unknown';
-      categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
-    });
-    return Array.from(categoryMap.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-  }, [findings]);
-
-  // Top assets by finding count
-  const assetCounts = useMemo(() => {
-    if (!findings) return [];
-    const assetMap = new Map<string, { count: number; critical: number }>();
-    findings.forEach(f => {
-      const assetId = f.asset_id || 'non-attribué';
-      const existing = assetMap.get(assetId) || { count: 0, critical: 0 };
-      existing.count++;
-      if (f.severity === 'critical' || f.severity === 'high') {
-        existing.critical++;
-      }
-      assetMap.set(assetId, existing);
-    });
-    return Array.from(assetMap.entries())
-      .sort((a, b) => b[1].critical - a[1].critical || b[1].count - a[1].count)
-      .slice(0, 5);
-  }, [findings]);
+  const criticalCount = counts?.critical ?? 0;
+  const avgScore = counts?.avg_score ?? 0;
+  const openCount = counts?.open ?? 0;
+  const overdueCount = counts?.overdue ?? 0;
 
   return (
     <AppLayout>
@@ -94,116 +156,127 @@ export default function Risks() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Tableau des Risques</h1>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <ShieldAlert className="h-6 w-6 text-destructive" />
+              Registre des Risques
+            </h1>
             <p className="text-muted-foreground">
-              Vue consolidée des vulnérabilités et expositions
+              Risques corrélés depuis les signaux et les actifs
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { refetchRisks(); refetchCounts(); }}
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               Actualiser
             </Button>
-            <Button asChild>
-              <Link to="/findings">
-                Voir tous les findings
-                <ExternalLink className="h-4 w-4 ml-2" />
-              </Link>
+            <Button
+              onClick={handleCorrelate}
+              disabled={correlating}
+              size="sm"
+            >
+              <Activity className={`h-4 w-4 mr-2 ${correlating ? "animate-spin" : ""}`} />
+              {correlating ? "Corrélation…" : "Corréler les risques"}
             </Button>
           </div>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* KPI Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {countsLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-4">
-                  <Skeleton className="h-8 w-12 mb-2" />
-                  <Skeleton className="h-4 w-20" />
-                </CardContent>
-              </Card>
+            Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}><CardContent className="p-4"><Skeleton className="h-10 w-full" /></CardContent></Card>
             ))
           ) : (
             <>
-              <Card className="border-l-4 border-l-foreground">
+              <Card className="border-l-4 border-l-destructive">
                 <CardContent className="p-4">
-                  <div className="text-3xl font-bold">{totalFindings}</div>
-                  <div className="text-sm text-muted-foreground">Total findings</div>
+                  <div className="text-3xl font-bold text-destructive">{criticalCount}</div>
+                  <div className="text-sm text-muted-foreground">Critiques</div>
                 </CardContent>
               </Card>
-              {Object.entries(SEVERITY_CONFIG).map(([key, config]) => (
-                <Card key={key} className={`border-l-4`} style={{ borderLeftColor: `hsl(var(--${key === 'critical' ? 'destructive' : key === 'high' ? 'warning' : 'muted'}))` }}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <config.icon className={`h-5 w-5 ${config.textColor}`} />
-                      <span className="text-2xl font-bold">{counts?.[key as keyof typeof counts] || 0}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">{config.label}</div>
-                  </CardContent>
-                </Card>
-              ))}
+              <Card className="border-l-4 border-l-primary">
+                <CardContent className="p-4">
+                  <div className="text-3xl font-bold">{openCount}</div>
+                  <div className="text-sm text-muted-foreground">Ouverts</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-3xl font-bold flex items-center gap-1">
+                    <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                    {avgScore}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Score moyen</div>
+                </CardContent>
+              </Card>
+              <Card className={overdueCount > 0 ? "border-l-4 border-l-yellow-500" : ""}>
+                <CardContent className="p-4">
+                  <div className={`text-3xl font-bold ${overdueCount > 0 ? "text-yellow-600" : ""}`}>
+                    {overdueCount}
+                  </div>
+                  <div className="text-sm text-muted-foreground">En retard</div>
+                </CardContent>
+              </Card>
             </>
           )}
         </div>
 
-        {/* Alert banner for critical/high */}
-        {openCriticalHigh > 0 && (
+        {/* Alert banner */}
+        {criticalCount > 0 && (
           <Card className="border-destructive/50 bg-destructive/5">
-            <CardContent className="py-4 flex items-center gap-4">
-              <AlertCircle className="h-6 w-6 text-destructive" />
-              <div>
-                <p className="font-medium text-destructive">
-                  {openCriticalHigh} vulnérabilité{openCriticalHigh > 1 ? 's' : ''} critique{openCriticalHigh > 1 ? 's' : ''}/élevée{openCriticalHigh > 1 ? 's' : ''} ouverte{openCriticalHigh > 1 ? 's' : ''}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Action requise dans les 7 jours selon les bonnes pratiques de sécurité
-                </p>
-              </div>
+            <CardContent className="py-3 flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+              <p className="text-sm font-medium text-destructive">
+                {criticalCount} risque{criticalCount > 1 ? "s" : ""} critique{criticalCount > 1 ? "s" : ""} nécessite{criticalCount > 1 ? "nt" : ""} une action immédiate.
+              </p>
             </CardContent>
           </Card>
         )}
 
         {/* Filters */}
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <CardTitle className="text-base">Filtres</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <div className="w-48">
-                <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sévérité" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toutes sévérités</SelectItem>
-                    {Object.entries(SEVERITY_CONFIG).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-48">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Statut" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {(severityFilter !== "all" || statusFilter !== "all") && (
-                <Button 
-                  variant="ghost" 
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-48 h-9"
+              />
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
+                <SelectTrigger className="w-40 h-9">
+                  <SelectValue placeholder="Niveau" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous niveaux</SelectItem>
+                  <SelectItem value="critical">Critique</SelectItem>
+                  <SelectItem value="high">Élevé</SelectItem>
+                  <SelectItem value="medium">Moyen</SelectItem>
+                  <SelectItem value="low">Faible</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-44 h-9">
+                  <SelectValue placeholder="Statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous statuts</SelectItem>
+                  <SelectItem value="open">Ouvert</SelectItem>
+                  <SelectItem value="in_treatment">En traitement</SelectItem>
+                  <SelectItem value="accepted">Accepté</SelectItem>
+                  <SelectItem value="closed">Clôturé</SelectItem>
+                </SelectContent>
+              </Select>
+              {(levelFilter !== "all" || statusFilter !== "open" || search) && (
+                <Button
+                  variant="ghost"
                   size="sm"
-                  onClick={() => { setSeverityFilter("all"); setStatusFilter("all"); }}
+                  onClick={() => { setLevelFilter("all"); setStatusFilter("open"); setSearch(""); }}
                 >
                   Réinitialiser
                 </Button>
@@ -212,169 +285,66 @@ export default function Risks() {
           </CardContent>
         </Card>
 
-        {/* Two columns: Top Categories + Top Assets */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Top Categories */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Top 5 Catégories
-              </CardTitle>
-              <CardDescription>Types de vulnérabilités les plus fréquents</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {findingsLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
-                </div>
-              ) : categoryCounts.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Aucune catégorie détectée
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {categoryCounts.map(([cat, count], idx) => (
-                    <div key={cat} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-bold text-muted-foreground">#{idx + 1}</span>
-                        <span className="font-medium">{cat}</span>
-                      </div>
-                      <Badge variant="secondary">{count}</Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Top Assets */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5" />
-                Actifs à Risque
-              </CardTitle>
-              <CardDescription>Actifs avec le plus de vulnérabilités critiques</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {findingsLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
-                </div>
-              ) : assetCounts.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Aucun actif affecté
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {assetCounts.map(([assetId, data], idx) => (
-                    <div key={assetId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-bold text-muted-foreground">#{idx + 1}</span>
-                        <span className="font-medium font-mono text-sm truncate max-w-[200px]">
-                          {assetId === 'non-attribué' ? '(Non attribué)' : assetId.slice(0, 8)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {data.critical > 0 && (
-                          <Badge variant="destructive">{data.critical} crit/high</Badge>
-                        )}
-                        <Badge variant="secondary">{data.count} total</Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Findings Preview */}
+        {/* Risks Table */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Derniers Findings</CardTitle>
-                <CardDescription>Les 10 vulnérabilités les plus récentes</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/findings">Voir tout</Link>
-              </Button>
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              {risksLoading ? "Chargement…" : `${filtered.length} risque${filtered.length !== 1 ? "s" : ""}`}
+            </CardTitle>
+            <CardDescription>Cliquez sur une ligne pour afficher le détail</CardDescription>
           </CardHeader>
-          <CardContent>
-            {findingsLoading ? (
-              <div className="space-y-3">
+          <CardContent className="p-0">
+            {risksLoading ? (
+              <div className="p-6 space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
-            ) : !findings || findings.length === 0 ? (
-              <div className="text-center py-12">
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16">
                 <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  Aucun finding détecté. Importez des résultats de scan pour commencer.
+                <p className="text-muted-foreground font-medium">Aucun risque trouvé</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Utilisez "Corréler les risques" pour générer le registre depuis vos signaux.
                 </p>
-                <Button className="mt-4" asChild>
-                  <Link to="/tools">Importer des résultats</Link>
-                </Button>
               </div>
             ) : (
-              <div className="space-y-2">
-                {findings.slice(0, 10).map((finding) => {
-                  const config = SEVERITY_CONFIG[finding.severity as keyof typeof SEVERITY_CONFIG] || SEVERITY_CONFIG.info;
-                  return (
-                    <div 
-                      key={finding.id} 
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-2 h-2 rounded-full ${config.color}`} />
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">{finding.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {finding.finding_type} • {new Date(finding.first_seen).toLocaleDateString('fr-FR')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge 
-                          variant={finding.status === 'open' ? 'destructive' : 'secondary'}
-                          className="capitalize"
-                        >
-                          {finding.status}
-                        </Badge>
-                        <Badge variant="outline" className={config.textColor}>
-                          {config.label}
-                        </Badge>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-8" />
+                    <TableHead>Risque</TableHead>
+                    <TableHead>Niveau</TableHead>
+                    <TableHead>Score</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Responsable</TableHead>
+                    <TableHead>Échéance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map(risk => (
+                    <RiskRow
+                      key={risk.id}
+                      risk={risk}
+                      expanded={expandedId === risk.id}
+                      onToggle={() => setExpandedId(expandedId === risk.id ? null : risk.id)}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
 
-        {/* SLA Warning */}
+        {/* SLA Reminder */}
         <Card className="bg-muted/30">
-          <CardContent className="py-4">
-            <div className="flex items-start gap-3">
-              <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div className="text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Bonnes pratiques de remédiation</p>
-                <p>
-                  • Critiques : sous 24h • Élevées : sous 7 jours • Moyennes : sous 30 jours • Faibles : selon planification
-                </p>
-                <p className="mt-1">
-                  Ces délais sont indicatifs et basés sur les standards de l'industrie (NIST, ISO 27001).
-                </p>
-              </div>
+          <CardContent className="py-3">
+            <div className="flex items-start gap-3 text-sm text-muted-foreground">
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+              <p>
+                <span className="font-medium text-foreground">SLA indicatifs :</span>{" "}
+                Critique : 48h • Élevé : 7j • Moyen : 30j • Faible : 90j (NIST / ISO 27001)
+              </p>
             </div>
           </CardContent>
         </Card>

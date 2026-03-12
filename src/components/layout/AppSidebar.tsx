@@ -52,7 +52,8 @@ const operationsItems = [
   { title: 'Documents', href: '/documents', icon: FileText },
   { title: 'Outils', href: '/tools', icon: Wrench },
   { title: 'Imports', href: '/runs', icon: Play },
-  { title: 'Remédiation', href: '/tasks', icon: ListTodo },
+  { title: 'Remédiation', href: '/remediation', icon: ListTodo },
+  { title: 'Tâches', href: '/tasks', icon: CheckSquare },
 ];
 
 const auditItems = [

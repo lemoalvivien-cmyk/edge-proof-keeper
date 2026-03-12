@@ -54,6 +54,7 @@ import Demo from "./pages/Demo";
 import Sources from "./pages/Sources";
 import Signals from "./pages/Signals";
 import RevenueSettings from "./pages/RevenueSettings";
+import Remediation from "./pages/Remediation";
 
 const queryClient = new QueryClient();
 
@@ -145,6 +146,7 @@ const App = () => (
               <Route path="/go-no-go" element={<ProtectedRoute requiredRoles={['admin']}><GoNoGo /></ProtectedRoute>} />
               <Route path="/proofs" element={<ProtectedRoute><Proofs /></ProtectedRoute>} />
               <Route path="/risks" element={<ProtectedRoute><Risks /></ProtectedRoute>} />
+              <Route path="/remediation" element={<ProtectedRoute><Remediation /></ProtectedRoute>} />
               <Route path="/findings" element={<ProtectedRoute><Findings /></ProtectedRoute>} />
               <Route path="/sources" element={<ProtectedRoute><Sources /></ProtectedRoute>} />
               <Route path="/signals" element={<ProtectedRoute><Signals /></ProtectedRoute>} />
