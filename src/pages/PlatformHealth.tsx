@@ -13,9 +13,11 @@ import {
   runStaleRiskCheck,
   evaluateAlertRules,
   updateAlertStatus,
+  getLatestPortfolioSummary,
 } from "@/lib/api-client";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import type { WeeklyWatchBriefResult } from "@/types/engine";
 import {
   Activity,
   AlertTriangle,
@@ -32,7 +34,10 @@ import {
   Clock,
   Server,
   Loader2,
+  Eye,
+  ArrowRight,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type SeverityKey = "critical" | "high" | "medium" | "low";
 
