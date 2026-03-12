@@ -216,6 +216,11 @@ import type {
   IngestSourcePayloadResult,
   SyncPublicIntelResult,
   SyncCustomerAuthorizedResult,
+  EntityNode,
+  EntityEdge,
+  SignalEntityLink,
+  CorrelateEntitiesResult,
+  EntityGraphSummary,
 } from '@/types/engine';
 
 async function getSupabaseToken(): Promise<string> {
@@ -424,6 +429,123 @@ export async function generateRemediationPlan(
   });
 }
 
+// ─── Entity Graph API ─────────────────────────────────────────────────────────
+
+export async function getSignalById(signalId: string): Promise<Signal | null> {
+  const { data, error } = await supabase
+    .from('signals')
+    .select('*, source_id!fk_signals_source_id(name, source_type, category), asset_id!fk_signals_asset_id(name, asset_type, identifier)')
+    .eq('id', signalId)
+    .maybeSingle();
+
+  if (error) throw new Error(`getSignalById error: ${error.message}`);
+  return data as unknown as Signal | null;
+}
+
+export async function getSignalEntities(
+  signalId: string,
+  orgId: string,
+): Promise<SignalEntityLink[]> {
+  const { data, error } = await supabase
+    .from('signal_entity_links')
+    .select('*, entity_node_id(id, entity_type, canonical_value, display_value, metadata, confidence_score, created_at, updated_at)')
+    .eq('signal_id', signalId)
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(`getSignalEntities error: ${error.message}`);
+  return (data ?? []).map(row => ({
+    ...row,
+    entity_node: row.entity_node_id as unknown as EntityNode,
+  })) as unknown as SignalEntityLink[];
+}
+
+export async function getEntityGraphSummary(orgId: string): Promise<EntityGraphSummary> {
+  const [nodesRes, edgesRes] = await Promise.all([
+    supabase
+      .from('entity_nodes')
+      .select('id, entity_type')
+      .eq('organization_id', orgId),
+    supabase
+      .from('entity_edges')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', orgId),
+  ]);
+
+  if (nodesRes.error) throw new Error(`getEntityGraphSummary nodes error: ${nodesRes.error.message}`);
+  if (edgesRes.error) throw new Error(`getEntityGraphSummary edges error: ${edgesRes.error.message}`);
+
+  const nodes = nodesRes.data ?? [];
+  const by_type = {} as Record<string, number>;
+  for (const n of nodes) {
+    by_type[n.entity_type] = (by_type[n.entity_type] ?? 0) + 1;
+  }
+
+  return {
+    total_nodes: nodes.length,
+    total_edges: edgesRes.count ?? 0,
+    by_type: by_type as EntityGraphSummary['by_type'],
+    top_connected: [],
+  };
+}
+
+export async function getEntityNodes(
+  orgId: string,
+  options?: { entity_type?: string; limit?: number },
+): Promise<EntityNode[]> {
+  let q = supabase
+    .from('entity_nodes')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: false })
+    .limit(options?.limit ?? 200);
+
+  if (options?.entity_type) {
+    q = q.eq('entity_type', options.entity_type);
+  }
+
+  const { data, error } = await q;
+  if (error) throw new Error(`getEntityNodes error: ${error.message}`);
+  return (data ?? []) as unknown as EntityNode[];
+}
+
+export async function getRelatedSignals(
+  orgId: string,
+  entityNodeId: string,
+): Promise<Signal[]> {
+  // Get signal IDs linked to this entity
+  const { data: links, error: linkErr } = await supabase
+    .from('signal_entity_links')
+    .select('signal_id')
+    .eq('organization_id', orgId)
+    .eq('entity_node_id', entityNodeId)
+    .limit(50);
+
+  if (linkErr) throw new Error(`getRelatedSignals links error: ${linkErr.message}`);
+  const ids = (links ?? []).map(l => l.signal_id);
+  if (!ids.length) return [];
+
+  const { data, error } = await supabase
+    .from('signals')
+    .select('*, source_id!fk_signals_source_id(name, source_type, category)')
+    .in('id', ids)
+    .eq('organization_id', orgId)
+    .order('detected_at', { ascending: false });
+
+  if (error) throw new Error(`getRelatedSignals signals error: ${error.message}`);
+  return (data ?? []) as unknown as Signal[];
+}
+
+export async function runEntityCorrelation(
+  orgId: string,
+  signalIds?: string[],
+): Promise<CorrelateEntitiesResult> {
+  return callEdgeFunction<CorrelateEntitiesResult>('correlate-entities', {
+    organization_id: orgId,
+    ...(signalIds?.length ? { signal_ids: signalIds } : {}),
+  });
+}
+
 export const apiClient = {
   // External backend
   createToolRun,
@@ -437,6 +559,7 @@ export const apiClient = {
   getPlatformHealth,
   // Signals & Risks
   getSignals,
+  getSignalById,
   getRisks,
   ingestSignals,
   correlateRisks,
@@ -449,4 +572,10 @@ export const apiClient = {
   ingestSourcePayload,
   syncPublicIntelSource,
   syncCustomerAuthorizedSource,
+  // Entity Graph
+  getSignalEntities,
+  getEntityGraphSummary,
+  getEntityNodes,
+  getRelatedSignals,
+  runEntityCorrelation,
 };

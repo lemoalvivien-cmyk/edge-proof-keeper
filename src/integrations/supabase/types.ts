@@ -492,6 +492,87 @@ export type Database = {
           },
         ]
       }
+      entity_edges: {
+        Row: {
+          created_at: string
+          edge_type: string
+          evidence: Json
+          from_node_id: string
+          id: string
+          organization_id: string
+          to_node_id: string
+        }
+        Insert: {
+          created_at?: string
+          edge_type: string
+          evidence?: Json
+          from_node_id: string
+          id?: string
+          organization_id: string
+          to_node_id: string
+        }
+        Update: {
+          created_at?: string
+          edge_type?: string
+          evidence?: Json
+          from_node_id?: string
+          id?: string
+          organization_id?: string
+          to_node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_edges_from_node_id_fkey"
+            columns: ["from_node_id"]
+            isOneToOne: false
+            referencedRelation: "entity_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_edges_to_node_id_fkey"
+            columns: ["to_node_id"]
+            isOneToOne: false
+            referencedRelation: "entity_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_nodes: {
+        Row: {
+          canonical_value: string
+          confidence_score: number | null
+          created_at: string
+          display_value: string
+          entity_type: string
+          id: string
+          metadata: Json
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_value: string
+          confidence_score?: number | null
+          created_at?: string
+          display_value: string
+          entity_type: string
+          id?: string
+          metadata?: Json
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_value?: string
+          confidence_score?: number | null
+          created_at?: string
+          display_value?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       evidence_chain_state: {
         Row: {
           last_hash: string
@@ -1344,6 +1425,48 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal_entity_links: {
+        Row: {
+          created_at: string
+          entity_node_id: string
+          id: string
+          organization_id: string
+          relation_type: string
+          signal_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_node_id: string
+          id?: string
+          organization_id: string
+          relation_type: string
+          signal_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_node_id?: string
+          id?: string
+          organization_id?: string
+          relation_type?: string
+          signal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_entity_links_entity_node_id_fkey"
+            columns: ["entity_node_id"]
+            isOneToOne: false
+            referencedRelation: "entity_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_entity_links_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signals"
             referencedColumns: ["id"]
           },
         ]
