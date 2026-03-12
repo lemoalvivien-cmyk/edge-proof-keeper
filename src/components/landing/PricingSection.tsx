@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
-import { openBookingOrFallback, getCheckoutUrl, type PlanKey } from "@/lib/revenue-links";
+import { openBookingOrFallback, getCheckoutUrl } from "@/lib/revenue-links";
 import { trackEvent } from "@/lib/tracking";
 
 
