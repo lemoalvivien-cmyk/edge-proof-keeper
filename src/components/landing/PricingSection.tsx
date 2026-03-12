@@ -161,23 +161,18 @@ export function PricingSection() {
                     Parler à un expert — démo personnalisée
                   </Button>
 
-                  {/* Runtime source indicator — visible & testable */}
-                  {!cta.isLoading && !hasCheckout && !hasBooking && (
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border text-center">
-                      <p className="text-xs text-muted-foreground">
-                        💳 Aucun lien de paiement configuré —{" "}
-                        <Link to="/settings/revenue" className="underline hover:text-primary">
-                          configurer dans Paramètres
-                        </Link>
-                      </p>
-                    </div>
-                  )}
+                  {/* Runtime source indicator — visible, testable, honest */}
                   {!cta.isLoading && !hasCheckout && hasBooking && (
                     <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 text-center">
                       <p className="text-xs text-muted-foreground">
-                        📅 Paiement par prise de rendez-vous (booking actif)
+                        📅 Prise de rendez-vous activée
                       </p>
                     </div>
+                  )}
+                  {!cta.isLoading && (
+                    <p className="text-[10px] text-muted-foreground/50 text-center">
+                      Config : {cta.configSource}{cta.tenantResolved ? ' · tenant résolu' : ' · fallback env'}
+                    </p>
                   )}
                 </div>
               </CardContent>
