@@ -59,10 +59,16 @@ export default {
           cyan: "hsl(var(--neon-cyan))",
           purple: "hsl(var(--neon-purple))",
           blue: "hsl(var(--neon-blue))",
+          green: "hsl(var(--neon-green))",
+          orange: "hsl(var(--neon-orange))",
         },
         glass: {
           DEFAULT: "hsl(var(--glass))",
           border: "hsl(var(--glass-border))",
+        },
+        sovereign: {
+          gold: "hsl(var(--sovereign-gold))",
+          glow: "hsl(var(--sovereign-glow))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
