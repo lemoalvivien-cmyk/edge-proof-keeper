@@ -66,3 +66,16 @@ verify_jwt = false
 
 [functions.enhance-remediation-actions]
 verify_jwt = false
+
+# ─── Monitoring & Alerting Functions ────────────────────────────────────────
+[functions.schedule-source-sync]
+verify_jwt = false
+
+[functions.stale-risk-check]
+verify_jwt = false
+
+[functions.evaluate-alert-rules]
+verify_jwt = false
+
+[functions.sync-customer-authorized-source]
+verify_jwt = false

@@ -315,6 +315,12 @@ import type {
   SignalEntityLink,
   CorrelateEntitiesResult,
   EntityGraphSummary,
+  Alert,
+  NotificationRule,
+  PlatformHealthSnapshot,
+  ScheduleSourceSyncResult,
+  StaleRiskCheckResult,
+  EvaluateAlertRulesResult,
 } from '@/types/engine';
 
 async function getSupabaseToken(): Promise<string> {

@@ -266,6 +266,98 @@ export interface PlatformHealthStatus {
   };
 }
 
+// ─── Alert ────────────────────────────────────────────────────────────────────
+
+export type AlertSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+export type AlertStatus   = 'open' | 'acknowledged' | 'resolved';
+export type AlertType     = 'stale_risk' | 'overdue_risk' | 'source_error' | 'engine_error' | string;
+
+export interface Alert {
+  id: string;
+  organization_id: string;
+  alert_type: AlertType;
+  severity: AlertSeverity;
+  title: string;
+  description: string;
+  source_entity_type: string | null;
+  source_entity_id: string | null;
+  status: AlertStatus;
+  first_detected_at: string;
+  last_detected_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Notification Rule ────────────────────────────────────────────────────────
+
+export interface NotificationRule {
+  id: string;
+  organization_id: string;
+  rule_type: string;
+  is_enabled: boolean;
+  severity_threshold: AlertSeverity | null;
+  channel: 'in_app' | 'email' | string;
+  config: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Platform Health Snapshot ─────────────────────────────────────────────────
+
+export interface PlatformHealthSnapshot {
+  id: string;
+  organization_id: string;
+  health_score: number;
+  summary: Record<string, unknown>;
+  created_at: string;
+}
+
+// ─── Platform Health Summary (composite) ─────────────────────────────────────
+
+export interface PlatformHealthSummary {
+  health_score: number;
+  db_ok: boolean;
+  ai_configured: boolean;
+  open_alerts: number;
+  critical_alerts: number;
+  active_sources: number;
+  open_signals: number;
+  open_risks: number;
+  pending_actions: number;
+  ai_analyses: number;
+  last_checked_at: string;
+}
+
+// ─── Monitoring Edge Function Results ────────────────────────────────────────
+
+export interface ScheduleSourceSyncResult {
+  success: boolean;
+  sources_considered: number;
+  syncs_triggered: number;
+  errors_count: number;
+  message?: string;
+}
+
+export interface StaleRiskCheckResult {
+  success: boolean;
+  stale_risks_found: number;
+  alerts_created: number;
+  alerts_updated: number;
+  errors_count: number;
+  message?: string;
+}
+
+export interface EvaluateAlertRulesResult {
+  success: boolean;
+  rules_evaluated: number;
+  alerts_matched: number;
+  notifications_to_send: number;
+  open_alerts_count: number;
+  summary: { critical: number; high: number; medium: number; low: number };
+  matched_alerts: Array<{ id: string; title: string; severity: string; alert_type: string; matched_rule?: string }>;
+  message?: string;
+}
+
 // ─── Ingest Signals ───────────────────────────────────────────────────────────
 
 export interface SignalInput {
