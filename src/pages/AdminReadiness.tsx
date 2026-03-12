@@ -3263,6 +3263,9 @@ export default function AdminReadiness() {
           </div>
         )}
 
+        {/* ── FULL PIPELINE LAUNCHER — bouton unique "Lancer le pipeline complet" ── */}
+        <FullPipelineLauncher orgId={organization?.id} onComplete={() => setRefreshKey(k => k + 1)} />
+
         {/* ── PREUVE FINALE LIVE — panneau de capture automatique ─────────── */}
         {/* Distinct des scénarios seedés · Polling automatique 15s · Honnête */}
         <LiveProofPanel user={user ?? null} organization={organization ?? null} />
