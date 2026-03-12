@@ -265,16 +265,24 @@ export async function generateTechnicalReport(
 
 export async function verifyEvidenceChain(
   payload: VerifyChainPayload,
-  token: string
+  token?: string
 ): Promise<VerifyChainResult> {
-  const base = getCoreApiUrl();
-  if (!base) throw new Error('Backend externe non configuré (VITE_CORE_API_URL manquant)');
-  const res = await fetch(`${base}/v1/evidence/verify-chain`, {
+  // Prefer internal Edge Function (no external backend required)
+  const tok = token ?? await getSupabaseToken();
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/verify-evidence-chain`, {
     method: 'POST',
-    headers: authHeaders(token),
+    headers: {
+      Authorization: `Bearer ${tok}`,
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+    },
     body: JSON.stringify(payload),
   });
-  return handleResponse<VerifyChainResult>(res);
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.error ?? `verify-evidence-chain error ${res.status}`);
+  // Edge Function wraps result in { success, verification }
+  if (json?.verification) return json.verification as VerifyChainResult;
+  return json as VerifyChainResult;
 }
 
 export async function getHealth(): Promise<unknown> {
