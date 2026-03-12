@@ -408,7 +408,7 @@ function DecisionLayerSection({ orgId, refreshKey }: { orgId?: string; refreshKe
 //   4. evaluate-alert-rules
 // Affiche chaque étape en temps réel avec statut clair.
 // ─────────────────────────────────────────────────────────────────────────────
-function FullPipelineLauncher({ orgId, onComplete }: { orgId?: string; onComplete: () => void }) {
+function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?: string; onComplete: () => void; demoAlreadyLoaded?: boolean }) {
   type FPStep = { id: string; label: string; state: 'idle' | 'running' | 'done' | 'error' | 'skipped'; result: string | null };
   const STEPS_INIT: FPStep[] = [
     { id: 'seed_data',     label: '① Seed données minimales — 1 risk + 1 alert + 1 snapshot',         state: 'idle', result: null },
