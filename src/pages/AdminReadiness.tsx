@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPlatformHealth } from '@/lib/api-client';
-import { useCommercialConfig } from '@/hooks/useCommercialConfig';
+import { useRuntimeConfig } from '@/hooks/useRuntimeConfig';
 import {
   CheckCircle2,
   XCircle,
@@ -32,6 +32,7 @@ import {
   ShoppingCart,
   Zap,
   Settings,
+  Server,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
