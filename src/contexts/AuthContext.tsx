@@ -64,7 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('[AuthContext] Bootstrap already in flight, waiting…');
           try { await existing; } catch { /* handled by the original caller */ }
         } else {
-          const promise = bootstrapOwner(currentUser.id, currentUser.email ?? '')
+          const promise: Promise<void> = bootstrapOwner(currentUser.id, currentUser.email ?? '')
+            .then(() => { /* success */ })
             .catch((err) => {
               console.warn('[AuthContext] Bootstrap non-fatal warning:', err);
             })
