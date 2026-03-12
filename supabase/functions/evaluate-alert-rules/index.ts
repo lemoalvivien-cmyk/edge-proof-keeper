@@ -2,8 +2,13 @@
  * CYBER SERENITY — evaluate-alert-rules Edge Function
  *
  * Reads notification_rules and open alerts, evaluates which alerts
- * match rule thresholds, and produces a notification summary.
- * Simple, defensive, no external calls.
+ * match rule thresholds, and dispatches webhook notifications (Slack/Teams).
+ *
+ * Supported channels:
+ *   - in_app   : no external call (frontend polls)
+ *   - slack    : POST to config.webhook_url (Slack Incoming Webhook)
+ *   - teams    : POST to config.webhook_url (Teams Incoming Webhook)
+ *   - webhook  : generic POST to config.url with config.headers
  *
  * POST /functions/v1/evaluate-alert-rules
  * Body: { organization_id }
@@ -24,6 +29,127 @@ const SEVERITY_ORDER: Record<string, number> = {
   low: 1,
   info: 0,
 };
+
+// ── Webhook dispatcher ──────────────────────────────────────────────────────
+
+interface AlertSummaryItem {
+  id: string;
+  title: string;
+  severity: string;
+  alert_type: string;
+  matched_rule?: string;
+}
+
+interface NotificationRule {
+  id: string;
+  rule_type: string;
+  severity_threshold: string | null;
+  channel: string;
+  config: Record<string, unknown>;
+}
+
+async function dispatchWebhook(
+  rule: NotificationRule,
+  matchedAlerts: AlertSummaryItem[],
+  orgId: string
+): Promise<{ dispatched: boolean; error?: string }> {
+  const { channel, config } = rule;
+  if (!matchedAlerts.length) return { dispatched: false };
+
+  const criticalCount = matchedAlerts.filter(a => a.severity === "critical").length;
+  const highCount     = matchedAlerts.filter(a => a.severity === "high").length;
+
+  try {
+    // ── Slack Incoming Webhook ──────────────────────────────────────────────
+    if (channel === "slack") {
+      const webhookUrl = config?.webhook_url as string | undefined;
+      if (!webhookUrl) return { dispatched: false, error: "slack: missing webhook_url in config" };
+
+      const color = criticalCount > 0 ? "danger" : highCount > 0 ? "warning" : "good";
+      const text  = `🚨 *Cyber Serenity — ${matchedAlerts.length} alerte(s) active(s)*\n` +
+        `Critique: ${criticalCount} · Élevé: ${highCount} · Org: ${orgId.slice(0, 8)}…\n` +
+        matchedAlerts.slice(0, 5).map(a => `• [${a.severity.toUpperCase()}] ${a.title}`).join("\n");
+
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          attachments: [{
+            color,
+            fields: matchedAlerts.slice(0, 5).map(a => ({
+              title: a.title,
+              value: `Sévérité: ${a.severity} · Type: ${a.alert_type}`,
+              short: true,
+            })),
+          }],
+        }),
+      });
+      return { dispatched: true };
+    }
+
+    // ── Teams Incoming Webhook ──────────────────────────────────────────────
+    if (channel === "teams") {
+      const webhookUrl = config?.webhook_url as string | undefined;
+      if (!webhookUrl) return { dispatched: false, error: "teams: missing webhook_url in config" };
+
+      const themeColor = criticalCount > 0 ? "FF0000" : highCount > 0 ? "FFA500" : "28a745";
+      const facts = matchedAlerts.slice(0, 5).map(a => ({
+        name: a.title,
+        value: `${a.severity.toUpperCase()} — ${a.alert_type}`,
+      }));
+
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          "@type": "MessageCard",
+          "@context": "http://schema.org/extensions",
+          themeColor,
+          summary: `Cyber Serenity — ${matchedAlerts.length} alerte(s)`,
+          sections: [{
+            activityTitle: `🚨 ${matchedAlerts.length} alerte(s) active(s) · ${criticalCount} critique(s)`,
+            activitySubtitle: `Organisation: ${orgId.slice(0, 8)}…`,
+            facts,
+          }],
+        }),
+      });
+      return { dispatched: true };
+    }
+
+    // ── Generic Webhook ─────────────────────────────────────────────────────
+    if (channel === "webhook") {
+      const url = config?.url as string | undefined;
+      if (!url) return { dispatched: false, error: "webhook: missing url in config" };
+
+      const extraHeaders = (config?.headers as Record<string, string> | undefined) ?? {};
+      await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...extraHeaders },
+        body: JSON.stringify({
+          event: "alerts_matched",
+          organization_id: orgId,
+          matched_count: matchedAlerts.length,
+          critical_count: criticalCount,
+          high_count: highCount,
+          alerts: matchedAlerts.slice(0, 20),
+          rule_type: rule.rule_type,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      return { dispatched: true };
+    }
+
+    // in_app or unknown — no external call
+    return { dispatched: false };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown dispatch error";
+    console.warn(`dispatchWebhook [${channel}] error:`, msg);
+    return { dispatched: false, error: msg };
+  }
+}
+
+// ── Main handler ────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -114,18 +240,18 @@ Deno.serve(async (req) => {
     }
 
     const openAlerts = alerts ?? [];
+    const criticalCount = openAlerts.filter((a) => a.severity === "critical").length;
+    const highCount     = openAlerts.filter((a) => a.severity === "high").length;
 
     // ── If no rules configured, return summary with defaults ─────────────────
     if (!rules || rules.length === 0) {
-      const criticalCount = openAlerts.filter((a) => a.severity === "critical").length;
-      const highCount     = openAlerts.filter((a) => a.severity === "high").length;
-
       return new Response(
         JSON.stringify({
           success: true,
           rules_evaluated: 0,
           alerts_matched: criticalCount + highCount,
           notifications_to_send: criticalCount + highCount,
+          notifications_dispatched: 0,
           open_alerts_count: openAlerts.length,
           summary: {
             critical: criticalCount,
@@ -148,9 +274,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Evaluate rules against alerts ───────────────────────────────────────
+    // ── Evaluate rules against alerts + dispatch webhooks ───────────────────
     let alertsMatched = 0;
-    const matchedAlerts: Array<{ id: string; title: string; severity: string; alert_type: string; matched_rule: string }> = [];
+    let notificationsDispatched = 0;
+    const matchedAlerts: AlertSummaryItem[] = [];
+    const dispatchErrors: string[] = [];
 
     for (const rule of rules) {
       const thresholdLevel = SEVERITY_ORDER[rule.severity_threshold ?? "medium"] ?? SEVERITY_ORDER.medium;
@@ -161,22 +289,33 @@ Deno.serve(async (req) => {
       });
 
       alertsMatched += matching.length;
-      for (const a of matching.slice(0, 10)) {
-        matchedAlerts.push({
-          id: a.id,
-          title: a.title,
-          severity: a.severity,
-          alert_type: a.alert_type,
-          matched_rule: rule.rule_type,
-        });
+
+      const ruleMatched: AlertSummaryItem[] = matching.slice(0, 20).map(a => ({
+        id: a.id,
+        title: a.title,
+        severity: a.severity,
+        alert_type: a.alert_type,
+        matched_rule: rule.rule_type,
+      }));
+      matchedAlerts.push(...ruleMatched);
+
+      // Dispatch webhook if channel requires it
+      if (rule.channel !== "in_app" && ruleMatched.length > 0) {
+        const dispatchResult = await dispatchWebhook(
+          rule as NotificationRule,
+          ruleMatched,
+          organization_id
+        );
+        if (dispatchResult.dispatched) {
+          notificationsDispatched++;
+        } else if (dispatchResult.error) {
+          dispatchErrors.push(`[${rule.channel}] ${dispatchResult.error}`);
+        }
       }
     }
 
-    const criticalCount = openAlerts.filter((a) => a.severity === "critical").length;
-    const highCount     = openAlerts.filter((a) => a.severity === "high").length;
-
     console.log(
-      `evaluate-alert-rules: org=${organization_id} rules=${rules.length} alerts=${openAlerts.length} matched=${alertsMatched}`
+      `evaluate-alert-rules: org=${organization_id} rules=${rules.length} alerts=${openAlerts.length} matched=${alertsMatched} dispatched=${notificationsDispatched}`
     );
 
     return new Response(
@@ -185,6 +324,8 @@ Deno.serve(async (req) => {
         rules_evaluated: rules.length,
         alerts_matched: alertsMatched,
         notifications_to_send: alertsMatched,
+        notifications_dispatched: notificationsDispatched,
+        dispatch_errors: dispatchErrors.length > 0 ? dispatchErrors : undefined,
         open_alerts_count: openAlerts.length,
         summary: {
           critical: criticalCount,
@@ -193,7 +334,7 @@ Deno.serve(async (req) => {
           low: openAlerts.filter((a) => a.severity === "low").length,
         },
         matched_alerts: matchedAlerts.slice(0, 20),
-        message: `${rules.length} règle(s) évaluée(s) — ${alertsMatched} alerte(s) correspondante(s)`,
+        message: `${rules.length} règle(s) évaluée(s) — ${alertsMatched} alerte(s) correspondante(s) · ${notificationsDispatched} webhook(s) envoyé(s)`,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
