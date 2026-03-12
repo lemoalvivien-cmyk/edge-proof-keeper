@@ -34,6 +34,31 @@ export async function bootstrapOwner(userId: string, email: string): Promise<Boo
     return { orgId: existingProfile.organization_id, isFirstRun: false };
   }
 
+  // ── 1b. Profile exists but org_id is null — check if user already has roles ─
+  // This happens when a user has a stale profile without org but already has
+  // user_roles from a previous bootstrap attempt. In that case we must NOT
+  // attempt to INSERT a new org (policy would reject it), but instead recover
+  // the org from their existing role.
+  if (existingProfile) {
+    const { data: existingRole } = await supabase
+      .from('user_roles')
+      .select('organization_id')
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingRole?.organization_id) {
+      // User already has a role → patch the profile to link to the existing org
+      await supabase
+        .from('profiles')
+        .update({ organization_id: existingRole.organization_id })
+        .eq('id', userId);
+      await ensureRuntimeConfigStub(existingRole.organization_id);
+      return { orgId: existingRole.organization_id, isFirstRun: false };
+    }
+    // No existing role → fall through to create org (bootstrap window is open)
+  }
+
   // ── 2. Create organization ─────────────────────────────────────────────────
   const baseSlug = email
     .split('@')[0]
