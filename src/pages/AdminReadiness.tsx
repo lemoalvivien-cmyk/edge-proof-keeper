@@ -797,10 +797,9 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   // Internal sovereign = Edge Functions opérationnel + données DB réelles + flag
   const internalSovereign = demoDataLoaded === true || (hasRealData && (dbStats?.portfolios ?? 0) > 0);
 
-  // App env mode
-  const isDev = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) === 'dev'
-    || import.meta.env.DEV;
-  const isProd = !isDev;
+  // App env mode — use IS_PROD from api-client.ts (single source of truth)
+  const isDev = !IS_PROD;
+  const isProd = IS_PROD;
 
   // In PROD: external sovereign is MANDATORY — no internal fallback accepted
   // In DEV: internal fallback is acceptable
