@@ -444,6 +444,28 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
     return json;
   };
 
+  // Route portfolio summary through Core API if configured, fallback to Edge Function
+  const callPortfolioSummary = async (body: Record<string, unknown>, tok: string) => {
+    const coreUrl = (import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '') || null;
+    if (coreUrl && import.meta.env.VITE_PUBLIC_APP_ENV !== 'dev' && !import.meta.env.DEV) {
+      try {
+        const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          return { ...json, _routed_to: 'external' };
+        }
+      } catch {
+        // fallback to internal Edge Function
+      }
+    }
+    return callEF('generate-portfolio-summary', body, tok);
+  };
+
   const handleLaunch = async () => {
     if (!orgId || running) return;
     setSteps(STEPS_INIT);
