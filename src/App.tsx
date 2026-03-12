@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { OwnerSetup } from "@/components/auth/OwnerSetup";
@@ -59,14 +59,16 @@ import PlatformHealth from "./pages/PlatformHealth";
 
 const queryClient = new QueryClient();
 
-// Solo mode wrapper: after successful auth, redirect to /admin-readiness for live proof
+// Solo mode wrapper: after successful auth, redirect to /admin-readiness for live proof.
+// Also redirects from '/' when already authenticated — the landing page is irrelevant
+// for the solo admin; /admin-readiness is the operational command center.
 function SoloModeWrapper({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { state, isSoloMode } = useSoloAuth();
 
   const handleSetupComplete = () => {
-    // After reconnection, go directly to admin-readiness so the user can immediately
-    // trigger the live proof pipeline — zero navigation friction.
+    // After fresh login via OwnerSetup, go directly to admin-readiness.
     navigate('/admin-readiness', { replace: true });
   };
 
@@ -84,6 +86,18 @@ function SoloModeWrapper({ children }: { children: React.ReactNode }) {
 
   if (state === 'needs_setup') {
     return <OwnerSetup onComplete={handleSetupComplete} />;
+  }
+
+  // Already authenticated — if landing on '/', send straight to admin-readiness.
+  // This fires on every page load when the session is still valid, ensuring the
+  // admin always lands on the operational dashboard, never on the public landing page.
+  if (state === 'authenticated' && location.pathname === '/') {
+    navigate('/admin-readiness', { replace: true });
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return <>{children}</>;
