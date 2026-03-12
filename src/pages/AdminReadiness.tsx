@@ -15,7 +15,7 @@ import {
   FlaskConical, Users, MessageSquare, Navigation, BarChart3, Loader2,
   ExternalLink, TrendingUp, DollarSign, MousePointerClick, Star,
   CalendarDays, ShoppingCart, Zap, Settings, Server, Brain, Activity, ListTodo,
-  Bell, Info, Link2, FileText, Play, Hash,
+  Bell, Info, Link2, FileText, Play, Hash, Lock,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
