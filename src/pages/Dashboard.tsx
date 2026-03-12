@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Shield, 
   AlertTriangle, 
@@ -7,8 +7,13 @@ import {
   Server,
   ArrowRight,
   ListTodo,
-  FlaskConical,
+  Zap,
+  FileText,
+  BarChart3,
+  Play,
+  Loader2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,8 +22,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useFindingCounts, useTopPriorityFindings } from '@/hooks/useFindings';
 import { useTaskCounts } from '@/hooks/useRemediation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { generatePortfolioSummary } from '@/lib/api-client';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 export default function Dashboard() {
   const navigate = useNavigate();
