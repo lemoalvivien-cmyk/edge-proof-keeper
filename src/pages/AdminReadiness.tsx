@@ -2499,6 +2499,10 @@ export default function AdminReadiness() {
         {/* Bootstrap state — explicit, data-driven */}
         <BootstrapBanner />
 
+        {/* ── PREUVE FINALE LIVE — panneau de capture automatique ─────────── */}
+        {/* Distinct des scénarios seedés · Polling automatique 15s · Honnête */}
+        <LiveProofPanel user={user ?? null} organization={organization ?? null} />
+
         {/* Légende statuts */}
         <Card className="border-muted">
           <CardContent className="py-3">
