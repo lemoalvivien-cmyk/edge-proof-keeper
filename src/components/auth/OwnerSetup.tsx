@@ -6,53 +6,31 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SOLO_STORAGE_KEYS } from '@/config/app';
-import { bootstrapOwner } from '@/lib/bootstrap';
 
+/**
+ * OwnerSetup — authentification uniquement.
+ *
+ * RESPONSABILITÉ UNIQUE : gérer le signup / signin Supabase.
+ * bootstrapOwner() est EXCLUSIVEMENT déclenché par AuthContext.fetchUserData
+ * lorsqu'aucun profil n'existe pour l'utilisateur connecté.
+ *
+ * Ce composant NE doit PAS appeler bootstrapOwner() : cela crée
+ * un double appel (OwnerSetup + AuthContext) qui génère un conflit
+ * RLS sur organizations (l'org est déjà créée, le rôle existe,
+ * la policy "Bootstrap: no-role user" bloque le second INSERT).
+ *
+ * SÉCURITÉ : seul l'email est stocké en localStorage à des fins
+ * d'affichage. Le mot de passe n'est jamais persisté.
+ */
 interface OwnerSetupProps {
   onComplete: () => void;
 }
 
-/**
- * One-time owner setup screen for Solo Mode.
- *
- * SECURITY NOTES:
- * - We do NOT store passwords in localStorage
- * - We only store email for display purposes
- * - Supabase handles session persistence securely
- * - If session expires, user re-authenticates here
- *
- * POST-AUTH:
- * - Calls bootstrapOwner() to ensure org + profile + admin role + runtime config stub
- *   are created, making tenant_resolved: true for public CTAs immediately.
- * - On first run (isFirstRun: true), redirects to /settings/revenue to complete URLs.
- */
 export function OwnerSetup({ onComplete }: OwnerSetupProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  const runBootstrap = async (userId: string, userEmail: string): Promise<boolean> => {
-    try {
-      const result = await bootstrapOwner(userId, userEmail);
-      if (result.isFirstRun) {
-        toast({
-          title: 'Espace de travail créé',
-          description: 'Organisation initialisée. Configurez vos URLs commerciales pour activer les CTAs publics.',
-        });
-      }
-      return result.isFirstRun;
-    } catch (err) {
-      // Non-fatal: user can still access the app
-      console.warn('Bootstrap warning (non-fatal):', err);
-      toast({
-        title: 'Setup partiel',
-        description: 'Authentifié. Allez dans Paramètres → Revenue pour finaliser la configuration.',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,62 +56,51 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
     setIsLoading(true);
 
     try {
-      // Try to sign in first (in case account already exists)
+      // ── 1. Tenter une connexion (compte existant) ──────────────────────────
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (!signInError && signInData.user) {
+        // Connexion réussie — AuthContext prend le relai via onAuthStateChange
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerEmail, email);
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
-        const isFirstRun = await runBootstrap(signInData.user.id, email);
         onComplete();
-        // Redirect to revenue settings on first run so admin can complete commercial URLs
-        if (isFirstRun) {
-          // Small delay to let AuthContext resolve org before navigation
-          setTimeout(() => {
-            window.location.href = '/settings/revenue';
-          }, 500);
-        }
         return;
       }
 
-      // If sign in failed with invalid credentials, try to sign up
+      // ── 2. Compte inexistant → signup ──────────────────────────────────────
       if (signInError?.message.includes('Invalid login credentials')) {
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
+            // bootstrap → /settings/revenue après confirmation du premier run
             emailRedirectTo: `${window.location.origin}/settings/revenue`,
           },
         });
 
-        if (signUpError) {
-          throw signUpError;
-        }
+        if (signUpError) throw signUpError;
 
         if (signUpData.user) {
           localStorage.setItem(SOLO_STORAGE_KEYS.ownerEmail, email);
           localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
-          await runBootstrap(signUpData.user.id, email);
         }
 
         toast({
           title: 'Accès initialisé',
-          description: 'Votre accès a été configuré. Complétez vos URLs commerciales pour activer les CTAs.',
+          description: 'Compte créé. Initialisation de votre espace de travail en cours…',
         });
 
+        // AuthContext va recevoir SIGNED_IN et déclencher fetchUserData → bootstrapOwner
         onComplete();
-        // Always redirect to revenue settings after new sign-up
-        setTimeout(() => {
-          window.location.href = '/settings/revenue';
-        }, 500);
-      } else {
-        throw signInError;
+        return;
       }
+
+      throw signInError;
     } catch (error) {
-      console.error('Owner setup error:', error);
+      console.error('[OwnerSetup] auth error:', error);
       toast({
         title: 'Erreur',
         description: error instanceof Error ? error.message : 'Une erreur est survenue.',
