@@ -2532,6 +2532,29 @@ export default function AdminReadiness() {
         {/* Bootstrap state — explicit, data-driven */}
         <BootstrapBanner />
 
+        {/* ── SESSION EXPIRÉE — bannière de reconnexion si session nulle ──── */}
+        {!authLoading && !user && (
+          <div className="rounded-lg border-2 border-destructive/50 bg-destructive/5 px-5 py-4 flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-start gap-3 min-w-0">
+              <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-destructive">SESSION EXPIRÉE — Pipeline réel bloqué</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Le refresh token est invalide (expiré ou révoqué). Reconnectez-vous pour débloquer le pipeline réel, les queries DB et la preuve live.
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="shrink-0 gap-1.5"
+              onClick={async () => { await signOut(); window.location.reload(); }}
+            >
+              <LogIn className="h-3.5 w-3.5" />Se reconnecter
+            </Button>
+          </div>
+        )}
+
         {/* ── PREUVE FINALE LIVE — panneau de capture automatique ─────────── */}
         {/* Distinct des scénarios seedés · Polling automatique 15s · Honnête */}
         <LiveProofPanel user={user ?? null} organization={organization ?? null} />
