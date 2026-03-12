@@ -658,6 +658,9 @@ export default function AdminReadiness() {
         {/* ── AI Intelligence Layer ────────────────────────────────────────── */}
         <AiIntelligenceSection orgId={organization?.id} refreshKey={refreshKey} />
 
+        {/* ── Continuous Watch ─────────────────────────────────────────────── */}
+        <ContinuousWatchSection orgId={organization?.id} refreshKey={refreshKey} />
+
         {/* ── Revenue Operating Readiness ─────────────────────────────────── */}
         <Card className="border-primary/20">
           <CardHeader className="pb-3">
