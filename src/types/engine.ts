@@ -722,4 +722,6 @@ export interface GeneratePortfolioSummaryResult {
   source_snapshot: PortfolioSummarySourceSnapshot;
   output: ExecutiveBriefResult | TechnicalBriefResult | WeeklyWatchBriefResult;
   period_label: string;
+  /** Routing marker added by api-client: 'external' when routed to Core API */
+  _routed_to?: 'external' | 'internal';
 }
