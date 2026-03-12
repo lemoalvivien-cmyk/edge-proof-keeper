@@ -201,6 +201,7 @@ export async function getHealth(): Promise<unknown> {
 // ─── Core Engine API (Supabase Edge Functions) ────────────────────────────────
 
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeSignalRecord, normalizeSignalRows } from '@/lib/engine-normalizers';
 import type {
   PlatformHealthStatus,
   Signal,
@@ -297,11 +298,7 @@ export async function getSignals(
 
   const { data, error } = await query;
   if (error) throw new Error(`getSignals error: ${error.message}`);
-  // Map signal_refs → references for type compatibility
-  return (data ?? []).map(row => ({
-    ...row,
-    references: (row as Record<string, unknown>).signal_refs ?? [],
-  })) as unknown as Signal[];
+  return normalizeSignalRows((data ?? []) as Record<string, unknown>[]);
 }
 
 export async function getRisks(
@@ -452,10 +449,7 @@ export async function getSignalById(signalId: string): Promise<Signal | null> {
 
   if (error) throw new Error(`getSignalById error: ${error.message}`);
   if (!data) return null;
-  return {
-    ...data,
-    references: (data as Record<string, unknown>).signal_refs ?? [],
-  } as unknown as Signal;
+  return normalizeSignalRecord(data as Record<string, unknown>);
 }
 
 export async function getSignalEntities(
@@ -549,10 +543,7 @@ export async function getRelatedSignals(
     .order('detected_at', { ascending: false });
 
   if (error) throw new Error(`getRelatedSignals signals error: ${error.message}`);
-  return (data ?? []).map(row => ({
-    ...row,
-    references: (row as Record<string, unknown>).signal_refs ?? [],
-  })) as unknown as Signal[];
+  return normalizeSignalRows((data ?? []) as Record<string, unknown>[]);
 }
 
 export async function runEntityCorrelation(
