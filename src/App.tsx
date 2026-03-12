@@ -112,7 +112,7 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/demo" element={<Demo />} />
               
-              {/* Auth route - redirect to dashboard in SOLO_MODE */}
+              {/* Auth route — public in SaaS mode, redirect in solo mode */}
               <Route path="/auth" element={SOLO_MODE ? <Navigate to="/dashboard" replace /> : <Auth />} />
               
               {/* Compatibility redirects for removed authorization module */}
