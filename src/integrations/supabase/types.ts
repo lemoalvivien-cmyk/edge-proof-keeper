@@ -133,6 +133,7 @@ export type Database = {
           demo_data_loaded: boolean
           demo_data_loaded_at: string | null
           enterprise_checkout_url: string | null
+          external_sovereign_confirmed_at: string | null
           id: string
           organization_id: string
           pro_checkout_url: string | null
@@ -150,6 +151,7 @@ export type Database = {
           demo_data_loaded?: boolean
           demo_data_loaded_at?: string | null
           enterprise_checkout_url?: string | null
+          external_sovereign_confirmed_at?: string | null
           id?: string
           organization_id: string
           pro_checkout_url?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           demo_data_loaded?: boolean
           demo_data_loaded_at?: string | null
           enterprise_checkout_url?: string | null
+          external_sovereign_confirmed_at?: string | null
           id?: string
           organization_id?: string
           pro_checkout_url?: string | null
