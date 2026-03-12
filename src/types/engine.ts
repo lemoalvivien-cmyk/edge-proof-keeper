@@ -659,3 +659,67 @@ export function sanitizeSignalText(input: string | null | undefined, maxLen = 50
   if (!input) return '';
   return input.trim().slice(0, maxLen).replace(/[\u0000-\u001F\u007F]/g, '');
 }
+
+// ─── Portfolio Intelligence (generate-portfolio-summary) ──────────────────────
+
+export type PortfolioSummaryType = 'executive_brief' | 'technical_brief' | 'weekly_watch_brief';
+
+export interface ExecutiveBriefResult {
+  headline: string;
+  overall_risk_level: 'low' | 'medium' | 'high' | 'critical';
+  top_risks: string[];
+  business_exposure_summary: string;
+  priority_actions: string[];
+  board_message: string;
+}
+
+export interface TechnicalBriefResult {
+  headline: string;
+  top_risk_clusters: string[];
+  critical_assets: string[];
+  stale_risks_summary: string;
+  priority_remediation_actions: string[];
+  technical_message: string;
+}
+
+export interface WeeklyWatchBriefResult {
+  headline: string;
+  new_alerts_summary: string;
+  top_changes: string[];
+  top_actions_this_week: string[];
+}
+
+export interface PortfolioSummarySourceSnapshot {
+  open_risks: number;
+  critical_risks: number;
+  high_risks: number;
+  avg_risk_score: number;
+  pending_actions: number;
+  overdue_actions: number;
+  open_alerts: number;
+  critical_alerts: number;
+  ai_analyses: number;
+  computed_at: string;
+}
+
+export interface PortfolioSummary {
+  id: string;
+  organization_id: string;
+  summary_type: PortfolioSummaryType;
+  model_name: string | null;
+  source_snapshot: PortfolioSummarySourceSnapshot | Record<string, unknown>;
+  output_json: ExecutiveBriefResult | TechnicalBriefResult | WeeklyWatchBriefResult | Record<string, unknown>;
+  period_label: string | null;
+  created_at: string;
+}
+
+export interface GeneratePortfolioSummaryResult {
+  success: boolean;
+  summary_id: string | null;
+  summary_type: PortfolioSummaryType;
+  model_name: string;
+  ai_used: boolean;
+  source_snapshot: PortfolioSummarySourceSnapshot;
+  output: ExecutiveBriefResult | TechnicalBriefResult | WeeklyWatchBriefResult;
+  period_label: string;
+}
