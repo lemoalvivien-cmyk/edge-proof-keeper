@@ -315,6 +315,12 @@ import type {
   SignalEntityLink,
   CorrelateEntitiesResult,
   EntityGraphSummary,
+  Alert,
+  NotificationRule,
+  PlatformHealthSnapshot,
+  ScheduleSourceSyncResult,
+  StaleRiskCheckResult,
+  EvaluateAlertRulesResult,
 } from '@/types/engine';
 
 async function getSupabaseToken(): Promise<string> {
@@ -610,6 +616,71 @@ export async function getAiAnalysisCount(orgId: string): Promise<number> {
     .eq('organization_id', orgId);
   if (error) return 0;
   return count ?? 0;
+}
+
+// ─── Monitoring & Alerting API ────────────────────────────────────────────────
+
+export async function getAlerts(
+  orgId: string,
+  options?: { status?: string; severity?: string; limit?: number }
+): Promise<Alert[]> {
+  let q = supabase
+    .from('alerts')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('last_detected_at', { ascending: false })
+    .limit(options?.limit ?? 100);
+
+  if (options?.status)   q = q.eq('status', options.status);
+  if (options?.severity) q = q.eq('severity', options.severity);
+
+  const { data, error } = await q;
+  if (error) throw new Error(`getAlerts error: ${error.message}`);
+  return (data ?? []) as unknown as Alert[];
+}
+
+export async function updateAlertStatus(
+  alertId: string,
+  status: 'open' | 'acknowledged' | 'resolved'
+): Promise<void> {
+  const { error } = await supabase
+    .from('alerts')
+    .update({ status })
+    .eq('id', alertId);
+  if (error) throw new Error(`updateAlertStatus error: ${error.message}`);
+}
+
+export async function getNotificationRules(orgId: string): Promise<NotificationRule[]> {
+  const { data, error } = await supabase
+    .from('notification_rules')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(`getNotificationRules error: ${error.message}`);
+  return (data ?? []) as unknown as NotificationRule[];
+}
+
+export async function getHealthSnapshots(orgId: string, limit = 10): Promise<PlatformHealthSnapshot[]> {
+  const { data, error } = await supabase
+    .from('platform_health_snapshots')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`getHealthSnapshots error: ${error.message}`);
+  return (data ?? []) as unknown as PlatformHealthSnapshot[];
+}
+
+export async function runScheduledSourceSync(orgId: string): Promise<ScheduleSourceSyncResult> {
+  return callEdgeFunction<ScheduleSourceSyncResult>('schedule-source-sync', { organization_id: orgId });
+}
+
+export async function runStaleRiskCheck(orgId: string): Promise<StaleRiskCheckResult> {
+  return callEdgeFunction<StaleRiskCheckResult>('stale-risk-check', { organization_id: orgId });
+}
+
+export async function evaluateAlertRules(orgId: string): Promise<EvaluateAlertRulesResult> {
+  return callEdgeFunction<EvaluateAlertRulesResult>('evaluate-alert-rules', { organization_id: orgId });
 }
 
 // ─── Entity Graph API ─────────────────────────────────────────────────────────

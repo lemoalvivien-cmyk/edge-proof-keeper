@@ -22,6 +22,7 @@ import {
   Users,
   DollarSign,
   Database,
+  Activity,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -64,6 +65,7 @@ const auditItems = [
 ];
 
 const adminItems = [
+  { title: 'Santé plateforme', href: '/platform-health', icon: Activity },
   { title: 'Paramètres', href: '/settings', icon: Settings },
   { title: 'Plans & Add-ons', href: '/plans', icon: CreditCard },
   { title: 'Revenue Settings', href: '/settings/revenue', icon: DollarSign },

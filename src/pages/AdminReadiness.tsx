@@ -14,6 +14,7 @@ import {
   FlaskConical, Users, MessageSquare, Navigation, BarChart3, Loader2,
   ExternalLink, TrendingUp, DollarSign, MousePointerClick, Star,
   CalendarDays, ShoppingCart, Zap, Settings, Server, Brain, Activity, ListTodo,
+  Bell,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -657,6 +658,9 @@ export default function AdminReadiness() {
 
         {/* ── AI Intelligence Layer ────────────────────────────────────────── */}
         <AiIntelligenceSection orgId={organization?.id} refreshKey={refreshKey} />
+
+        {/* ── Continuous Watch ─────────────────────────────────────────────── */}
+        <ContinuousWatchSection orgId={organization?.id} refreshKey={refreshKey} />
 
         {/* ── Revenue Operating Readiness ─────────────────────────────────── */}
         <Card className="border-primary/20">

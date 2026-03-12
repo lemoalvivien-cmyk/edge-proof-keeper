@@ -55,6 +55,7 @@ import Sources from "./pages/Sources";
 import Signals from "./pages/Signals";
 import RevenueSettings from "./pages/RevenueSettings";
 import Remediation from "./pages/Remediation";
+import PlatformHealth from "./pages/PlatformHealth";
 
 const queryClient = new QueryClient();
 
@@ -151,6 +152,7 @@ const App = () => (
               <Route path="/sources" element={<ProtectedRoute><Sources /></ProtectedRoute>} />
               <Route path="/signals" element={<ProtectedRoute><Signals /></ProtectedRoute>} />
               <Route path="/api-test" element={<ProtectedRoute><ApiTest /></ProtectedRoute>} />
+              <Route path="/platform-health" element={<ProtectedRoute><PlatformHealth /></ProtectedRoute>} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>
