@@ -12,18 +12,24 @@ export type RiskLevel = 'critical' | 'high' | 'medium' | 'low';
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
 
 export type SourceStatus = 'not_configured' | 'active' | 'error' | 'disabled';
-export type SourceType = 'upload' | 'api' | 'manual' | 'import';
-export type SourceCategory = 'vulnerability' | 'asset' | 'compliance' | 'threat';
+export type SourceType = 'upload' | 'api' | 'manual' | 'import' | 'public_intel' | 'customer_authorized';
+export type SourceCategory = 'vulnerability' | 'asset' | 'compliance' | 'threat' | 'exposure' | 'brand';
 
 export type SyncRunStatus = 'pending' | 'running' | 'completed' | 'failed';
 
-export type SignalStatus = 'new' | 'acknowledged' | 'correlated' | 'closed';
+export type SignalStatus = 'new' | 'open' | 'acknowledged' | 'correlated' | 'ignored' | 'resolved' | 'closed';
 export type SignalType =
   | 'vulnerability'
   | 'misconfiguration'
   | 'exposure'
   | 'threat'
-  | 'compliance';
+  | 'compliance'
+  | 'exposed_asset'
+  | 'cert_transparency'
+  | 'dns_record'
+  | 'cve'
+  | 'brand_impersonation'
+  | 'repo_exposure';
 
 export type RiskStatus = 'open' | 'in_treatment' | 'accepted' | 'closed';
 export type ActionStatus = 'open' | 'in_progress' | 'done' | 'cancelled';
@@ -41,14 +47,16 @@ export interface DataSource {
   id: string;
   organization_id: string;
   name: string;
-  source_type: SourceType;
-  category: SourceCategory;
+  source_type: SourceType | string;
+  category: SourceCategory | string;
   status: SourceStatus;
   config: Record<string, unknown>;
   last_sync_at: string | null;
   confidence_score: number | null;
   created_at: string;
   updated_at: string;
+  // Computed from joins
+  signal_count?: number;
 }
 
 // ─── Source Sync Run ──────────────────────────────────────────────────────────
@@ -73,18 +81,18 @@ export interface Signal {
   id: string;
   organization_id: string;
   source_id: string;
-  asset_id: string | null;
+  asset_id?: string | null;
   signal_type: SignalType | string;
   category: string;
   title: string;
   description: string;
   severity: Severity;
-  confidence_score: number | null;
+  confidence_score?: number | null;
   evidence: Record<string, unknown>;
-  signal_refs: unknown[];
+  references: unknown[];
   detected_at: string;
   status: SignalStatus;
-  dedupe_key: string | null;
+  dedupe_key?: string | null;
   raw_payload: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -217,7 +225,7 @@ export interface SignalInput {
   severity?: Severity | string;
   confidence_score?: number;
   evidence?: Record<string, unknown>;
-  signal_refs?: unknown[];
+  references?: unknown[];
   detected_at?: string;
   dedupe_key?: string;
   raw_payload?: Record<string, unknown>;
@@ -259,4 +267,105 @@ export interface GenerateRemediationPlanResult {
     limitations: string;
     actions: RemediationActionOutput[];
   };
+}
+
+// ─── Source Payload Ingestion ─────────────────────────────────────────────────
+
+export interface SourcePayloadItem {
+  signal_type: string;
+  category: string;
+  title: string;
+  description?: string;
+  severity?: Severity | string;
+  confidence_score?: number;
+  evidence?: Record<string, unknown>;
+  references?: string[];
+  asset_id?: string | null;
+  detected_at?: string;
+  raw_payload?: Record<string, unknown>;
+}
+
+export interface IngestSourcePayloadInput {
+  source_id: string;
+  items: SourcePayloadItem[];
+}
+
+export interface IngestSourcePayloadResult {
+  success: boolean;
+  sync_run_id: string;
+  source_id: string;
+  received: number;
+  inserted: number;
+  skipped_duplicates: number;
+  failed: number;
+  error: string | null;
+}
+
+// ─── Public Intel Sync ────────────────────────────────────────────────────────
+
+export type ProviderStatus =
+  | 'ok'
+  | 'not_configured'
+  | 'unsupported_provider'
+  | 'missing_api_key'
+  | 'error';
+
+export interface SyncPublicIntelResult {
+  success: boolean;
+  source_id: string;
+  provider: string;
+  provider_status: ProviderStatus;
+  sync_run_id: string | null;
+  signals_ingested: number;
+  message: string;
+}
+
+export interface SyncCustomerAuthorizedResult {
+  success: boolean;
+  source_id: string;
+  sync_run_id: string;
+  received: number;
+  inserted: number;
+  skipped_duplicates: number;
+  error: string | null;
+}
+
+// ─── Helper Normalizers ───────────────────────────────────────────────────────
+
+const SEVERITY_MAP: Record<string, Severity> = {
+  critical: 'critical',
+  crit: 'critical',
+  high: 'high',
+  medium: 'medium',
+  med: 'medium',
+  moderate: 'medium',
+  low: 'low',
+  info: 'info',
+  informational: 'info',
+  none: 'info',
+};
+
+export function normalizeSeverity(input: string | null | undefined): Severity {
+  if (!input) return 'info';
+  return SEVERITY_MAP[input.trim().toLowerCase()] ?? 'info';
+}
+
+const SIGNAL_STATUS_MAP: Record<string, SignalStatus> = {
+  new: 'new',
+  open: 'open',
+  acknowledged: 'acknowledged',
+  correlated: 'correlated',
+  ignored: 'ignored',
+  resolved: 'resolved',
+  closed: 'closed',
+};
+
+export function normalizeSignalStatus(input: string | null | undefined): SignalStatus {
+  if (!input) return 'new';
+  return SIGNAL_STATUS_MAP[input.trim().toLowerCase()] ?? 'new';
+}
+
+export function sanitizeSignalText(input: string | null | undefined, maxLen = 500): string {
+  if (!input) return '';
+  return input.trim().slice(0, maxLen).replace(/[\u0000-\u001F\u007F]/g, '');
 }
