@@ -106,18 +106,18 @@ export function HeroSection() {
               <ArrowRight className="w-5 h-5" />
             </Button>
 
-            {/* CTA 2 — Tester avec un fichier */}
+            {/* CTA 2 — Tester avec un fichier → demo (public) */}
             <Button
               variant="outline"
               size="lg"
               className="h-13 px-6 text-base border-border hover:border-primary/50 gap-2 w-full sm:w-auto"
               onClick={() => {
                 trackEvent('cta_tester_fichier', { source_page: '/', cta_origin: 'hero_secondary' });
-                navigate('/tools');
+                navigate('/demo');
               }}
             >
               <Upload className="w-5 h-5" />
-              Tester avec un fichier
+              Voir une démo interactive
             </Button>
 
             {/* CTA 3 — Demander démo commerciale */}
