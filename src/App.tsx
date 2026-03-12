@@ -2,85 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { OwnerSetup } from "@/components/auth/OwnerSetup";
 import { useSoloAuth } from "@/hooks/useSoloAuth";
 import { SOLO_MODE } from "@/config/app";
 import { Loader2 } from "lucide-react";
-import Landing from "./pages/Landing";
-import Pricing from "./pages/Pricing";
-import Auth from "./pages/Auth";
-import Onboarding from "./pages/Onboarding";
-import Dashboard from "./pages/Dashboard";
-import DashboardTechnical from "./pages/DashboardTechnical";
-import Assets from "./pages/Assets";
-import Scans from "./pages/Scans";
-import Documents from "./pages/Documents";
-import Compliance from "./pages/Compliance";
-import Evidence from "./pages/Evidence";
-import Settings from "./pages/Settings";
-import Tools from "./pages/Tools";
-import ToolDetail from "./pages/ToolDetail";
-import Runs from "./pages/Runs";
-import RunDetail from "./pages/RunDetail";
-import Reports from "./pages/Reports";
-import Tasks from "./pages/Tasks";
-import TaskDetail from "./pages/TaskDetail";
-import GoNoGo from "./pages/GoNoGo";
-import Proofs from "./pages/Proofs";
-import Risks from "./pages/Risks";
-import Findings from "./pages/Findings";
-import NotFound from "./pages/NotFound";
-import ApiTest from "./pages/ApiTest";
-import ReportStudio from "./pages/ReportStudio";
-import AdminReadiness from "./pages/AdminReadiness";
-import AdminLeads from "./pages/AdminLeads";
-// Legal pages
-import Terms from "./pages/legal/Terms";
-import Privacy from "./pages/legal/Privacy";
-import AuthorizedUse from "./pages/legal/AuthorizedUse";
-import Disclaimer from "./pages/legal/Disclaimer";
-// Offres pages
-import ImportsHub from "./pages/offres/ImportsHub";
-import DevsecOpsPack from "./pages/offres/DevsecOpsPack";
-import AuditPackCabinets from "./pages/offres/AuditPackCabinets";
-import RemediationPatchBridge from "./pages/offres/RemediationPatchBridge";
-import ContinuousGovernance from "./pages/offres/ContinuousGovernance";
-import EasmOsintSignals from "./pages/offres/EasmOsintSignals";
-import PlansAddons from "./pages/PlansAddons";
-import Demo from "./pages/Demo";
-import Sources from "./pages/Sources";
-import Signals from "./pages/Signals";
-import RevenueSettings from "./pages/RevenueSettings";
-import Remediation from "./pages/Remediation";
-import PlatformHealth from "./pages/PlatformHealth";
-
-const queryClient = new QueryClient();
-
-// Solo mode wrapper that handles auto-session
-function SoloModeWrapper({ children }: { children: React.ReactNode }) {
-  const { state, onSetupComplete, isSoloMode } = useSoloAuth();
-
-  if (!isSoloMode) {
-    return <>{children}</>;
-  }
-
-  if (state === 'loading') {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (state === 'needs_setup') {
-    return <OwnerSetup onComplete={onSetupComplete} />;
-  }
-
-  return <>{children}</>;
-}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
