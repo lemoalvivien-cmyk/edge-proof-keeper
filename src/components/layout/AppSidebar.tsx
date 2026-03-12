@@ -21,6 +21,7 @@ import {
   Gauge,
   Users,
   DollarSign,
+  Database,
 } from 'lucide-react';
 import {
   Sidebar,
