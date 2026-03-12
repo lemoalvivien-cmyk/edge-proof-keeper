@@ -31,29 +31,31 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as strin
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { organization, profile } = useAuth();
   const { data: findingCounts } = useFindingCounts();
   const { data: topFindings = [] } = useTopPriorityFindings(5);
   const { data: taskCounts } = useTaskCounts();
+
+  // Pipeline live proof state
+  const [pipelineRunning, setPipelineRunning] = useState(false);
+  const [pipelineState, setPipelineState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [pipelineMsg, setPipelineMsg] = useState<string | null>(null);
 
   // Fetch compliance stats
   const { data: complianceStats } = useQuery({
     queryKey: ['compliance-stats', organization?.id],
     queryFn: async () => {
       if (!organization?.id) return null;
-      
       const { data: mappings } = await supabase
         .from('control_mappings')
         .select('status')
         .eq('organization_id', organization.id);
-      
       const { count: totalControls } = await supabase
         .from('compliance_controls')
         .select('*', { count: 'exact', head: true });
-      
       const implemented = mappings?.filter(m => m.status === 'implemented').length ?? 0;
       const inProgress = mappings?.filter(m => m.status === 'in_progress').length ?? 0;
-      
       return {
         total: totalControls ?? 0,
         implemented,
@@ -77,6 +79,62 @@ export default function Dashboard() {
     },
     enabled: !!organization?.id,
   });
+
+  // Pipeline proof status (DB state)
+  const { data: pipelineProof, refetch: refetchProof } = useQuery({
+    queryKey: ['dashboard-pipeline-proof', organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return null;
+      const [runsRes, findingsRes, portfolioRes] = await Promise.all([
+        supabase.from('tool_runs').select('id, status', { count: 'exact', head: true }).eq('organization_id', organization.id),
+        supabase.from('findings').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id),
+        supabase.from('portfolio_summaries').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id),
+      ]);
+      return {
+        runs: runsRes.count ?? 0,
+        findings: findingsRes.count ?? 0,
+        summaries: portfolioRes.count ?? 0,
+      };
+    },
+    enabled: !!organization?.id,
+  });
+
+  // Quick E2E pipeline launcher (uses seed path for speed)
+  const handleQuickPipeline = async () => {
+    if (!organization?.id || pipelineRunning) return;
+    setPipelineRunning(true);
+    setPipelineState('running');
+    setPipelineMsg('Injection du scénario [DEMO]…');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Session expirée');
+      const tok = session.access_token;
+
+      // Step 1: seed demo run
+      const seedRes = await fetch(`${SUPABASE_URL}/functions/v1/seed-demo-run`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+        body: JSON.stringify({ organization_id: organization.id }),
+      });
+      const seedJson = await seedRes.json();
+      if (!seedRes.ok || !seedJson.tool_run_id) throw new Error(seedJson?.error ?? `HTTP ${seedRes.status}`);
+      setPipelineMsg(`Run créé (${seedJson.findings_inserted} findings). Génération synthèse…`);
+
+      // Step 2: portfolio summary
+      await generatePortfolioSummary(organization.id, 'executive_brief');
+
+      setPipelineState('done');
+      setPipelineMsg(`✓ ${seedJson.findings_inserted} findings [DEMO] en DB · synthèse executive générée · pipeline prouvé`);
+      refetchProof();
+      qc.invalidateQueries({ queryKey: ['findings'] });
+      qc.invalidateQueries({ queryKey: ['finding-counts'] });
+    } catch (err) {
+      setPipelineState('error');
+      setPipelineMsg(err instanceof Error ? err.message : 'Erreur');
+    } finally {
+      setPipelineRunning(false);
+    }
+  };
 
   const criticalHighCount = (findingCounts?.critical ?? 0) + (findingCounts?.high ?? 0);
   const riskScore = Math.max(0, 100 - (criticalHighCount * 5));
