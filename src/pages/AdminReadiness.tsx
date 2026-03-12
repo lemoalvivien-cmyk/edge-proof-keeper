@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPlatformHealth } from '@/lib/api-client';
 import { useRuntimeConfig } from '@/hooks/useRuntimeConfig';
+import { BootstrapBanner } from '@/components/ui/BootstrapBanner';
 import {
   CheckCircle2, XCircle, AlertTriangle, RefreshCw, Shield, Database, Cpu,
   FlaskConical, Users, MessageSquare, Navigation, BarChart3, Loader2,
