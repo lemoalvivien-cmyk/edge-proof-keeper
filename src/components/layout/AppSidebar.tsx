@@ -48,6 +48,7 @@ const mainNavItems = [
 const operationsItems = [
   { title: 'Actifs', href: '/assets', icon: Server },
   { title: 'Sources', href: '/sources', icon: Database },
+  { title: 'Signals', href: '/signals', icon: AlertTriangle },
   { title: 'Documents', href: '/documents', icon: FileText },
   { title: 'Outils', href: '/tools', icon: Wrench },
   { title: 'Imports', href: '/runs', icon: Play },

@@ -53,5 +53,6 @@ verify_jwt = false
 [functions.sync-public-intel-source]
 verify_jwt = false
 
-[functions.sync-customer-authorized-source]
+# ─── Entity Graph Functions ─────────────────────────────────────────────────
+[functions.correlate-entities]
 verify_jwt = false
