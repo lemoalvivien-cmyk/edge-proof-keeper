@@ -34,6 +34,9 @@ verify_jwt = false
 [functions.correlate-risks]
 verify_jwt = false
 
+[functions.build-remediation-queue]
+verify_jwt = false
+
 [functions.analyze-signal-with-gemini]
 verify_jwt = false
 
