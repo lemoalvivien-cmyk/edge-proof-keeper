@@ -253,19 +253,18 @@ const Pricing = () => {
                       {!cta.isLoading && (
                         <div className="p-3 rounded-xl bg-muted/20 border border-border text-center space-y-1">
                           {hasCheckout && (
-                            <p className="text-xs text-success">✓ Paiement direct activé (Stripe)</p>
+                            <p className="text-xs text-success">✓ Paiement direct activé — mode checkout</p>
                           )}
                           {!hasCheckout && hasBooking && (
-                            <p className="text-xs text-primary">📅 Prise de rendez-vous activée</p>
+                            <p className="text-xs text-primary">📅 Prise de rendez-vous — mode booking</p>
                           )}
                           {!hasCheckout && !hasBooking && (
                             <p className="text-xs text-muted-foreground">
-                              Formulaire de demande (aucun lien commercial configuré)
+                              Formulaire de demande — mode lead_capture
                             </p>
                           )}
-                          <p className="text-xs text-muted-foreground/60">
-                            Config : {cta.configSource}
-                            {cta.tenantResolved ? ' · tenant résolu' : ' · fallback env'}
+                          <p className="text-xs text-muted-foreground/60 font-mono">
+                            source:{cta.configSource} · tenant:{cta.tenantResolved ? 'ok' : 'none'} · cta:{cta.demoCta} · phase:{cta.bootstrapPhase}
                           </p>
                         </div>
                       )}
