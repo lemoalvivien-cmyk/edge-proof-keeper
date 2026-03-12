@@ -738,7 +738,27 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   // DB counters — prouve que le moteur interne tourne réellement
   const { data: dbStats } = useQuery({
     queryKey: ['sovereign-db-stats', orgId],
-...
+    queryFn: async () => {
+      if (!orgId) return null;
+      const [risksRes, alertsRes, portfolioRes, snapshotRes] = await Promise.all([
+        supabase.from('risk_register').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+        supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+        supabase.from('portfolio_summaries').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+        supabase.from('platform_health_snapshots').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+      ]);
+      return {
+        risks:      risksRes.count ?? 0,
+        alerts:     alertsRes.count ?? 0,
+        portfolios: portfolioRes.count ?? 0,
+        snapshots:  snapshotRes.count ?? 0,
+      };
+    },
+    enabled: !!orgId,
+    staleTime: 30_000,
+  });
+
+  const hasRealData = (dbStats?.risks ?? 0) > 0 || (dbStats?.portfolios ?? 0) > 0;
+
   const coreConfigured    = !!coreApiUrl;
   const aiConfigured      = !!aiGatewayUrl;
   const lovableGateway    = !aiGatewayUrl || aiGatewayUrl.includes('lovable.dev');
