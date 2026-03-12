@@ -704,8 +704,9 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
   };
 
   // Vérification déterministe : nuclei doit exister en tools_catalog
-  const { data: nucleiTool, isLoading: nucleiLoading } = useQuery({
-    queryKey: ['tools-catalog-nuclei-check'],
+  // tools_catalog est accessible à tout utilisateur authentifié (RLS: auth.uid() IS NOT NULL)
+  const { data: nucleiTool, isLoading: nucleiLoading, error: nucleiError } = useQuery({
+    queryKey: ['tools-catalog-nuclei-check', !!orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tools_catalog')
@@ -716,11 +717,14 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
       if (error) throw error;
       return data;
     },
+    // Ne lancer la query que si l'org est connue (session active)
+    enabled: !!orgId,
+    retry: 1,
   });
 
   // Nombre total d'outils actifs pour la surface de preuve
   const { data: catalogCount } = useQuery({
-    queryKey: ['tools-catalog-count'],
+    queryKey: ['tools-catalog-count', !!orgId],
     queryFn: async () => {
       const { count } = await supabase
         .from('tools_catalog')
@@ -728,6 +732,7 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
         .eq('status', 'active');
       return count ?? 0;
     },
+    enabled: !!orgId,
   });
 
   const handleRunRealPipeline = async () => {
@@ -873,9 +878,13 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
   const doneCount = steps.filter(s => s.state === 'done').length;
   const allDone = doneCount === steps.length;
 
-  // Prérequis bloquant : nuclei doit être présent avant d'activer le bouton
-  const nucleiReady = !nucleiLoading && nucleiTool !== null && nucleiTool !== undefined;
-  const pipelineBlocked = !nucleiReady;
+  // Prérequis bloquant : session requise, puis nuclei doit être dans tools_catalog
+  // nucleiError = auth error (session expirée) ou vraie absence
+  const sessionMissing = !orgId;
+  const nucleiQueryFailed = !!nucleiError;  // auth error ou réseau
+  const nucleiAbsent = !nucleiLoading && !nucleiQueryFailed && nucleiTool === null;
+  const nucleiReady = !nucleiLoading && !nucleiQueryFailed && nucleiTool !== null && nucleiTool !== undefined;
+  const pipelineBlocked = sessionMissing || nucleiQueryFailed || nucleiAbsent;
 
   return (
     <Card className="border-2 border-success/40 bg-success/[0.02]">
@@ -906,20 +915,31 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
 
         {/* ── Prérequis catalogue — état visible et honnête ── */}
         <div className={`mx-6 my-3 rounded-lg border px-4 py-2.5 ${
+          sessionMissing ? 'border-destructive/40 bg-destructive/5' :
           nucleiLoading ? 'border-muted/40 bg-muted/10' :
           nucleiReady ? 'border-success/30 bg-success/5' :
+          nucleiQueryFailed ? 'border-warning/40 bg-warning/5' :
           'border-destructive/40 bg-destructive/5'
         }`}>
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <p className={`text-xs font-medium flex items-center gap-1.5 ${
+              sessionMissing ? 'text-destructive' :
               nucleiLoading ? 'text-muted-foreground' :
-              nucleiReady ? 'text-success/80' : 'text-destructive'
+              nucleiReady ? 'text-success/80' :
+              nucleiQueryFailed ? 'text-warning' :
+              'text-destructive'
             }`}>
-              {nucleiLoading
+              {sessionMissing
+                ? <><XCircle className="h-3.5 w-3.5 shrink-0" />SESSION EXPIRÉE — Reconnectez-vous pour activer le pipeline</>
+                : nucleiLoading
                 ? <><Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />Vérification tools_catalog…</>
                 : nucleiReady
                 ? <><CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                     tools_catalog ✓ — nuclei (id: {nucleiTool?.id?.slice(0, 8)}…) · {catalogCount ?? '?'} outils actifs · Outil pipeline : <span className="font-mono">nuclei</span> [seed idempotent garanti]
+                  </>
+                : nucleiQueryFailed
+                ? <><AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    ERREUR QUERY — Session peut-être expirée · Reconnectez-vous et rechargez
                   </>
                 : <><XCircle className="h-3.5 w-3.5 shrink-0" />
                     PRÉREQUIS MANQUANT — nuclei absent de tools_catalog · create-tool-run retournera 404 · Relancez la migration seed
@@ -977,12 +997,21 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
             onClick={handleRunRealPipeline}
             disabled={!orgId || running || pipelineBlocked}
             className="gap-1.5"
-            title={pipelineBlocked ? 'nuclei manquant dans tools_catalog — pipeline bloqué' : undefined}
+            title={
+              sessionMissing ? 'Session expirée — reconnectez-vous'
+              : nucleiQueryFailed ? 'Erreur query tools_catalog — reconnectez-vous'
+              : nucleiAbsent ? 'nuclei manquant dans tools_catalog — migration seed requise'
+              : undefined
+            }
           >
             {running
               ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
-              : pipelineBlocked
-              ? <><XCircle className="h-4 w-4" />Catalogue manquant — pipeline bloqué</>
+              : sessionMissing
+              ? <><XCircle className="h-4 w-4" />Session expirée — reconnexion requise</>
+              : nucleiQueryFailed
+              ? <><AlertTriangle className="h-4 w-4" />Erreur session — rechargez</>
+              : nucleiAbsent
+              ? <><XCircle className="h-4 w-4" />nuclei absent — seed requis</>
               : <><Zap className="h-4 w-4" />Lancer le pipeline réel</>}
           </Button>
           {overallState !== 'idle' && !running && (
@@ -1000,7 +1029,11 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
 
         <div className="px-6 py-3 border-t border-border bg-muted/10">
           <p className="text-[10px] text-muted-foreground font-mono">
-            {pipelineBlocked
+            {sessionMissing
+              ? '✗ BLOQUÉ — Session absente ou expirée · Reconnectez-vous via le formulaire Owner Setup (ou rechargez la page)'
+              : nucleiQueryFailed
+              ? '✗ ERREUR QUERY — tools_catalog inaccessible · Session peut-être expirée · Reconnectez-vous et rechargez'
+              : nucleiAbsent
               ? '✗ BLOQUÉ — nuclei absent de tools_catalog · Ajoutez-le via la migration seed ou manuellement dans /tools'
               : allDone
               ? '✓ PIPELINE RÉEL PROUVÉ — upload-artifact + normalize-tool-run traversés · findings issus du pipeline, pas d\'injection directe'
@@ -2143,7 +2176,7 @@ function RlsSecurityPanel({ orgId }: { orgId?: string }) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function AdminReadiness() {
-  const { organization, user } = useAuth();
+  const { organization, user, isLoading: authLoading, signOut } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
 
   const runtime = useRuntimeConfig();
@@ -2498,6 +2531,29 @@ export default function AdminReadiness() {
 
         {/* Bootstrap state — explicit, data-driven */}
         <BootstrapBanner />
+
+        {/* ── SESSION EXPIRÉE — bannière de reconnexion si session nulle ──── */}
+        {!authLoading && !user && (
+          <div className="rounded-lg border-2 border-destructive/50 bg-destructive/5 px-5 py-4 flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-start gap-3 min-w-0">
+              <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-destructive">SESSION EXPIRÉE — Pipeline réel bloqué</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Le refresh token est invalide (expiré ou révoqué). Reconnectez-vous pour débloquer le pipeline réel, les queries DB et la preuve live.
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="shrink-0 gap-1.5"
+              onClick={async () => { await signOut(); window.location.reload(); }}
+            >
+              <LogIn className="h-3.5 w-3.5" />Se reconnecter
+            </Button>
+          </div>
+        )}
 
         {/* ── PREUVE FINALE LIVE — panneau de capture automatique ─────────── */}
         {/* Distinct des scénarios seedés · Polling automatique 15s · Honnête */}

@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // SIGNED_IN: new login or signup — bootstrap if needed
         setTimeout(() => fetchUserData(currentSession.user), 0);
       } else {
-        // SIGNED_OUT
+        // SIGNED_OUT or session invalidated
         setProfile(null);
         setOrganization(null);
         setRoles([]);
@@ -132,9 +132,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Authoritative initial session check — runs once
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    // If the refresh token is invalid (expired/revoked), sign out cleanly
+    // so the UI shows the login form instead of a broken state.
+    supabase.auth.getSession().then(({ data: { session: currentSession }, error }) => {
       if (initialHandled) return;
       initialHandled = true;
+
+      // Stale or invalid refresh token — purge session and force re-login
+      if (error?.message?.includes('Refresh Token Not Found') ||
+          error?.message?.includes('refresh_token_not_found') ||
+          error?.code === 'refresh_token_not_found') {
+        console.warn('[AuthContext] Stale refresh token — signing out cleanly');
+        supabase.auth.signOut().finally(() => {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setOrganization(null);
+          setRoles([]);
+          setIsLoading(false);
+        });
+        return;
+      }
+
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       if (currentSession?.user) {
