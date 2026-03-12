@@ -8,10 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRisks, useRiskCounts } from "@/hooks/useRisks";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { correlateRisks } from "@/lib/api-client";
+import { correlateRisks, analyzeRiskIntelligence, getRiskAiAnalysis } from "@/lib/api-client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { Risk } from "@/types/engine";
+import type { RiskIntelligenceResult } from "@/types/engine";
 import {
   AlertTriangle,
   ShieldAlert,
@@ -23,6 +26,12 @@ import {
   ChevronRight,
   Activity,
   TrendingUp,
+  Brain,
+  Loader2,
+  CheckCircle2,
+  Lightbulb,
+  Target,
+  BarChart2,
 } from "lucide-react";
 
 const LEVEL_CONFIG: Record<string, { label: string; variant: "destructive" | "default" | "secondary" | "outline" }> = {
@@ -39,9 +48,175 @@ const STATUS_CONFIG: Record<string, string> = {
   closed:       "Clôturé",
 };
 
-function RiskRow({ risk, expanded, onToggle }: { risk: Risk; expanded: boolean; onToggle: () => void }) {
+const CONFIDENCE_CONFIG: Record<string, { label: string; className: string }> = {
+  high:   { label: "Confiance haute",   className: "bg-success/10 text-success border-success/30" },
+  medium: { label: "Confiance moyenne", className: "bg-warning/10 text-warning border-warning/30" },
+  low:    { label: "Confiance faible",  className: "bg-muted/50 text-muted-foreground border-muted" },
+};
+
+// ── AI Intelligence Panel ─────────────────────────────────────────────────────
+
+function AiIntelligencePanel({
+  riskId,
+  orgId,
+}: {
+  riskId: string;
+  orgId: string;
+}) {
+  const [analyzing, setAnalyzing] = useState(false);
+  const qc = useQueryClient();
+
+  const { data: analysis, isLoading } = useQuery({
+    queryKey: ["risk-ai-analysis", riskId, orgId],
+    queryFn: () => getRiskAiAnalysis(orgId, riskId, "technical_analysis"),
+    enabled: !!riskId && !!orgId,
+  });
+
+  const intel = analysis?.output_json as RiskIntelligenceResult | undefined;
+
+  const handleAnalyze = async () => {
+    setAnalyzing(true);
+    try {
+      const result = await analyzeRiskIntelligence(orgId, riskId);
+      if (!result.success && result.ai_available === false) {
+        toast({
+          title: "IA non configurée",
+          description: "LOVABLE_API_KEY absent — l'intelligence IA n'est pas disponible.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!result.success) {
+        toast({ title: "Erreur IA", description: result.error ?? "Erreur inconnue", variant: "destructive" });
+        return;
+      }
+      toast({ title: "Analyse IA terminée", description: result.cached ? "Résultat depuis le cache." : "Nouvelle analyse générée." });
+      qc.invalidateQueries({ queryKey: ["risk-ai-analysis", riskId] });
+    } catch (e: unknown) {
+      toast({ title: "Erreur", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="pt-3 space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    );
+  }
+
+  if (!intel) {
+    return (
+      <div className="pt-3">
+        <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Brain className="h-4 w-4 text-primary shrink-0" />
+            <span>Aucune analyse IA disponible pour ce risque.</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleAnalyze}
+            disabled={analyzing}
+            className="shrink-0"
+          >
+            {analyzing ? (
+              <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Analyse…</>
+            ) : (
+              <><Brain className="h-3.5 w-3.5 mr-1.5" />Enrichir avec IA</>
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const conf = CONFIDENCE_CONFIG[intel.confidence_assessment] ?? CONFIDENCE_CONFIG.low;
+
+  return (
+    <div className="pt-3 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Brain className="h-4 w-4 text-primary" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-primary">Intelligence IA</span>
+          <Badge variant="outline" className={`text-[10px] ${conf.className}`}>{conf.label}</Badge>
+        </div>
+        <Button size="sm" variant="ghost" onClick={handleAnalyze} disabled={analyzing} className="h-7 text-xs">
+          {analyzing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+        </Button>
+      </div>
+
+      {/* Executive summary */}
+      <div className="rounded-md border border-border bg-card p-3">
+        <p className="text-xs font-semibold uppercase text-muted-foreground mb-1 flex items-center gap-1.5">
+          <Target className="h-3.5 w-3.5" />Résumé exécutif
+        </p>
+        <p className="text-sm leading-relaxed">{intel.executive_summary}</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-3">
+        {/* Business impact */}
+        <div className="rounded-md border border-border bg-card p-3">
+          <p className="text-xs font-semibold uppercase text-muted-foreground mb-1 flex items-center gap-1.5">
+            <BarChart2 className="h-3.5 w-3.5" />Impact Business IA
+          </p>
+          <p className="text-sm text-muted-foreground">{intel.business_impact}</p>
+        </div>
+        {/* Technical impact */}
+        <div className="rounded-md border border-border bg-card p-3">
+          <p className="text-xs font-semibold uppercase text-muted-foreground mb-1 flex items-center gap-1.5">
+            <ShieldAlert className="h-3.5 w-3.5" />Impact Technique IA
+          </p>
+          <p className="text-sm text-muted-foreground">{intel.technical_impact}</p>
+        </div>
+      </div>
+
+      {/* Priority rationale */}
+      <div className="rounded-md border border-border bg-card p-3">
+        <p className="text-xs font-semibold uppercase text-muted-foreground mb-1 flex items-center gap-1.5">
+          <AlertCircle className="h-3.5 w-3.5" />Justification de priorité
+        </p>
+        <p className="text-sm text-muted-foreground">{intel.priority_rationale}</p>
+      </div>
+
+      {/* Next steps */}
+      {intel.recommended_next_steps?.length > 0 && (
+        <div className="rounded-md border border-border bg-card p-3">
+          <p className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Lightbulb className="h-3.5 w-3.5" />Actions recommandées
+          </p>
+          <ul className="space-y-1.5">
+            {intel.recommended_next_steps.map((step, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                {step}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Risk Row ─────────────────────────────────────────────────────────────────
+
+function RiskRow({
+  risk,
+  expanded,
+  onToggle,
+  orgId,
+}: {
+  risk: Risk;
+  expanded: boolean;
+  onToggle: () => void;
+  orgId: string;
+}) {
   const lvl = LEVEL_CONFIG[risk.risk_level] ?? LEVEL_CONFIG.low;
-  const isOverdue = risk.due_date && new Date(risk.due_date) < new Date() && risk.status !== 'closed';
+  const isOverdue = risk.due_date && new Date(risk.due_date) < new Date() && risk.status !== "closed";
 
   return (
     <>
@@ -95,12 +270,16 @@ function RiskRow({ risk, expanded, onToggle }: { risk: Risk; expanded: boolean; 
                 </p>
               </div>
             </div>
+            {/* AI Intelligence Panel */}
+            <AiIntelligencePanel riskId={risk.id} orgId={orgId} />
           </TableCell>
         </TableRow>
       )}
     </>
   );
 }
+
+// ── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Risks() {
   const { organization } = useAuth();
@@ -291,7 +470,9 @@ export default function Risks() {
             <CardTitle className="text-base">
               {risksLoading ? "Chargement…" : `${filtered.length} risque${filtered.length !== 1 ? "s" : ""}`}
             </CardTitle>
-            <CardDescription>Cliquez sur une ligne pour afficher le détail</CardDescription>
+            <CardDescription>
+              Cliquez sur une ligne pour afficher le détail et l'intelligence IA
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {risksLoading ? (
@@ -326,6 +507,7 @@ export default function Risks() {
                     <RiskRow
                       key={risk.id}
                       risk={risk}
+                      orgId={organization?.id ?? ""}
                       expanded={expandedId === risk.id}
                       onToggle={() => setExpandedId(expandedId === risk.id ? null : risk.id)}
                     />
