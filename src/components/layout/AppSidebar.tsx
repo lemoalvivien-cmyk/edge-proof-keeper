@@ -22,6 +22,7 @@ import {
   Users,
   DollarSign,
   Database,
+  Activity,
 } from 'lucide-react';
 import {
   Sidebar,
