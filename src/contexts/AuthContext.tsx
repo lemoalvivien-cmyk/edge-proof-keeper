@@ -154,10 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
 
-      if (data.user) {
-        await bootstrapOwner(data.user.id, email);
-        await fetchUserData(data.user);
-      }
+      // NE PAS appeler bootstrapOwner ici.
+      // onAuthStateChange(SIGNED_IN) → fetchUserData → bootstrapOwner est la seule voie.
+      // Appeler bootstrapOwner ici + fetchUserData crée un double appel concurrent.
 
       return { error: null };
     } catch (error) {
