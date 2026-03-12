@@ -1,31 +1,41 @@
 # SOURCE OF TRUTH — Cyber Serenity / Sentinel Edge
 
 **Source de vérité actuelle : workspace Lovable**
-**Date de génération : 2026-03-12**
-**Objectif : réconciliation technique avant poursuite des développements**
+**Date de génération : 2026-03-12T12:00:00Z**
+**Objectif : réconciliation technique avant synchro GitHub**
 
 ---
 
-## Contexte
+## Règle fondamentale
 
-Ce document établit que le workspace Lovable est la référence absolue pour toute décision technique à partir de cette date.
+Le workspace Lovable est la référence absolue pour toute décision technique à partir de cette date.
+
+**Aucun développement futur ne doit s'appuyer sur un état non prouvé dans ces fichiers.**
 
 Tout ce qui n'est pas visible dans le code du workspace est considéré comme ABSENT,
 même si annoncé dans un compte-rendu précédent.
 
-Les fichiers `docs/REPO_RECONCILIATION_REPORT.md` et `docs/REPO_RECONCILIATION_GAPS.md`
-constituent le rapport d'audit complet produit lors de cette session.
+---
+
+## Fichiers de vérité produits dans cette session
+
+| Fichier | Contenu |
+|---------|---------|
+| `docs/SOURCE_OF_TRUTH.md` | Ce fichier — règles de réconciliation |
+| `docs/WORKSPACE_STATE_REPORT.md` | Inventaire brut pages / routes / sidebar / API / tables / edge functions |
+| `docs/WORKSPACE_GAPS.md` | Écarts, partiels, blockers critiques |
+| `docs/WORKSPACE_TO_GITHUB_SYNC.md` | Liste précise des fichiers à synchroniser vers GitHub |
 
 ---
 
 ## Périmètre audité
 
-- Fichiers source React/TypeScript (`src/`)
-- Migrations Supabase (`supabase/migrations/`)
-- Edge Functions (`supabase/functions/`)
-- Configuration (`supabase/config.toml`, `.env`)
-- Routes (`src/App.tsx`)
-- Sidebar (`src/components/layout/AppSidebar.tsx`)
-- Types moteur (`src/types/engine.ts`)
+- Routes et pages (`src/App.tsx`, `src/pages/`)
+- Navigation (`src/components/layout/AppSidebar.tsx`)
+- API client (`src/lib/api-client.ts`)
+- Revenue logic (`src/lib/revenue-links.ts`, composants landing)
 - Normalizers (`src/lib/engine-normalizers.ts`)
-- Client API (`src/lib/api-client.ts`)
+- Types moteur (`src/types/engine.ts`)
+- Edge Functions (`supabase/functions/`)
+- Schema DB (`src/integrations/supabase/types.ts` + contexte tables fourni)
+- Variables d'environnement (`.env` + usage dans le code)
