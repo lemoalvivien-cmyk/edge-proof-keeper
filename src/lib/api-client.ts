@@ -769,4 +769,9 @@ export const apiClient = {
   getRiskById,
   getRemediationActions,
   buildRemediationQueue,
+  // AI Intelligence Layer
+  analyzeRiskIntelligence,
+  enhanceRemediationActions,
+  getRiskAiAnalysis,
+  getAiAnalysisCount,
 };
