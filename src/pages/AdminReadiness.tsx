@@ -214,14 +214,14 @@ function AiIntelligenceSection({ orgId, refreshKey }: { orgId?: string; refreshK
     {
       label: 'Analyses IA — risques (DB)',
       icon: <Brain className="h-4 w-4" />,
-      status: aiStats === undefined ? 'unknown' as Status : (aiStats.riskAnalyses > 0 ? 'ok' : 'warn') as Status,
-      detail: aiStats !== null ? `${aiStats.riskAnalyses} analyse(s) de risque en ai_analyses` : '…',
+      status: (aiStats == null ? 'unknown' : (aiStats.riskAnalyses > 0 ? 'ok' : 'warn')) as Status,
+      detail: aiStats != null ? `${aiStats.riskAnalyses} analyse(s) de risque en ai_analyses` : '…',
     },
     {
       label: 'Analyses IA — remédiation (DB)',
       icon: <Zap className="h-4 w-4" />,
-      status: aiStats === undefined ? 'unknown' as Status : (aiStats.remediationAnalyses > 0 ? 'ok' : 'warn') as Status,
-      detail: aiStats !== null ? `${aiStats.remediationAnalyses} plan(s) de remédiation en ai_analyses` : '…',
+      status: (aiStats == null ? 'unknown' : (aiStats.remediationAnalyses > 0 ? 'ok' : 'warn')) as Status,
+      detail: aiStats != null ? `${aiStats.remediationAnalyses} plan(s) de remédiation en ai_analyses` : '…',
     },
     {
       label: 'Table ai_analyses (DB)',
