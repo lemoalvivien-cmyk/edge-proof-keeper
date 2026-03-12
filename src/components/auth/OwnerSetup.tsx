@@ -24,6 +24,7 @@ interface OwnerSetupProps {
  * POST-AUTH:
  * - Calls bootstrapOwner() to ensure org + profile + admin role + runtime config stub
  *   are created, making tenant_resolved: true for public CTAs immediately.
+ * - On first run (isFirstRun: true), redirects to /settings/revenue to complete URLs.
  */
 export function OwnerSetup({ onComplete }: OwnerSetupProps) {
   const [email, setEmail] = useState('');
@@ -31,23 +32,25 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const runBootstrap = async (userId: string, userEmail: string) => {
+  const runBootstrap = async (userId: string, userEmail: string): Promise<boolean> => {
     try {
       const result = await bootstrapOwner(userId, userEmail);
       if (result.isFirstRun) {
         toast({
           title: 'Espace de travail créé',
-          description: 'Organisation initialisée. Configurez vos URLs dans Revenue Settings.',
+          description: 'Organisation initialisée. Configurez vos URLs commerciales pour activer les CTAs publics.',
         });
       }
+      return result.isFirstRun;
     } catch (err) {
-      // Non-fatal: user can still access the app, but tenant_resolved may be false until fixed
+      // Non-fatal: user can still access the app
       console.warn('Bootstrap warning (non-fatal):', err);
       toast({
         title: 'Setup partiel',
         description: 'Authentifié. Allez dans Paramètres → Revenue pour finaliser la configuration.',
         variant: 'destructive',
       });
+      return false;
     }
   };
 
@@ -84,9 +87,15 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
       if (!signInError && signInData.user) {
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerEmail, email);
         localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
-        // Ensure org + runtime config exist
-        await runBootstrap(signInData.user.id, email);
+        const isFirstRun = await runBootstrap(signInData.user.id, email);
         onComplete();
+        // Redirect to revenue settings on first run so admin can complete commercial URLs
+        if (isFirstRun) {
+          // Small delay to let AuthContext resolve org before navigation
+          setTimeout(() => {
+            window.location.href = '/settings/revenue';
+          }, 500);
+        }
         return;
       }
 
@@ -96,7 +105,7 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${window.location.origin}/settings/revenue`,
           },
         });
 
@@ -107,16 +116,19 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
         if (signUpData.user) {
           localStorage.setItem(SOLO_STORAGE_KEYS.ownerEmail, email);
           localStorage.setItem(SOLO_STORAGE_KEYS.ownerSetupComplete, 'true');
-          // Bootstrap: create org, profile, admin role, runtime config stub
           await runBootstrap(signUpData.user.id, email);
         }
 
         toast({
           title: 'Accès initialisé',
-          description: 'Votre accès a été configuré avec succès.',
+          description: 'Votre accès a été configuré. Complétez vos URLs commerciales pour activer les CTAs.',
         });
 
         onComplete();
+        // Always redirect to revenue settings after new sign-up
+        setTimeout(() => {
+          window.location.href = '/settings/revenue';
+        }, 500);
       } else {
         throw signInError;
       }
