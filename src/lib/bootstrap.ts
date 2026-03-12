@@ -11,6 +11,10 @@
  *   - An app_runtime_config stub exists for that org (so get-public-config → tenant_resolved: true)
  *
  * Returns { orgId, isFirstRun } or throws on hard failure.
+ *
+ * ── Idempotency strategy ──────────────────────────────────────────────────────
+ * Every INSERT is preceded by a SELECT. If the target row already exists we
+ * skip the INSERT, preventing RLS violations from concurrent bootstrap calls.
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -29,17 +33,13 @@ export async function bootstrapOwner(userId: string, email: string): Promise<Boo
     .maybeSingle();
 
   if (existingProfile?.organization_id) {
-    // Already bootstrapped — verify app_runtime_config exists, create stub if not
+    // Already fully bootstrapped
     await ensureRuntimeConfigStub(existingProfile.organization_id);
     return { orgId: existingProfile.organization_id, isFirstRun: false };
   }
 
-  // ── 1b. Always check existing roles before attempting org INSERT ───────────
-  // The hardened RLS policy (NOT EXISTS user_roles) blocks INSERT if the user
-  // already has any role. This covers two recovery scenarios:
-  //   a) Profile exists without org_id (stale state)
-  //   b) No profile at all but user has roles (race condition / partial bootstrap)
-  // In both cases: recover the org from user_roles instead of creating a new one.
+  // ── 1b. Check if user already has a role (partial bootstrap recovery) ──────
+  // This covers: profile exists without org_id OR no profile but role exists.
   const { data: existingRole } = await supabase
     .from('user_roles')
     .select('organization_id')
@@ -48,7 +48,8 @@ export async function bootstrapOwner(userId: string, email: string): Promise<Boo
     .maybeSingle();
 
   if (existingRole?.organization_id) {
-    // User already has a role → recover org, patch profile, ensure config stub
+    // Recover: patch profile, ensure config stub
+    console.log('[bootstrap] Recovering from partial bootstrap via existing role');
     await supabase
       .from('profiles')
       .upsert({ id: userId, email, organization_id: existingRole.organization_id }, { onConflict: 'id' });
@@ -57,9 +58,9 @@ export async function bootstrapOwner(userId: string, email: string): Promise<Boo
   }
 
   // ── 2. Create organization ─────────────────────────────────────────────────
-  // At this point: user has 0 roles → RLS policy allows the INSERT (bootstrap window is open)
-  const baseSlug = email
-    .split('@')[0]
+  // At this point: user has 0 roles → RLS "Bootstrap: no-role user can create
+  // first organization" allows the INSERT.
+  const baseSlug = (email.split('@')[0] ?? 'owner')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '-')
     .replace(/-+/g, '-')
@@ -73,19 +74,31 @@ export async function bootstrapOwner(userId: string, email: string): Promise<Boo
     .single();
 
   if (orgError || !org) {
+    // Last-resort: maybe org was created by a concurrent call — try role again
+    const { data: retryRole } = await supabase
+      .from('user_roles')
+      .select('organization_id')
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle();
+    if (retryRole?.organization_id) {
+      console.log('[bootstrap] Concurrent bootstrap detected, recovering via role');
+      await supabase
+        .from('profiles')
+        .upsert({ id: userId, email, organization_id: retryRole.organization_id }, { onConflict: 'id' });
+      await ensureRuntimeConfigStub(retryRole.organization_id);
+      return { orgId: retryRole.organization_id, isFirstRun: false };
+    }
     throw new Error(`Impossible de créer l'organisation: ${orgError?.message}`);
   }
 
   const orgId = org.id;
+  console.log('[bootstrap] Organization created:', orgId);
 
-  // ── 3. Upsert profile (may exist from auth trigger without org) ────────────
+  // ── 3. Upsert profile ──────────────────────────────────────────────────────
   const { error: profileError } = await supabase
     .from('profiles')
-    .upsert({
-      id: userId,
-      email,
-      organization_id: orgId,
-    }, { onConflict: 'id' });
+    .upsert({ id: userId, email, organization_id: orgId }, { onConflict: 'id' });
 
   if (profileError) {
     throw new Error(`Impossible de créer le profil: ${profileError.message}`);
@@ -94,42 +107,42 @@ export async function bootstrapOwner(userId: string, email: string): Promise<Boo
   // ── 4. Assign admin role ───────────────────────────────────────────────────
   const { error: roleError } = await supabase
     .from('user_roles')
-    .upsert({
-      user_id: userId,
-      organization_id: orgId,
-      role: 'admin',
-    }, { onConflict: 'user_id,organization_id' });
+    .upsert({ user_id: userId, organization_id: orgId, role: 'admin' }, { onConflict: 'user_id,organization_id' });
 
   if (roleError) {
-    // Non-fatal: log and continue (user can still access app, role may already exist)
-    console.warn('Warning: could not assign admin role:', roleError.message);
+    console.warn('[bootstrap] Warning: could not assign admin role:', roleError.message);
+  } else {
+    console.log('[bootstrap] Admin role assigned for org:', orgId);
   }
 
-  // ── 5. Create app_runtime_config stub (makes tenant_resolved: true) ────────
+  // ── 5. Create app_runtime_config stub ─────────────────────────────────────
   await ensureRuntimeConfigStub(orgId);
 
+  console.log('[bootstrap] Bootstrap complete — isFirstRun: true, orgId:', orgId);
   return { orgId, isFirstRun: true };
 }
 
 async function ensureRuntimeConfigStub(orgId: string): Promise<void> {
-  // Check if already exists
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Check if already exists first to avoid RLS violation on duplicate insert
   const { data: existing } = await (supabase as any)
     .from('app_runtime_config')
     .select('id')
     .eq('organization_id', orgId)
     .maybeSingle();
 
-  if (existing) return; // already exists, nothing to do
+  if (existing) return;
 
-  // Create minimal stub — no URLs yet, but the row makes tenant_resolved: true
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any)
+  const { error } = await (supabase as any)
     .from('app_runtime_config')
     .insert({
       organization_id: orgId,
       reports_mode: 'internal_fallback',
       sales_mode: 'lead_first',
     });
-  // Non-fatal if this fails (e.g. admin role not yet propagated) — will be retried on next load
+
+  if (error) {
+    // Non-fatal: RLS may block this until the admin role JWT propagates.
+    // The row will be created on next load once roles are committed.
+    console.warn('[bootstrap] ensureRuntimeConfigStub non-fatal:', error.message);
+  }
 }
