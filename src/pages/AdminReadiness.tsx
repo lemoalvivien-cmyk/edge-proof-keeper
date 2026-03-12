@@ -1994,35 +1994,123 @@ function LiveProofPanel({ user, organization }: {
         )}
 
         {liveState === 'READY' && (
-          <div className="mx-6 my-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
-            <p className="text-sm font-semibold text-warning flex items-center gap-2">
-              <Clock className="h-4 w-4 shrink-0" />
-              PRÊT — Aucun run live encore exécuté
+          <div className="mx-6 my-3 rounded-lg border-2 border-warning/50 bg-warning/[0.03] px-4 py-4 space-y-3">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <p className="text-sm font-bold text-warning flex items-center gap-2">
+                  <Rocket className="h-4 w-4 shrink-0" />
+                  RECONNECTÉ — SESSION ACTIVE · 1 CLIC POUR LA PREUVE FINALE
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Session ✓ · Org ✓ · pipeline prêt · Un seul geste requis.
+                  {hasSeededRuns && <span className="ml-2 text-muted-foreground/60">({liveProof?.seededRuns.length} run(s) seedé(s) exclus — not you)</span>}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleInlinePipeline}
+                disabled={inlinePipeRunning || !organization?.id}
+                className="shrink-0 gap-1.5 bg-warning text-warning-foreground hover:bg-warning/90 font-bold"
+              >
+                {inlinePipeRunning
+                  ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
+                  : <><Zap className="h-4 w-4" />Obtenir la preuve live</>}
+              </Button>
+            </div>
+
+            {/* Inline pipeline steps — shown while running or after */}
+            {inlinePipeSteps.length > 0 && (
+              <div className="rounded border border-border bg-background/60 divide-y divide-border/50">
+                {inlinePipeSteps.map((step, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2">
+                    <StepStateIcon state={step.state} />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-medium">{step.label}</span>
+                      {step.result && (
+                        <p className={`text-[10px] font-mono mt-0.5 ${step.state === 'done' ? 'text-success' : step.state === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {step.result}
+                        </p>
+                      )}
+                    </div>
+                    <StepStateBadge state={step.state} />
+                  </div>
+                ))}
+              </div>
+            )}
+            {inlinePipeError && (
+              <p className="text-xs text-destructive font-mono">✗ {inlinePipeError}</p>
+            )}
+          </div>
+        )}
+
+        {/* RUNNING — inline pipeline in progress but no liveProof yet */}
+        {liveState === 'RUNNING' && inlinePipeRunning && (
+          <div className="mx-6 my-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 space-y-2">
+            <p className="text-sm font-semibold text-primary flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+              PIPELINE LIVE EN COURS — create → upload → normalize → findings → synthèse
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Session authentifiée ✓ · Org résolue ✓ · tools_catalog prêt ✓
-              <br/>
-              Action requise : Lancer le <strong>Pipeline Réel</strong> ci-dessous pour obtenir la preuve finale.
-            </p>
-            {hasSeededRuns && (
-              <p className="text-xs font-mono text-muted-foreground/60 mt-1.5 flex items-center gap-1">
-                <Info className="h-3 w-3 shrink-0" />
-                {liveProof?.seededRuns.length} run(s) seedé(s) détecté(s) — exclus de la preuve live (requested_by ≠ user courant)
-              </p>
+            {inlinePipeSteps.length > 0 && (
+              <div className="rounded border border-border bg-background/60 divide-y divide-border/50">
+                {inlinePipeSteps.map((step, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2">
+                    <StepStateIcon state={step.state} />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-medium">{step.label}</span>
+                      {step.result && (
+                        <p className={`text-[10px] font-mono mt-0.5 ${step.state === 'done' ? 'text-success' : step.state === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {step.result}
+                        </p>
+                      )}
+                    </div>
+                    <StepStateBadge state={step.state} />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
 
         {liveState === 'PARTIAL' && (
-          <div className="mx-6 my-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
+          <div className="mx-6 my-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 space-y-2">
             <p className="text-sm font-semibold text-warning flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               PARTIEL — Run live créé mais pipeline incomplet
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               run_id={liveProof?.liveRun?.id?.slice(0, 12)}… · status={liveProof?.liveRun?.status}
               · findings={liveProof?.liveRunFindings ?? 0} ← blocage principal
             </p>
+            {/* Offer re-run from partial state */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleInlinePipeline}
+              disabled={inlinePipeRunning}
+              className="gap-1.5 text-xs border-warning/40 text-warning"
+            >
+              {inlinePipeRunning
+                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />En cours…</>
+                : <><Zap className="h-3.5 w-3.5" />Relancer le pipeline</>}
+            </Button>
+            {inlinePipeSteps.length > 0 && (
+              <div className="rounded border border-border bg-background/60 divide-y divide-border/50">
+                {inlinePipeSteps.map((step, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2">
+                    <StepStateIcon state={step.state} />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-medium">{step.label}</span>
+                      {step.result && (
+                        <p className={`text-[10px] font-mono mt-0.5 ${step.state === 'done' ? 'text-success' : step.state === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {step.result}
+                        </p>
+                      )}
+                    </div>
+                    <StepStateBadge state={step.state} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
