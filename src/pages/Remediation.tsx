@@ -8,9 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRemediationActions, useRemediationActionCounts, useUpdateRemediationAction } from "@/hooks/useRisks";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { enhanceRemediationActions, getRiskAiAnalysis } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import type { RemediationAction } from "@/types/engine";
+import type { EnhancedRemediationResult } from "@/types/engine";
 import {
   ListTodo,
   RefreshCw,
@@ -18,7 +21,14 @@ import {
   Play,
   CheckCircle2,
   Clock,
-  AlertCircle,
+  Brain,
+  Loader2,
+  Lightbulb,
+  Target,
+  BarChart2,
+  ArrowUpDown,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 const PRIORITY_CONFIG: Record<string, { label: string; variant: "destructive" | "default" | "secondary" | "outline" }> = {
@@ -65,12 +75,251 @@ async function callBuildQueue(orgId: string, token: string) {
   return json as { risks_processed: number; actions_created: number; actions_updated: number; errors_count: number };
 }
 
+// ── AI Enhancement Panel for a single risk's actions ─────────────────────────
+
+function AiEnhancementPanel({
+  riskId,
+  riskTitle,
+  orgId,
+}: {
+  riskId: string;
+  riskTitle: string;
+  orgId: string;
+}) {
+  const [enhancing, setEnhancing] = useState(false);
+  const qc = useQueryClient();
+
+  const { data: analysis, isLoading } = useQuery({
+    queryKey: ["remediation-ai-analysis", riskId, orgId],
+    queryFn: () => getRiskAiAnalysis(orgId, riskId, "remediation_plan"),
+    enabled: !!riskId && !!orgId,
+  });
+
+  const enhanced = analysis?.output_json as unknown as EnhancedRemediationResult | undefined;
+
+  const handleEnhance = async () => {
+    setEnhancing(true);
+    try {
+      const result = await enhanceRemediationActions(orgId, riskId);
+      if (!result.success && result.ai_available === false) {
+        toast({
+          title: "IA non configurée",
+          description: "LOVABLE_API_KEY absent — l'intelligence IA n'est pas disponible.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!result.success) {
+        toast({ title: "Erreur IA", description: (result as { error?: string }).error ?? "Erreur inconnue", variant: "destructive" });
+        return;
+      }
+      toast({ title: "Remédiation enrichie", description: result.cached ? "Résultat depuis le cache." : "Enrichissement IA généré." });
+      qc.invalidateQueries({ queryKey: ["remediation-ai-analysis", riskId] });
+    } catch (e: unknown) {
+      toast({ title: "Erreur", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setEnhancing(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="pt-2"><Skeleton className="h-8 w-full" /></div>;
+  }
+
+  if (!enhanced) {
+    return (
+      <div className="pt-2">
+        <div className="rounded border border-dashed border-primary/30 bg-primary/5 p-3 flex items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Brain className="h-3.5 w-3.5 text-primary" />
+            Pas encore d'enrichissement IA pour : <span className="font-medium">{riskTitle.slice(0, 50)}</span>
+          </p>
+          <Button size="sm" variant="outline" onClick={handleEnhance} disabled={enhancing} className="h-7 text-xs shrink-0">
+            {enhancing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />…</> : <><Brain className="h-3 w-3 mr-1" />Enrichir</>}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pt-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Brain className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-semibold uppercase text-primary">Enrichissement IA</span>
+        </div>
+        <Button size="sm" variant="ghost" onClick={handleEnhance} disabled={enhancing} className="h-6 text-xs">
+          {enhancing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+        </Button>
+      </div>
+
+      {enhanced.overall_strategy && (
+        <div className="rounded border border-border bg-card p-3">
+          <p className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+            <Target className="h-3 w-3" />Stratégie globale
+          </p>
+          <p className="text-xs text-muted-foreground">{enhanced.overall_strategy}</p>
+        </div>
+      )}
+
+      {enhanced.total_effort_estimate && (
+        <p className="text-xs text-muted-foreground font-mono">
+          Effort total estimé : <span className="font-semibold text-foreground">{enhanced.total_effort_estimate}</span>
+        </p>
+      )}
+
+      {enhanced.actions?.length > 0 && (
+        <div className="space-y-1.5">
+          {enhanced.actions.sort((a, b) => (a.execution_order ?? 99) - (b.execution_order ?? 99)).map((act, i) => (
+            <div key={i} className="rounded border border-border bg-muted/20 p-2.5 space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-primary border border-primary/30 rounded px-1.5 py-0.5">
+                  #{act.execution_order ?? i + 1}
+                </span>
+                <p className="text-xs font-medium truncate">{act.original_title}</p>
+                {act.estimated_effort && (
+                  <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{act.estimated_effort}</span>
+                )}
+              </div>
+              {act.business_justification && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Justification :</span> {act.business_justification}
+                </p>
+              )}
+              {act.expected_gain && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Gain :</span> {act.expected_gain}
+                </p>
+              )}
+              {act.implementation_notes && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Notes :</span> {act.implementation_notes}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Risk Group Row (groups actions by risk) ───────────────────────────────────
+
+function RiskGroupRow({
+  riskTitle,
+  riskId,
+  riskLevel,
+  actions,
+  orgId,
+  onStatusChange,
+}: {
+  riskTitle: string;
+  riskId: string;
+  riskLevel: string;
+  actions: ActionWithRisk[];
+  orgId: string;
+  onStatusChange: (id: string, status: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const lvl = PRIORITY_CONFIG[riskLevel] ?? PRIORITY_CONFIG.low;
+
+  return (
+    <div className="border-b border-border last:border-0">
+      {/* Group header */}
+      <button
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-left"
+        onClick={() => setOpen(v => !v)}
+      >
+        {open ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+        <Badge variant={lvl.variant} className="shrink-0">{lvl.label}</Badge>
+        <span className="text-sm font-medium truncate">{riskTitle}</span>
+        <span className="ml-auto text-xs text-muted-foreground shrink-0">{actions.length} action(s)</span>
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4">
+          {/* Actions table for this risk */}
+          <div className="rounded border border-border overflow-hidden mb-3">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Priorité</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Responsable</TableHead>
+                  <TableHead>Échéance</TableHead>
+                  <TableHead>Gain attendu</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {actions.map((action) => {
+                  const pri = PRIORITY_CONFIG[action.priority] ?? PRIORITY_CONFIG.low;
+                  const isOverdue = action.due_date &&
+                    new Date(action.due_date) < new Date() &&
+                    action.status !== "done" &&
+                    action.status !== "cancelled";
+                  return (
+                    <TableRow key={action.id}>
+                      <TableCell>
+                        <div className="font-medium truncate max-w-xs">{action.title}</div>
+                        {action.implementation_notes && (
+                          <div className="text-xs text-muted-foreground truncate max-w-xs mt-0.5">
+                            {action.implementation_notes.slice(0, 80)}…
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {ACTION_TYPE_LABELS[action.action_type] ?? action.action_type}
+                      </TableCell>
+                      <TableCell><Badge variant={pri.variant}>{pri.label}</Badge></TableCell>
+                      <TableCell>
+                        <Select value={action.status} onValueChange={val => onStatusChange(action.id, val)}>
+                          <SelectTrigger className="h-7 w-32 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">À faire</SelectItem>
+                            <SelectItem value="in_progress">En cours</SelectItem>
+                            <SelectItem value="done">Terminé</SelectItem>
+                            <SelectItem value="cancelled">Annulé</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{action.owner ?? "—"}</TableCell>
+                      <TableCell className={`text-sm ${isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                        {action.due_date ? new Date(action.due_date).toLocaleDateString("fr-FR") : "—"}
+                        {isOverdue && " ⚠"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground max-w-[140px] truncate">
+                        {action.expected_gain || "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* AI Enhancement Panel */}
+          <AiEnhancementPanel riskId={riskId} riskTitle={riskTitle} orgId={orgId} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main Page ────────────────────────────────────────────────────────────────
+
 export default function Remediation() {
   const { organization } = useAuth();
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("open");
   const [search, setSearch] = useState("");
   const [building, setBuilding] = useState(false);
+  const [viewMode, setViewMode] = useState<"flat" | "grouped">("grouped");
 
   const { data: counts, isLoading: countsLoading, refetch: refetchCounts } = useRemediationActionCounts();
   const { data: actions, isLoading: actionsLoading, refetch: refetchActions } = useRemediationActions({
@@ -89,6 +338,21 @@ export default function Remediation() {
       a.risk_register?.title?.toLowerCase().includes(q)
     );
   }, [actions, search]);
+
+  // Group by risk_id
+  const groupedByRisk = useMemo(() => {
+    const map = new Map<string, { riskTitle: string; riskLevel: string; actions: ActionWithRisk[] }>();
+    for (const a of filtered) {
+      const riskId = a.risk_id;
+      const riskTitle = a.risk_register?.title ?? "Risque inconnu";
+      const riskLevel = a.risk_register?.risk_level ?? a.priority;
+      if (!map.has(riskId)) {
+        map.set(riskId, { riskTitle, riskLevel, actions: [] });
+      }
+      map.get(riskId)!.actions.push(a);
+    }
+    return Array.from(map.entries()).map(([riskId, v]) => ({ riskId, ...v }));
+  }, [filtered]);
 
   const handleBuildQueue = async () => {
     if (!organization?.id) return;
@@ -130,7 +394,7 @@ export default function Remediation() {
               File de Remédiation
             </h1>
             <p className="text-muted-foreground">
-              Actions prioritaires issues du registre des risques
+              Actions prioritaires issues du registre des risques — enrichies par IA
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -229,6 +493,15 @@ export default function Remediation() {
                   <SelectItem value="cancelled">Annulé</SelectItem>
                 </SelectContent>
               </Select>
+              <Button
+                variant={viewMode === "grouped" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode(v => v === "grouped" ? "flat" : "grouped")}
+                className="ml-auto"
+              >
+                <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
+                {viewMode === "grouped" ? "Vue groupée" : "Vue liste"}
+              </Button>
               {(priorityFilter !== "all" || statusFilter !== "open" || search) && (
                 <Button
                   variant="ghost"
@@ -242,13 +515,17 @@ export default function Remediation() {
           </CardContent>
         </Card>
 
-        {/* Actions Table */}
+        {/* Actions */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
               {actionsLoading ? "Chargement…" : `${filtered.length} action${filtered.length !== 1 ? "s" : ""}`}
             </CardTitle>
-            <CardDescription>Actions générées depuis le registre des risques</CardDescription>
+            <CardDescription>
+              {viewMode === "grouped"
+                ? "Groupé par risque — cliquez pour développer et enrichir avec IA"
+                : "Actions générées depuis le registre des risques"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {actionsLoading ? (
@@ -262,6 +539,20 @@ export default function Remediation() {
                 <p className="text-sm text-muted-foreground mt-1">
                   Utilisez "Construire la file de remédiation" pour générer les actions depuis les risques ouverts.
                 </p>
+              </div>
+            ) : viewMode === "grouped" ? (
+              <div>
+                {groupedByRisk.map(({ riskId, riskTitle, riskLevel, actions: riskActions }) => (
+                  <RiskGroupRow
+                    key={riskId}
+                    riskId={riskId}
+                    riskTitle={riskTitle}
+                    riskLevel={riskLevel}
+                    actions={riskActions}
+                    orgId={organization?.id ?? ""}
+                    onStatusChange={handleStatusChange}
+                  />
+                ))}
               </div>
             ) : (
               <Table>
@@ -345,7 +636,7 @@ export default function Remediation() {
               <Clock className="h-4 w-4 mt-0.5 shrink-0" />
               <p>
                 Les actions sont générées automatiquement depuis les risques ouverts.
-                Changez le statut directement dans le tableau. Les actions terminées sont conservées à des fins d'audit.
+                En vue groupée, cliquez sur un groupe pour afficher les détails et enrichir les actions via IA.
               </p>
             </div>
           </CardContent>

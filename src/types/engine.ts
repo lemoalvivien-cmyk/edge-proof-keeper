@@ -168,7 +168,58 @@ export interface AiAnalysis {
   created_at: string;
 }
 
-// ─── AI Output shapes ─────────────────────────────────────────────────────────
+// ─── Risk Intelligence (analyze-risk-intelligence output) ──────────────────
+
+export interface RiskIntelligenceResult {
+  executive_summary: string;
+  business_impact: string;
+  technical_impact: string;
+  priority_rationale: string;
+  confidence_assessment: 'low' | 'medium' | 'high';
+  recommended_next_steps: string[];
+}
+
+// ─── Enhanced Remediation (enhance-remediation-actions output) ─────────────
+
+export interface EnhancedRemediationActionItem {
+  original_title: string;
+  business_justification: string;
+  implementation_notes: string;
+  expected_gain: string;
+  execution_order: number;
+  estimated_effort: string;
+}
+
+export interface EnhancedRemediationResult {
+  overall_strategy: string;
+  actions: EnhancedRemediationActionItem[];
+  total_effort_estimate: string;
+  limitations: string;
+}
+
+// ─── AI Function responses ────────────────────────────────────────────────────
+
+export interface AnalyzeRiskIntelligenceResult {
+  success: boolean;
+  analysis_id: string | null;
+  risk_id: string;
+  result: RiskIntelligenceResult;
+  cached: boolean;
+  ai_available?: boolean;
+  error?: string;
+}
+
+export interface EnhanceRemediationResult {
+  success: boolean;
+  analysis_id: string | null;
+  risk_id: string;
+  result: EnhancedRemediationResult;
+  cached: boolean;
+  ai_available?: boolean;
+  error?: string;
+}
+
+// ─── AI Output shapes (legacy — kept for compatibility) ───────────────────────
 
 export interface TechnicalAnalysisOutput {
   explanation: string;
