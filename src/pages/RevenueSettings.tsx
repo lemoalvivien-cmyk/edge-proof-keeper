@@ -466,6 +466,8 @@ export default function RevenueSettings() {
         support_email:           rtRow.support_email           ?? ccRow?.support_email            ?? '',
         sales_enabled:           ccRow?.sales_enabled           ?? true,
       });
+      // Restore persisted sovereign confirmation from DB
+      setSovereignConfirmedAt(rtRow.external_sovereign_confirmed_at ?? null);
       setIsDirty(false);
     } else if (ccRow) {
       setForm(f => ({
@@ -480,6 +482,7 @@ export default function RevenueSettings() {
       setIsDirty(false);
     }
   }, [rtRow, ccRow]);
+
 
   // ── Save mutation: upsert both tables ─────────────────────────────────────
   const save = useMutation({
