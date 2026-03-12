@@ -59,22 +59,20 @@ import PlatformHealth from "./pages/PlatformHealth";
 
 const queryClient = new QueryClient();
 
-// Solo mode wrapper: after successful auth, redirect to /admin-readiness for live proof.
-// Also redirects from '/' when already authenticated — the landing page is irrelevant
-// for the solo admin; /admin-readiness is the operational command center.
+// SoloModeWrapper: only active when VITE_SOLO_MODE=true.
+// In public SaaS mode (default), this is a transparent pass-through.
 function SoloModeWrapper({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { state, isSoloMode } = useSoloAuth();
 
-  const handleSetupComplete = () => {
-    // After fresh login via OwnerSetup, go directly to admin-readiness.
-    navigate('/admin-readiness', { replace: true });
-  };
-
   if (!isSoloMode) {
     return <>{children}</>;
   }
+
+  const handleSetupComplete = () => {
+    navigate('/admin-readiness', { replace: true });
+  };
 
   if (state === 'loading') {
     return (
@@ -88,9 +86,6 @@ function SoloModeWrapper({ children }: { children: React.ReactNode }) {
     return <OwnerSetup onComplete={handleSetupComplete} />;
   }
 
-  // Already authenticated — if landing on '/', send straight to admin-readiness.
-  // This fires on every page load when the session is still valid, ensuring the
-  // admin always lands on the operational dashboard, never on the public landing page.
   if (state === 'authenticated' && location.pathname === '/') {
     navigate('/admin-readiness', { replace: true });
     return (
@@ -117,7 +112,7 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/demo" element={<Demo />} />
               
-              {/* Auth route - redirect to dashboard in SOLO_MODE */}
+              {/* Auth route — public in SaaS mode, redirect in solo mode */}
               <Route path="/auth" element={SOLO_MODE ? <Navigate to="/dashboard" replace /> : <Auth />} />
               
               {/* Compatibility redirects for removed authorization module */}
