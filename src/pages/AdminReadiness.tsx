@@ -997,12 +997,21 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
             onClick={handleRunRealPipeline}
             disabled={!orgId || running || pipelineBlocked}
             className="gap-1.5"
-            title={pipelineBlocked ? 'nuclei manquant dans tools_catalog — pipeline bloqué' : undefined}
+            title={
+              sessionMissing ? 'Session expirée — reconnectez-vous'
+              : nucleiQueryFailed ? 'Erreur query tools_catalog — reconnectez-vous'
+              : nucleiAbsent ? 'nuclei manquant dans tools_catalog — migration seed requise'
+              : undefined
+            }
           >
             {running
               ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
-              : pipelineBlocked
-              ? <><XCircle className="h-4 w-4" />Catalogue manquant — pipeline bloqué</>
+              : sessionMissing
+              ? <><XCircle className="h-4 w-4" />Session expirée — reconnexion requise</>
+              : nucleiQueryFailed
+              ? <><AlertTriangle className="h-4 w-4" />Erreur session — rechargez</>
+              : nucleiAbsent
+              ? <><XCircle className="h-4 w-4" />nuclei absent — seed requis</>
               : <><Zap className="h-4 w-4" />Lancer le pipeline réel</>}
           </Button>
           {overallState !== 'idle' && !running && (
@@ -1020,7 +1029,11 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
 
         <div className="px-6 py-3 border-t border-border bg-muted/10">
           <p className="text-[10px] text-muted-foreground font-mono">
-            {pipelineBlocked
+            {sessionMissing
+              ? '✗ BLOQUÉ — Session absente ou expirée · Reconnectez-vous via le formulaire Owner Setup (ou rechargez la page)'
+              : nucleiQueryFailed
+              ? '✗ ERREUR QUERY — tools_catalog inaccessible · Session peut-être expirée · Reconnectez-vous et rechargez'
+              : nucleiAbsent
               ? '✗ BLOQUÉ — nuclei absent de tools_catalog · Ajoutez-le via la migration seed ou manuellement dans /tools'
               : allDone
               ? '✓ PIPELINE RÉEL PROUVÉ — upload-artifact + normalize-tool-run traversés · findings issus du pipeline, pas d\'injection directe'
