@@ -415,6 +415,9 @@ export default function RevenueSettings() {
   const [form, setForm] = useState<FormState>(defaultForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [isDirty, setIsDirty] = useState(false);
+  // Tracks the DB-persisted sovereign confirmation timestamp (survives reload)
+  const [sovereignConfirmedAt, setSovereignConfirmedAt] = useState<string | null>(null);
+
 
   // ── Fetch app_runtime_config ───────────────────────────────────────────────
   const { data: rtRow, isLoading: rtLoading } = useQuery<RuntimeConfigRow | null>({
