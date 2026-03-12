@@ -319,7 +319,7 @@ export async function getRisks(
 ): Promise<Risk[]> {
   let query = supabase
     .from('risk_register')
-    .select('*, assets(name, asset_type, identifier)')
+    .select('*, asset_id!fk_risk_register_asset_id(name, asset_type, identifier)')
     .eq('organization_id', orgId)
     .order('score', { ascending: false })
     .limit(options?.limit ?? 100);
@@ -330,7 +330,8 @@ export async function getRisks(
 
   const { data, error } = await query;
   if (error) throw new Error(`getRisks error: ${error.message}`);
-  return (data ?? []) as Risk[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []) as unknown as Risk[];
 }
 
 /**
