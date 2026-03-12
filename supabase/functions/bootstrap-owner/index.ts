@@ -135,11 +135,12 @@ Deno.serve(async (req) => {
     }
 
     // ── 7. Assign admin role ───────────────────────────────────────────────────
+    // Constraint is UNIQUE(user_id, organization_id, role) — must include role in conflict spec
     const { error: roleError } = await admin
       .from('user_roles')
       .upsert(
         { user_id: userId, organization_id: orgId, role: 'admin' },
-        { onConflict: 'user_id,organization_id' }
+        { onConflict: 'user_id,organization_id,role' }
       );
 
     if (roleError) {
