@@ -667,7 +667,7 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
 }
 
 // ── Sovereign Backend Status Panel ────────────────────────────────────────────
-// Affiche 100% SOUVERAIN EXTERNE si Core API configuré + ping OK.
+// Affiche 100% SOUVERAIN EXTERNE si Core API configuré + ping OK OU confirmation DB persistée.
 // Affiche 100% SOUVERAIN INTERNE si moteur Edge Functions opérationnel + données DB > 0.
 // Badge EXTERNE prioritaire sur INTERNE.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -681,6 +681,25 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   // ── Ping Core API state ─────────────────────────────────────────────────────
   const [pingState,  setPingState]  = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
   const [pingResult, setPingResult] = useState<string | null>(null);
+
+  // ── Read persistent sovereign confirmation from DB (badge survives reload) ───
+  const { data: rtConfig, refetch: refetchRt } = useQuery({
+    queryKey: ['sovereign-rt-config', orgId],
+    queryFn: async () => {
+      if (!orgId) return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from('app_runtime_config')
+        .select('external_sovereign_confirmed_at, core_api_url')
+        .eq('organization_id', orgId)
+        .maybeSingle();
+      return data ?? null;
+    },
+    enabled: !!orgId,
+    staleTime: 60_000,
+  });
+
+  const dbConfirmedAt: string | null = rtConfig?.external_sovereign_confirmed_at ?? null;
 
   const handlePing = async () => {
     if (!coreApiUrl) return;
@@ -696,6 +715,16 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
         const body = await res.json().catch(() => ({}));
         setPingState('ok');
         setPingResult(`✓ HTTP ${res.status} · ${ms}ms · ${body.status ?? 'up'}`);
+        // Persist confirmation to DB — badge permanent après reload
+        if (orgId) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any).from('app_runtime_config').upsert({
+            organization_id: orgId,
+            core_api_url: coreApiUrl,
+            external_sovereign_confirmed_at: new Date().toISOString(),
+          }, { onConflict: 'organization_id' });
+          refetchRt();
+        }
       } else {
         setPingState('fail');
         setPingResult(`✗ HTTP ${res.status} · ${ms}ms`);
@@ -733,9 +762,9 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   const coreConfigured    = !!coreApiUrl;
   const aiConfigured      = !!aiGatewayUrl;
   const lovableGateway    = !aiGatewayUrl || aiGatewayUrl.includes('lovable.dev');
-  // External sovereign = Core API configured + ping succeeded (or not yet tested)
-  const externalSovereign = coreConfigured && (pingState === 'ok' || pingState === 'idle');
-  const externalConfirmed = coreConfigured && pingState === 'ok';
+  // External sovereign = Core API configured + (DB confirmed OR ping succeeded this session)
+  const externalConfirmed = coreConfigured && (!!dbConfirmedAt || pingState === 'ok');
+  const externalSovereign = externalConfirmed;
 
   // Internal sovereign = Edge Functions opérationnel + données DB réelles + flag
   const internalSovereign = demoDataLoaded === true || (hasRealData && (dbStats?.portfolios ?? 0) > 0);
@@ -821,12 +850,13 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   const score   = isSovereign100 ? 100 : Math.round((okCount / sovereignItems.length) * 100);
 
   const badgeLabel = externalConfirmed
-    ? '✓ 100% SOUVERAIN EXTERNE'
+    ? `✓ 100% SOUVERAIN EXTERNE${dbConfirmedAt ? ' (persisté)' : ''}`
     : coreConfigured
     ? '⚡ SOUVERAIN EXTERNE (ping requis)'
     : internalSovereign
     ? '✓ 100% SOUVERAIN INTERNE'
     : '⚠ SOUVERAINETÉ PARTIELLE';
+
 
   return (
     <Card className={`border-2 ${isSovereign100 ? 'border-success/50 bg-success/[0.01]' : 'border-primary/30 bg-primary/[0.01]'}`}>
@@ -925,7 +955,7 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
         <div className="px-6 py-3 border-t border-border bg-muted/10">
           <p className="text-[10px] font-mono text-muted-foreground/70">
             {externalConfirmed
-              ? '✓ SOUVERAINETÉ EXTERNE CONFIRMÉE — Core API joignable · appels réseau vers votre backend · RLS stricte · multi-tenant'
+              ? `✓ SOUVERAINETÉ EXTERNE CONFIRMÉE${dbConfirmedAt ? ` · persisté le ${new Date(dbConfirmedAt).toLocaleString('fr-FR')}` : ''} · Core API joignable · RLS stricte · multi-tenant`
               : isSovereign100
               ? '✓ SOUVERAINETÉ CONFIRMÉE — moteur opérationnel · données réelles · RLS stricte · multi-tenant'
               : 'Seed automatique actif — données DB réelles en cours de chargement…'}
