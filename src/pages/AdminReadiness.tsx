@@ -536,28 +536,32 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
   const doneCount = steps.filter(s => s.state === 'done').length;
   const allDone   = doneCount === steps.length;
 
+  const isLoaded = demoAlreadyLoaded || allDone;
+
   return (
-    <Card className={`border-2 ${allDone ? 'border-success/60 bg-success/[0.015]' : overall === 'error' ? 'border-warning/40' : 'border-primary/60 bg-primary/[0.015]'}`}>
+    <Card className={`border-2 ${isLoaded ? 'border-success/60 bg-success/[0.015]' : overall === 'error' ? 'border-warning/40' : 'border-primary/60 bg-primary/[0.015]'}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Rocket className="h-5 w-5 text-primary" />
-            Lancer le Pipeline Complet — Preuve Produit Totale
+            Pipeline Complet — Preuve Produit Totale
           </CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className={`text-xs font-bold ${
-              allDone ? 'bg-success/10 text-success border-success/30' :
+              isLoaded ? 'bg-success/10 text-success border-success/30' :
               overall === 'error' ? 'bg-warning/10 text-warning border-warning/30' :
               overall === 'running' ? 'bg-primary/10 text-primary border-primary/30' :
               'bg-muted/50 text-muted-foreground border-muted'
             }`}>
-              {allDone ? '✓ PIPELINE COMPLET EXÉCUTÉ' : overall === 'running' ? 'EN COURS…' : overall === 'error' ? 'PARTIEL' : 'NON LANCÉ'}
+              {isLoaded ? '✓ DÉMO CHARGÉE' : overall === 'running' ? 'EN COURS…' : overall === 'error' ? 'PARTIEL' : 'NON LANCÉ'}
             </Badge>
             <span className="text-sm font-bold text-muted-foreground">{doneCount}/{steps.length}</span>
           </div>
         </div>
         <CardDescription>
-          Un clic = données réelles en DB + 3 briefs générés + alertes évaluées · Résultats visibles dans Report Studio et Platform Health
+          {isLoaded && demoAlreadyLoaded && overall === 'idle'
+            ? '✓ Données démo déjà chargées automatiquement — risques, alertes et briefs présents en DB. Relancez si besoin.'
+            : 'Un clic = données réelles en DB + 3 briefs générés + alertes évaluées · Résultats visibles dans Report Studio et Platform Health'}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
