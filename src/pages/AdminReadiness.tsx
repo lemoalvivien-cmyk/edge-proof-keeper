@@ -498,11 +498,12 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
         hasError = true;
       }
 
-      // ③ Executive Brief
+      // ③ Executive Brief — Core API si configuré, Edge Function sinon
       upd('exec_brief', { state: 'running' });
       try {
-        const r = await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'executive_brief' }, tok);
-        upd('exec_brief', { state: 'done', result: `✓ executive_brief · ${r.ai_used ? `IA: ${r.model_name}` : 'fallback'} · ${r.source_snapshot?.open_risks ?? 0} risques` });
+        const r = await callPortfolioSummary({ organization_id: orgId, summary_type: 'executive_brief' }, tok);
+        const via = r._routed_to === 'external' ? '🌐 EXTERNE' : (r.ai_used ? `IA: ${r.model_name}` : 'fallback');
+        upd('exec_brief', { state: 'done', result: `✓ executive_brief · ${via} · ${r.source_snapshot?.open_risks ?? 0} risques` });
       } catch (e) {
         upd('exec_brief', { state: 'error', result: `✗ ${(e as Error).message}` });
         hasError = true;
@@ -511,8 +512,9 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
       // ④ Technical Brief
       upd('tech_brief', { state: 'running' });
       try {
-        const r = await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'technical_brief' }, tok);
-        upd('tech_brief', { state: 'done', result: `✓ technical_brief · ${r.ai_used ? `IA: ${r.model_name}` : 'fallback'} · ${r.source_snapshot?.pending_actions ?? 0} actions` });
+        const r = await callPortfolioSummary({ organization_id: orgId, summary_type: 'technical_brief' }, tok);
+        const via = r._routed_to === 'external' ? '🌐 EXTERNE' : (r.ai_used ? `IA: ${r.model_name}` : 'fallback');
+        upd('tech_brief', { state: 'done', result: `✓ technical_brief · ${via} · ${r.source_snapshot?.pending_actions ?? 0} actions` });
       } catch (e) {
         upd('tech_brief', { state: 'error', result: `✗ ${(e as Error).message}` });
         hasError = true;
@@ -521,8 +523,9 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
       // ⑤ Weekly Watch Brief
       upd('weekly_brief', { state: 'running' });
       try {
-        const r = await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'weekly_watch_brief' }, tok);
-        upd('weekly_brief', { state: 'done', result: `✓ weekly_watch_brief · ${r.ai_used ? `IA: ${r.model_name}` : 'fallback'} · ${r.source_snapshot?.open_alerts ?? 0} alertes` });
+        const r = await callPortfolioSummary({ organization_id: orgId, summary_type: 'weekly_watch_brief' }, tok);
+        const via = r._routed_to === 'external' ? '🌐 EXTERNE' : (r.ai_used ? `IA: ${r.model_name}` : 'fallback');
+        upd('weekly_brief', { state: 'done', result: `✓ weekly_watch_brief · ${via} · ${r.source_snapshot?.open_alerts ?? 0} alertes` });
       } catch (e) {
         upd('weekly_brief', { state: 'error', result: `✗ ${(e as Error).message}` });
         hasError = true;
