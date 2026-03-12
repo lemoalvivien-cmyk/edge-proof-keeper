@@ -45,3 +45,13 @@ verify_jwt = false
 
 [functions.submit-sales-lead]
 verify_jwt = false
+
+# ─── Ingestion Hub Functions ────────────────────────────────────────────────
+[functions.ingest-source-payload]
+verify_jwt = false
+
+[functions.sync-public-intel-source]
+verify_jwt = false
+
+[functions.sync-customer-authorized-source]
+verify_jwt = false
