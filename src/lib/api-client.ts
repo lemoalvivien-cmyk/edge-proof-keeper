@@ -321,6 +321,9 @@ import type {
   ScheduleSourceSyncResult,
   StaleRiskCheckResult,
   EvaluateAlertRulesResult,
+  PortfolioSummaryType,
+  PortfolioSummary,
+  GeneratePortfolioSummaryResult,
 } from '@/types/engine';
 
 async function getSupabaseToken(): Promise<string> {
