@@ -843,6 +843,9 @@ export default function AdminReadiness() {
           </Button>
         </div>
 
+        {/* Bootstrap state — explicit, data-driven */}
+        <BootstrapBanner />
+
         {/* Légende statuts */}
         <Card className="border-muted">
           <CardContent className="py-3">
