@@ -1,15 +1,35 @@
 /**
- * SENTINEL EDGE — External API Client
+ * SENTINEL EDGE — API Client
  *
- * All AI/report generation MUST go through VITE_CORE_API_URL (your backend proxy).
+ * Report generation strategy (controlled by reportsMode from useRuntimeConfig):
+ *   external_only      → requires VITE_CORE_API_URL / runtime core_api_url
+ *   internal_fallback  → tries external, falls back to Edge Function generate-reports
+ *   internal_only      → always uses Edge Function generate-reports (default / safe mode)
+ *
  * The frontend NEVER calls AI providers directly.
- *
- * When VITE_CORE_API_URL is not configured, functions throw a clear error so
- * the UI can surface "Backend externe non configuré".
+ * All AI logic lives in Edge Functions (server-side).
  */
 
-const CORE_API_URL = (import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '');
-const AI_GATEWAY_URL = (import.meta.env.VITE_AI_GATEWAY_URL as string | undefined)?.replace(/\/$/, '');
+// ─── Env-level config (build-time) ───────────────────────────────────────────
+let _runtimeCoreApiUrl: string | null = null;
+let _runtimeAiGatewayUrl: string | null = null;
+
+/** Called once by useRuntimeConfig to inject DB-level overrides */
+export function setRuntimeApiUrls(coreApi: string | null, aiGateway: string | null) {
+  _runtimeCoreApiUrl  = coreApi  ? coreApi.replace(/\/$/, '')  : null;
+  _runtimeAiGatewayUrl = aiGateway ? aiGateway.replace(/\/$/, '') : null;
+}
+
+function getCoreApiUrl(): string | null {
+  return _runtimeCoreApiUrl
+    ?? ((import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '') || null);
+}
+
+function getAiGatewayUrl(): string | null {
+  return _runtimeAiGatewayUrl
+    ?? ((import.meta.env.VITE_AI_GATEWAY_URL as string | undefined)?.replace(/\/$/, '') || null)
+    ?? getCoreApiUrl();
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,6 +67,7 @@ export interface ExecutiveReportResult {
   business_impact: string;
   top_priorities: string[];
   recommendations: string[];
+  generated_by?: 'external' | 'internal';
 }
 
 // ─── Technical Report (DSI) ───────────────────────────────────────────────────
@@ -62,6 +83,7 @@ export interface TechnicalFinding {
 export interface TechnicalReportResult {
   summary: string;
   findings: TechnicalFinding[];
+  generated_by?: 'external' | 'internal';
 }
 
 export interface VerifyChainPayload {
@@ -76,22 +98,9 @@ export interface VerifyChainResult {
   has_discrepancy: boolean;
 }
 
+export type ReportsMode = 'external_only' | 'internal_fallback' | 'internal_only';
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function requireCoreApi(): string {
-  if (!CORE_API_URL) {
-    throw new Error('Backend externe non configuré (VITE_CORE_API_URL manquant)');
-  }
-  return CORE_API_URL;
-}
-
-function requireAiGateway(): string {
-  const base = AI_GATEWAY_URL ?? CORE_API_URL;
-  if (!base) {
-    throw new Error('Backend externe non configuré (VITE_AI_GATEWAY_URL manquant)');
-  }
-  return base;
-}
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -108,13 +117,19 @@ function authHeaders(token: string): HeadersInit {
   };
 }
 
+/** True if an external backend URL is available (runtime or env) */
+export function isExternalBackendConfigured(): boolean {
+  return Boolean(getCoreApiUrl());
+}
+
 // ─── External Backend Functions ───────────────────────────────────────────────
 
 export async function createToolRun(
   payload: CreateToolRunPayload,
   token: string
 ): Promise<CreateToolRunResult> {
-  const base = requireCoreApi();
+  const base = getCoreApiUrl();
+  if (!base) throw new Error('Backend externe non configuré (VITE_CORE_API_URL manquant)');
   const res = await fetch(`${base}/v1/tool-runs`, {
     method: 'POST',
     headers: authHeaders(token),
@@ -127,7 +142,8 @@ export async function uploadToolRunArtifact(
   payload: UploadArtifactPayload,
   token: string
 ): Promise<UploadArtifactResult> {
-  const base = requireCoreApi();
+  const base = getCoreApiUrl();
+  if (!base) throw new Error('Backend externe non configuré (VITE_CORE_API_URL manquant)');
   const formData = new FormData();
   formData.append('file', payload.file);
   formData.append('tool_run_id', payload.tool_run_id);
@@ -141,39 +157,118 @@ export async function uploadToolRunArtifact(
   return handleResponse<UploadArtifactResult>(res);
 }
 
+// ─── Internal fallback via Edge Function generate-reports ────────────────────
+
+async function generateReportInternal(
+  runId: string,
+  reportType: 'executive' | 'technical',
+  token: string
+): Promise<ExecutiveReportResult | TechnicalReportResult> {
+  const token2 = token || await getSupabaseToken();
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-reports`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token2}`,
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ tool_run_id: runId, report_type: reportType }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.error ?? `generate-reports error ${res.status}`);
+  return { ...json, generated_by: 'internal' };
+}
+
+// ─── Unified report generation (mode-aware) ──────────────────────────────────
+
 export async function generateExecutiveReport(
   runId: string,
-  token?: string
+  token?: string,
+  mode: ReportsMode = 'internal_fallback'
 ): Promise<ExecutiveReportResult> {
-  const base = requireAiGateway();
-  const headers: HeadersInit = token ? authHeaders(token) : { 'Content-Type': 'application/json' };
-  const res = await fetch(`${base}/v1/reports/executive`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
-  });
-  return handleResponse<ExecutiveReportResult>(res);
+  const aiBase = getAiGatewayUrl();
+  const tok = token ?? await getSupabaseToken();
+
+  // external_only — require external backend
+  if (mode === 'external_only') {
+    if (!aiBase) throw new Error('Backend externe non configuré (VITE_CORE_API_URL manquant)');
+    const headers: HeadersInit = tok ? authHeaders(tok) : { 'Content-Type': 'application/json' };
+    const res = await fetch(`${aiBase}/v1/reports/executive`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
+    });
+    return { ...(await handleResponse<ExecutiveReportResult>(res)), generated_by: 'external' };
+  }
+
+  // internal_only — always use Edge Function
+  if (mode === 'internal_only') {
+    return generateReportInternal(runId, 'executive', tok) as Promise<ExecutiveReportResult>;
+  }
+
+  // internal_fallback (default) — try external, fall back to internal
+  if (aiBase) {
+    try {
+      const headers: HeadersInit = tok ? authHeaders(tok) : { 'Content-Type': 'application/json' };
+      const res = await fetch(`${aiBase}/v1/reports/executive`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
+      });
+      if (res.ok) return { ...(await res.json()), generated_by: 'external' };
+    } catch {
+      // fall through to internal
+    }
+  }
+  return generateReportInternal(runId, 'executive', tok) as Promise<ExecutiveReportResult>;
 }
 
 export async function generateTechnicalReport(
   runId: string,
-  token?: string
+  token?: string,
+  mode: ReportsMode = 'internal_fallback'
 ): Promise<TechnicalReportResult> {
-  const base = requireAiGateway();
-  const headers: HeadersInit = token ? authHeaders(token) : { 'Content-Type': 'application/json' };
-  const res = await fetch(`${base}/v1/reports/technical`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
-  });
-  return handleResponse<TechnicalReportResult>(res);
+  const aiBase = getAiGatewayUrl();
+  const tok = token ?? await getSupabaseToken();
+
+  if (mode === 'external_only') {
+    if (!aiBase) throw new Error('Backend externe non configuré (VITE_CORE_API_URL manquant)');
+    const headers: HeadersInit = tok ? authHeaders(tok) : { 'Content-Type': 'application/json' };
+    const res = await fetch(`${aiBase}/v1/reports/technical`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
+    });
+    return { ...(await handleResponse<TechnicalReportResult>(res)), generated_by: 'external' };
+  }
+
+  if (mode === 'internal_only') {
+    return generateReportInternal(runId, 'technical', tok) as Promise<TechnicalReportResult>;
+  }
+
+  // internal_fallback
+  if (aiBase) {
+    try {
+      const headers: HeadersInit = tok ? authHeaders(tok) : { 'Content-Type': 'application/json' };
+      const res = await fetch(`${aiBase}/v1/reports/technical`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ tool_run_id: runId } satisfies GenerateReportPayload),
+      });
+      if (res.ok) return { ...(await res.json()), generated_by: 'external' };
+    } catch {
+      // fall through to internal
+    }
+  }
+  return generateReportInternal(runId, 'technical', tok) as Promise<TechnicalReportResult>;
 }
 
 export async function verifyEvidenceChain(
   payload: VerifyChainPayload,
   token: string
 ): Promise<VerifyChainResult> {
-  const base = requireCoreApi();
+  const base = getCoreApiUrl();
+  if (!base) throw new Error('Backend externe non configuré (VITE_CORE_API_URL manquant)');
   const res = await fetch(`${base}/v1/evidence/verify-chain`, {
     method: 'POST',
     headers: authHeaders(token),
@@ -182,19 +277,11 @@ export async function verifyEvidenceChain(
   return handleResponse<VerifyChainResult>(res);
 }
 
-export function isExternalBackendConfigured(): boolean {
-  return Boolean(CORE_API_URL);
-}
-
 export async function getHealth(): Promise<unknown> {
-  const base = import.meta.env.VITE_CORE_API_URL as string | undefined;
-  if (!base) {
-    throw new Error('Backend externe non configuré');
-  }
+  const base = getCoreApiUrl();
+  if (!base) throw new Error('Backend externe non configuré');
   const response = await fetch(`${base}/health`);
-  if (!response.ok) {
-    throw new Error('API Cyber Serenity indisponible');
-  }
+  if (!response.ok) throw new Error('API Cyber Serenity indisponible');
   return response.json();
 }
 
@@ -523,7 +610,6 @@ export async function getRelatedSignals(
   orgId: string,
   entityNodeId: string,
 ): Promise<Signal[]> {
-  // Get signal IDs linked to this entity
   const { data: links, error: linkErr } = await supabase
     .from('signal_entity_links')
     .select('signal_id')

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,24 +24,53 @@ import {
   RefreshCw,
   Zap,
   ExternalLink,
+  Server,
+  Brain,
+  Settings2,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface CommercialConfig {
-  id: string;
+interface RuntimeConfigRow {
+  id?: string;
   organization_id: string;
+  core_api_url: string | null;
+  ai_gateway_url: string | null;
+  booking_url: string | null;
+  starter_checkout_url: string | null;
+  pro_checkout_url: string | null;
+  enterprise_checkout_url: string | null;
+  support_email: string | null;
+  reports_mode: string;
+  sales_mode: string;
+}
+
+interface CommercialConfig {
   booking_url: string | null;
   starter_checkout_url: string | null;
   pro_checkout_url: string | null;
   enterprise_checkout_url: string | null;
   support_email: string | null;
   sales_enabled: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
-type ConfigForm = Omit<CommercialConfig, 'id' | 'organization_id' | 'created_at' | 'updated_at'>;
+type ReportsMode = 'external_only' | 'internal_fallback' | 'internal_only';
+type SalesMode   = 'lead_first' | 'checkout_first' | 'booking_first' | 'disabled';
+
+interface FormState {
+  // Backend
+  core_api_url:            string;
+  ai_gateway_url:          string;
+  reports_mode:            ReportsMode;
+  sales_mode:              SalesMode;
+  // Commercial
+  booking_url:             string;
+  starter_checkout_url:    string;
+  pro_checkout_url:        string;
+  enterprise_checkout_url: string;
+  support_email:           string;
+  sales_enabled:           boolean;
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -55,25 +85,10 @@ function isValidEmail(val: string): boolean {
 }
 
 function ConfigField({
-  label,
-  description,
-  id,
-  value,
-  onChange,
-  placeholder,
-  icon,
-  error,
-  isUrl = true,
+  label, description, id, value, onChange, placeholder, icon, error, isUrl = true,
 }: {
-  label: string;
-  description: string;
-  id: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  icon: React.ReactNode;
-  error?: string;
-  isUrl?: boolean;
+  label: string; description: string; id: string; value: string; onChange: (v: string) => void;
+  placeholder: string; icon: React.ReactNode; error?: string; isUrl?: boolean;
 }) {
   const isSet = !!value.trim();
   return (
@@ -83,10 +98,7 @@ function ConfigField({
           <span className="text-muted-foreground">{icon}</span>
           {label}
         </Label>
-        <Badge
-          variant="outline"
-          className={`text-xs ${isSet ? 'bg-success/10 text-success border-success/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}
-        >
+        <Badge variant="outline" className={`text-xs ${isSet ? 'bg-success/10 text-success border-success/30' : 'bg-muted/50 text-muted-foreground border-muted'}`}>
           {isSet ? '✓ Configuré' : 'Non défini'}
         </Badge>
       </div>
@@ -100,13 +112,8 @@ function ConfigField({
           className={`flex-1 ${error ? 'border-destructive' : ''}`}
         />
         {isSet && isUrl && (
-          <Button
-            variant="ghost"
-            size="icon"
-            type="button"
-            className="shrink-0"
-            onClick={() => window.open(value, '_blank', 'noopener,noreferrer')}
-          >
+          <Button variant="ghost" size="icon" type="button" className="shrink-0"
+            onClick={() => window.open(value, '_blank', 'noopener,noreferrer')}>
             <ExternalLink className="h-4 w-4" />
           </Button>
         )}
@@ -123,73 +130,125 @@ export default function RevenueSettings() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const [form, setForm] = useState<ConfigForm>({
-    booking_url: '',
-    starter_checkout_url: '',
-    pro_checkout_url: '',
-    enterprise_checkout_url: '',
-    support_email: '',
-    sales_enabled: true,
-  });
-  const [errors, setErrors] = useState<Partial<Record<keyof ConfigForm, string>>>({});
+  const defaultForm: FormState = {
+    core_api_url: '', ai_gateway_url: '',
+    reports_mode: 'internal_fallback', sales_mode: 'lead_first',
+    booking_url: '', starter_checkout_url: '', pro_checkout_url: '',
+    enterprise_checkout_url: '', support_email: '', sales_enabled: true,
+  };
+
+  const [form, setForm] = useState<FormState>(defaultForm);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [isDirty, setIsDirty] = useState(false);
 
-  // ── Fetch existing config ──────────────────────────────────────────────────
-  const { data: config, isLoading } = useQuery<CommercialConfig | null>({
-    queryKey: ['commercial-config', organization?.id],
+  // ── Fetch app_runtime_config ───────────────────────────────────────────────
+  const { data: rtRow, isLoading: rtLoading } = useQuery<RuntimeConfigRow | null>({
+    queryKey: ['app-runtime-config', organization?.id],
     queryFn: async () => {
       if (!organization?.id) return null;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
-        .from('commercial_config')
+      const { data } = await (supabase as any)
+        .from('app_runtime_config')
         .select('*')
         .eq('organization_id', organization.id)
         .maybeSingle();
-      if (error) throw error;
-      return data as CommercialConfig | null;
+      return data ?? null;
     },
     enabled: !!organization?.id,
   });
 
-  // Hydrate form from DB
+  // ── Fetch commercial_config (legacy booking/checkout) ─────────────────────
+  const { data: ccRow, isLoading: ccLoading } = useQuery<CommercialConfig | null>({
+    queryKey: ['commercial-config', organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from('commercial_config')
+        .select('booking_url, starter_checkout_url, pro_checkout_url, enterprise_checkout_url, support_email, sales_enabled')
+        .eq('organization_id', organization.id)
+        .maybeSingle();
+      return data ?? null;
+    },
+    enabled: !!organization?.id,
+  });
+
+  // Hydrate form: runtime config takes precedence, then commercial_config
   useEffect(() => {
-    if (config) {
+    if (rtRow) {
       setForm({
-        booking_url:             config.booking_url             ?? '',
-        starter_checkout_url:   config.starter_checkout_url   ?? '',
-        pro_checkout_url:        config.pro_checkout_url        ?? '',
-        enterprise_checkout_url: config.enterprise_checkout_url ?? '',
-        support_email:           config.support_email           ?? '',
-        sales_enabled:           config.sales_enabled,
+        core_api_url:            rtRow.core_api_url            ?? '',
+        ai_gateway_url:          rtRow.ai_gateway_url          ?? '',
+        reports_mode:            (rtRow.reports_mode as ReportsMode) ?? 'internal_fallback',
+        sales_mode:              (rtRow.sales_mode   as SalesMode)   ?? 'lead_first',
+        booking_url:             rtRow.booking_url             ?? ccRow?.booking_url             ?? '',
+        starter_checkout_url:    rtRow.starter_checkout_url    ?? ccRow?.starter_checkout_url    ?? '',
+        pro_checkout_url:        rtRow.pro_checkout_url         ?? ccRow?.pro_checkout_url         ?? '',
+        enterprise_checkout_url: rtRow.enterprise_checkout_url ?? ccRow?.enterprise_checkout_url  ?? '',
+        support_email:           rtRow.support_email           ?? ccRow?.support_email            ?? '',
+        sales_enabled:           ccRow?.sales_enabled           ?? true,
       });
       setIsDirty(false);
+    } else if (ccRow) {
+      setForm(f => ({
+        ...f,
+        booking_url:             ccRow.booking_url             ?? '',
+        starter_checkout_url:    ccRow.starter_checkout_url    ?? '',
+        pro_checkout_url:        ccRow.pro_checkout_url         ?? '',
+        enterprise_checkout_url: ccRow.enterprise_checkout_url ?? '',
+        support_email:           ccRow.support_email           ?? '',
+        sales_enabled:           ccRow.sales_enabled,
+      }));
+      setIsDirty(false);
     }
-  }, [config]);
+  }, [rtRow, ccRow]);
 
-  // ── Upsert mutation ────────────────────────────────────────────────────────
+  // ── Save mutation: upsert both tables ─────────────────────────────────────
   const save = useMutation({
-    mutationFn: async (data: ConfigForm) => {
+    mutationFn: async (data: FormState) => {
       if (!organization?.id) throw new Error('Organisation non trouvée');
-      const payload = {
+
+      // 1. Upsert app_runtime_config
+      const rtPayload: Omit<RuntimeConfigRow, 'id'> = {
         organization_id:         organization.id,
-        booking_url:             data.booking_url             || null,
-        starter_checkout_url:   data.starter_checkout_url   || null,
-        pro_checkout_url:        data.pro_checkout_url        || null,
-        enterprise_checkout_url: data.enterprise_checkout_url || null,
-        support_email:           data.support_email           || null,
+        core_api_url:            data.core_api_url             || null,
+        ai_gateway_url:          data.ai_gateway_url           || null,
+        booking_url:             data.booking_url              || null,
+        starter_checkout_url:    data.starter_checkout_url     || null,
+        pro_checkout_url:        data.pro_checkout_url          || null,
+        enterprise_checkout_url: data.enterprise_checkout_url  || null,
+        support_email:           data.support_email            || null,
+        reports_mode:            data.reports_mode,
+        sales_mode:              data.sales_mode,
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: rtErr } = await (supabase as any)
+        .from('app_runtime_config')
+        .upsert(rtPayload, { onConflict: 'organization_id' });
+      if (rtErr) throw rtErr;
+
+      // 2. Keep commercial_config in sync (legacy consumers)
+      const ccPayload = {
+        organization_id:         organization.id,
+        booking_url:             data.booking_url              || null,
+        starter_checkout_url:    data.starter_checkout_url     || null,
+        pro_checkout_url:        data.pro_checkout_url          || null,
+        enterprise_checkout_url: data.enterprise_checkout_url  || null,
+        support_email:           data.support_email            || null,
         sales_enabled:           data.sales_enabled,
         updated_at:              new Date().toISOString(),
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error: ccErr } = await (supabase as any)
         .from('commercial_config')
-        .upsert(payload, { onConflict: 'organization_id' });
-      if (error) throw error;
+        .upsert(ccPayload, { onConflict: 'organization_id' });
+      if (ccErr) throw ccErr;
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['app-runtime-config'] });
       qc.invalidateQueries({ queryKey: ['commercial-config'] });
       setIsDirty(false);
-      toast({ title: 'Configuration sauvegardée', description: 'Vos liens commerciaux sont actifs.' });
+      toast({ title: 'Configuration sauvegardée', description: 'Les paramètres runtime sont actifs immédiatement.' });
     },
     onError: (e) => {
       toast({ title: 'Erreur', description: (e as Error).message, variant: 'destructive' });
@@ -198,8 +257,11 @@ export default function RevenueSettings() {
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const validate = (): boolean => {
-    const errs: Partial<Record<keyof ConfigForm, string>> = {};
-    const urlFields: Array<keyof ConfigForm> = ['booking_url', 'starter_checkout_url', 'pro_checkout_url', 'enterprise_checkout_url'];
+    const errs: Partial<Record<keyof FormState, string>> = {};
+    const urlFields: Array<keyof FormState> = [
+      'core_api_url', 'ai_gateway_url',
+      'booking_url', 'starter_checkout_url', 'pro_checkout_url', 'enterprise_checkout_url',
+    ];
     urlFields.forEach(k => {
       const v = (form[k] as string) ?? '';
       if (v && !isValidUrl(v)) errs[k] = 'URL invalide (ex: https://...)';
@@ -216,19 +278,18 @@ export default function RevenueSettings() {
     if (validate()) save.mutate(form);
   };
 
-  const set = <K extends keyof ConfigForm>(key: K, val: ConfigForm[K]) => {
+  const set = <K extends keyof FormState>(key: K, val: FormState[K]) => {
     setForm(f => ({ ...f, [key]: val }));
     setIsDirty(true);
     if (errors[key]) setErrors(e => { const n = { ...e }; delete n[key]; return n; });
   };
 
-  // ── Compute live readiness ─────────────────────────────────────────────────
   const configuredCount = [
-    form.booking_url,
-    form.starter_checkout_url,
-    form.pro_checkout_url,
-    form.enterprise_checkout_url,
+    form.booking_url, form.starter_checkout_url,
+    form.pro_checkout_url, form.enterprise_checkout_url,
   ].filter(Boolean).length;
+
+  const isLoading = rtLoading || ccLoading;
 
   return (
     <AppLayout>
@@ -238,18 +299,20 @@ export default function RevenueSettings() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <DollarSign className="h-5 w-5 text-primary" />
+              <Settings2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Revenue Settings</h1>
-              <p className="text-sm text-muted-foreground">Configuration commerciale pilotable — priorité sur les variables d'env.</p>
+              <h1 className="text-2xl font-bold tracking-tight">Revenue & Runtime Settings</h1>
+              <p className="text-sm text-muted-foreground">
+                Configuration pilotable en base — priorité absolue sur les variables d'env.
+              </p>
             </div>
           </div>
           {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
 
         {/* Status bar */}
-        <Card className={`border-${configuredCount >= 3 ? 'success' : configuredCount >= 1 ? 'warning' : 'destructive'}/30`}>
+        <Card>
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -265,7 +328,7 @@ export default function RevenueSettings() {
                     {configuredCount >= 3 && 'Tunnel commercial complet'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {configuredCount}/4 liens actifs · Mode vente : {form.sales_enabled ? 'Activé' : 'Désactivé'}
+                    {configuredCount}/4 liens commerciaux · Mode rapport : {form.reports_mode} · Mode vente : {form.sales_mode}
                   </p>
                 </div>
               </div>
@@ -283,7 +346,96 @@ export default function RevenueSettings() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* Booking */}
+          {/* ── Backend / Reporting ── */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Server className="h-4 w-4 text-primary" />
+                Backend & Reporting
+              </CardTitle>
+              <CardDescription>
+                URL du backend externe pour la génération de rapports IA.
+                En l'absence de ces URLs, le moteur interne (Edge Functions) prend le relais.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <ConfigField
+                label="Core API URL"
+                description="Proxy backend principal (ex: https://api.votre-backend.fr). Optionnel."
+                id="core_api_url"
+                value={form.core_api_url}
+                onChange={v => set('core_api_url', v)}
+                placeholder="https://api.cyberserenity.fr"
+                icon={<Server className="h-4 w-4" />}
+                error={errors.core_api_url}
+              />
+              <Separator />
+              <ConfigField
+                label="AI Gateway URL"
+                description="Endpoint IA dédié (optionnel, utilise Core API si absent)"
+                id="ai_gateway_url"
+                value={form.ai_gateway_url}
+                onChange={v => set('ai_gateway_url', v)}
+                placeholder="https://ai.cyberserenity.fr"
+                icon={<Brain className="h-4 w-4" />}
+                error={errors.ai_gateway_url}
+              />
+              <Separator />
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-sm font-medium">
+                  <Brain className="h-4 w-4 text-muted-foreground" />
+                  Mode de génération des rapports
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Contrôle si les rapports Report Studio utilisent le backend externe, le moteur interne, ou les deux.
+                </p>
+                <Select
+                  value={form.reports_mode}
+                  onValueChange={v => set('reports_mode', v as ReportsMode)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="internal_only">
+                      Moteur interne uniquement (Edge Functions Gemini)
+                    </SelectItem>
+                    <SelectItem value="internal_fallback">
+                      Fallback interne — essaie externe, puis interne
+                    </SelectItem>
+                    <SelectItem value="external_only">
+                      Backend externe uniquement (Core API URL requis)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-sm font-medium">
+                  <Zap className="h-4 w-4 text-muted-foreground" />
+                  Mode de vente
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Contrôle le comportement des CTAs commerciaux.
+                </p>
+                <Select
+                  value={form.sales_mode}
+                  onValueChange={v => set('sales_mode', v as SalesMode)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lead_first">Lead first — formulaire en priorité</SelectItem>
+                    <SelectItem value="booking_first">Booking first — rendez-vous en priorité</SelectItem>
+                    <SelectItem value="checkout_first">Checkout first — paiement direct en priorité</SelectItem>
+                    <SelectItem value="disabled">Désactivé — aucun CTA commercial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Booking ── */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -291,7 +443,7 @@ export default function RevenueSettings() {
                 Prise de rendez-vous
               </CardTitle>
               <CardDescription>
-                Lien Calendly, Cal.com, HubSpot ou tout autre outil de booking.
+                Lien Calendly, Cal.com, HubSpot ou tout outil de booking.
                 Utilisé par les boutons "Demander une démo" et "Planifier".
               </CardDescription>
             </CardHeader>
@@ -300,7 +452,7 @@ export default function RevenueSettings() {
                 label="URL de booking"
                 description="Ex : https://calendly.com/votre-equipe/demo-cyber-serenity"
                 id="booking_url"
-                value={form.booking_url ?? ''}
+                value={form.booking_url}
                 onChange={v => set('booking_url', v)}
                 placeholder="https://calendly.com/..."
                 icon={<CalendarDays className="h-4 w-4" />}
@@ -309,7 +461,7 @@ export default function RevenueSettings() {
             </CardContent>
           </Card>
 
-          {/* Checkout */}
+          {/* ── Checkout ── */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -326,7 +478,7 @@ export default function RevenueSettings() {
                 label="Starter — 490 €/an"
                 description="Lien d'achat direct pour le plan Starter"
                 id="starter_checkout_url"
-                value={form.starter_checkout_url ?? ''}
+                value={form.starter_checkout_url}
                 onChange={v => set('starter_checkout_url', v)}
                 placeholder="https://buy.stripe.com/starter..."
                 icon={<ShoppingCart className="h-4 w-4" />}
@@ -337,7 +489,7 @@ export default function RevenueSettings() {
                 label="Pro"
                 description="Lien d'achat direct pour le plan Pro"
                 id="pro_checkout_url"
-                value={form.pro_checkout_url ?? ''}
+                value={form.pro_checkout_url}
                 onChange={v => set('pro_checkout_url', v)}
                 placeholder="https://buy.stripe.com/pro..."
                 icon={<ShoppingCart className="h-4 w-4" />}
@@ -348,7 +500,7 @@ export default function RevenueSettings() {
                 label="Enterprise"
                 description="Lien d'achat ou devis pour le plan Enterprise"
                 id="enterprise_checkout_url"
-                value={form.enterprise_checkout_url ?? ''}
+                value={form.enterprise_checkout_url}
                 onChange={v => set('enterprise_checkout_url', v)}
                 placeholder="https://buy.stripe.com/enterprise..."
                 icon={<ShoppingCart className="h-4 w-4" />}
@@ -357,7 +509,7 @@ export default function RevenueSettings() {
             </CardContent>
           </Card>
 
-          {/* Support */}
+          {/* ── Support ── */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -370,7 +522,7 @@ export default function RevenueSettings() {
                 label="Email de support / vente"
                 description="Utilisé dans les emails automatiques et le footer"
                 id="support_email"
-                value={form.support_email ?? ''}
+                value={form.support_email}
                 onChange={v => set('support_email', v)}
                 placeholder="sales@cyberserenity.fr"
                 icon={<Mail className="h-4 w-4" />}
@@ -385,16 +537,12 @@ export default function RevenueSettings() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => qc.invalidateQueries({ queryKey: ['commercial-config'] })}
+              onClick={() => qc.invalidateQueries({ queryKey: ['app-runtime-config', 'commercial-config'] })}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Annuler
             </Button>
-            <Button
-              type="submit"
-              disabled={save.isPending || !isDirty}
-              className="gap-2"
-            >
+            <Button type="submit" disabled={save.isPending || !isDirty} className="gap-2">
               {save.isPending
                 ? <><Loader2 className="h-4 w-4 animate-spin" />Sauvegarde…</>
                 : <><Save className="h-4 w-4" />Sauvegarder la configuration</>
