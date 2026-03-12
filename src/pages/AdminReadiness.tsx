@@ -488,6 +488,263 @@ function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refresh
   );
 }
 
+// ── Core Proof Panel — preuve live du cœur produit ────────────────────────────
+type ProofStatus = 'idle' | 'running' | 'proven' | 'partial' | 'failed' | 'unverifiable';
+
+interface ProofStep {
+  label: string;
+  description: string;
+  status: ProofStatus;
+  result?: string;
+  icon: React.ReactNode;
+}
+
+function ProofStatusBadge({ status }: { status: ProofStatus }) {
+  const cfg: Record<ProofStatus, { label: string; cls: string }> = {
+    idle:         { label: 'Non testé',         cls: 'bg-muted/50 text-muted-foreground border-muted' },
+    running:      { label: 'En cours…',         cls: 'bg-primary/10 text-primary border-primary/30' },
+    proven:       { label: 'PROUVÉ',            cls: 'bg-success/10 text-success border-success/30' },
+    partial:      { label: 'PARTIEL',           cls: 'bg-warning/10 text-warning border-warning/30' },
+    failed:       { label: 'ÉCHEC',             cls: 'bg-destructive/10 text-destructive border-destructive/30' },
+    unverifiable: { label: 'NON VÉRIFIABLE',    cls: 'bg-muted/40 text-muted-foreground border-muted/60' },
+  };
+  const c = cfg[status];
+  return <Badge variant="outline" className={`text-xs font-bold ${c.cls}`}>{c.label}</Badge>;
+}
+
+function CoreProofPanel({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
+  const qc = useQueryClient();
+  const [portfolioStatus, setPortfolioStatus] = useState<ProofStatus>('idle');
+  const [portfolioResult, setPortfolioResult] = useState<string | null>(null);
+  const [chainStatus, setChainStatus] = useState<ProofStatus>('idle');
+  const [chainResult, setChainResult] = useState<string | null>(null);
+
+  // DB-level proof queries — no user action required
+  const { data: dbProof } = useQuery({
+    queryKey: ['core-proof-db', orgId, refreshKey],
+    queryFn: async () => {
+      if (!orgId) return null;
+      const [runsRes, findingsRes, evidenceRes, portfolioRes] = await Promise.all([
+        supabase.from('tool_runs' as 'tool_runs').select('id, status, requested_at').eq('organization_id', orgId).order('requested_at', { ascending: false }).limit(1),
+        supabase.from('findings').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+        supabase.from('evidence_log').select('id, seq, entry_hash', { count: 'exact' }).eq('organization_id', orgId).order('seq', { ascending: false }).limit(1),
+        supabase.from('portfolio_summaries').select('id, summary_type, model_name, created_at').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(3),
+      ]);
+      return {
+        lastRun: runsRes.data?.[0] ?? null,
+        findingsCount: findingsRes.count ?? 0,
+        evidenceCount: evidenceRes.count ?? 0,
+        lastEvidenceSeq: evidenceRes.data?.[0]?.seq ?? null,
+        lastEvidenceHash: evidenceRes.data?.[0]?.entry_hash ?? null,
+        portfolioSummaries: portfolioRes.data ?? [],
+      };
+    },
+    enabled: !!orgId,
+  });
+
+  const handleSmokePortfolio = async () => {
+    if (!orgId) return;
+    setPortfolioStatus('running');
+    setPortfolioResult(null);
+    try {
+      const result = await generatePortfolioSummary(orgId, 'executive_brief');
+      const isAi = result.ai_used;
+      setPortfolioStatus('proven');
+      setPortfolioResult(
+        `✓ executive_brief généré · ${isAi ? `IA: ${result.model_name}` : 'fallback déterministe'} · ` +
+        `${result.source_snapshot?.open_risks ?? 0} risques · ${result.source_snapshot?.pending_actions ?? 0} actions`
+      );
+      qc.invalidateQueries({ queryKey: ['core-proof-db', orgId] });
+      qc.invalidateQueries({ queryKey: ['decision-scores', orgId] });
+      qc.invalidateQueries({ queryKey: ['decision-layer-stats', orgId] });
+    } catch (err) {
+      setPortfolioStatus('failed');
+      setPortfolioResult(err instanceof Error ? err.message : 'Erreur inconnue');
+    }
+  };
+
+  const handleSmokeChain = async () => {
+    if (!orgId) return;
+    setChainStatus('running');
+    setChainResult(null);
+    try {
+      const result = await verifyEvidenceChain({ organization_id: orgId });
+      if (result.is_valid) {
+        setChainStatus('proven');
+        setChainResult(
+          `✓ Chaîne intègre · ${result.last_seq ?? 0} entrée(s) · tête: ${result.head_hash?.slice(0, 12) ?? 'GENESIS'}…`
+        );
+      } else {
+        setChainStatus('partial');
+        setChainResult(
+          `⚠ Discordance à seq #${result.first_bad_seq} · ${result.last_seq} entrée(s) vérifiées`
+        );
+      }
+    } catch (err) {
+      setChainStatus('failed');
+      setChainResult(err instanceof Error ? err.message : 'Erreur inconnue');
+    }
+  };
+
+  // Build proof steps
+  const lastRun = dbProof?.lastRun;
+  const findingsCount = dbProof?.findingsCount ?? 0;
+  const evidenceCount = dbProof?.evidenceCount ?? 0;
+  const portfolios = dbProof?.portfolioSummaries ?? [];
+  const hasPortfolio = portfolios.length > 0;
+  const hasRun = !!lastRun;
+
+  const steps: ProofStep[] = [
+    {
+      label: 'Tool Run disponible',
+      description: 'Artefact d\'entrée présent en DB',
+      icon: <FileText className="h-4 w-4" />,
+      status: dbProof === undefined ? 'idle' : hasRun ? 'proven' : 'partial',
+      result: lastRun
+        ? `Run ${lastRun.status} — ${new Date(lastRun.requested_at).toLocaleString('fr-FR')}`
+        : 'Aucun run — créez un import via /runs',
+    },
+    {
+      label: 'Findings normalisés (DB)',
+      description: 'Résultats stockés post-normalisation',
+      icon: <Shield className="h-4 w-4" />,
+      status: dbProof === undefined ? 'idle' : findingsCount > 0 ? 'proven' : 'partial',
+      result: dbProof !== undefined ? `${findingsCount} finding(s) en base` : undefined,
+    },
+    {
+      label: 'Synthèse Executive (portfolio_summaries)',
+      description: 'generate-portfolio-summary exécuté et persisté',
+      icon: <BarChart3 className="h-4 w-4" />,
+      status: portfolioStatus !== 'idle' ? portfolioStatus : dbProof === undefined ? 'idle' : hasPortfolio ? 'proven' : 'partial',
+      result: portfolioResult ?? (hasPortfolio
+        ? `✓ Dernière le ${new Date(portfolios[0].created_at).toLocaleString('fr-FR')} · ${portfolios[0].model_name ?? 'fallback'}`
+        : 'Non généré — cliquez sur "Tester"'),
+    },
+    {
+      label: 'Evidence Chain intègre',
+      description: 'verify-evidence-chain — chaîne SHA-256 vérifiée',
+      icon: <Hash className="h-4 w-4" />,
+      status: chainStatus !== 'idle' ? chainStatus : dbProof === undefined ? 'idle' : evidenceCount > 0 ? 'proven' : 'partial',
+      result: chainResult ?? (evidenceCount > 0
+        ? `${evidenceCount} entrée(s) · tête seq #${dbProof?.lastEvidenceSeq ?? 0} · ${dbProof?.lastEvidenceHash?.slice(0, 12) ?? ''}…`
+        : 'Aucune entrée — cliquez sur "Vérifier"'),
+    },
+    {
+      label: 'Sortie métier visible',
+      description: 'Report Studio — brief exploitable par un client ou admin',
+      icon: <Brain className="h-4 w-4" />,
+      status: dbProof === undefined ? 'idle' : hasPortfolio ? 'proven' : 'partial',
+      result: hasPortfolio
+        ? `✓ ${portfolios.length} synthèse(s) disponible(s) dans Report Studio`
+        : 'Non disponible — générez une synthèse',
+    },
+  ];
+
+  const provenCount = steps.filter(s => s.status === 'proven').length;
+  const overallStatus: ProofStatus =
+    provenCount === steps.length ? 'proven'
+    : provenCount >= 3 ? 'partial'
+    : provenCount >= 1 ? 'partial'
+    : 'idle';
+
+  return (
+    <Card className="border-2 border-primary/30 bg-primary/2">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FlaskConical className="h-5 w-5 text-primary" />
+            Preuve du Cœur Produit — Matrice Live
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <ProofStatusBadge status={overallStatus} />
+            <span className="text-sm font-bold text-muted-foreground">{provenCount}/{steps.length} prouvés</span>
+          </div>
+        </div>
+        <CardDescription>
+          Vérification de bout en bout · Run → Findings → Synthèse → Evidence Chain → Sortie métier
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-center justify-between gap-4 px-6 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`shrink-0 ${
+                  step.status === 'proven' ? 'text-success' :
+                  step.status === 'partial' ? 'text-warning' :
+                  step.status === 'failed' ? 'text-destructive' :
+                  step.status === 'running' ? 'text-primary animate-pulse' :
+                  'text-muted-foreground'
+                }`}>
+                  {step.status === 'proven' ? <CheckCircle2 className="h-5 w-5" /> :
+                   step.status === 'partial' ? <AlertTriangle className="h-5 w-5" /> :
+                   step.status === 'failed' ? <XCircle className="h-5 w-5" /> :
+                   step.status === 'running' ? <Loader2 className="h-5 w-5 animate-spin" /> :
+                   <div className="h-5 w-5 rounded-full border-2 border-muted" />}
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-muted-foreground shrink-0">{step.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{step.label}</p>
+                    <p className="text-xs text-muted-foreground/70">{step.description}</p>
+                    {step.result && (
+                      <p className="text-xs font-mono text-muted-foreground mt-0.5 truncate">{step.result}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <ProofStatusBadge status={step.status} />
+            </div>
+          ))}
+        </div>
+
+        {/* Smoke test buttons */}
+        <div className="flex flex-wrap gap-2 px-6 py-4 border-t border-border bg-muted/20">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleSmokePortfolio}
+            disabled={!orgId || portfolioStatus === 'running'}
+            className="gap-1.5 text-xs"
+          >
+            {portfolioStatus === 'running'
+              ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Génération…</>
+              : <><Play className="h-3.5 w-3.5" />Tester generate-portfolio-summary</>}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleSmokeChain}
+            disabled={!orgId || chainStatus === 'running'}
+            className="gap-1.5 text-xs"
+          >
+            {chainStatus === 'running'
+              ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Vérification…</>
+              : <><Hash className="h-3.5 w-3.5" />Vérifier la chaîne d'évidence</>}
+          </Button>
+          <Button size="sm" variant="ghost" asChild className="text-xs">
+            <Link to="/report-studio"><BarChart3 className="h-3.5 w-3.5 mr-1" />Report Studio<ExternalLink className="h-3 w-3 ml-1" /></Link>
+          </Button>
+          <Button size="sm" variant="ghost" asChild className="text-xs">
+            <Link to="/evidence"><Link2 className="h-3.5 w-3.5 mr-1" />Evidence Vault<ExternalLink className="h-3 w-3 ml-1" /></Link>
+          </Button>
+        </div>
+
+        {/* Honest state summary */}
+        <div className="px-6 py-3 border-t border-border bg-muted/10">
+          <p className="text-[10px] text-muted-foreground font-mono">
+            {overallStatus === 'proven'
+              ? '✓ Scénario nominal complet prouvé — moteur opérationnel bout-en-bout'
+              : overallStatus === 'partial'
+              ? `⚠ Partiel — ${provenCount}/${steps.length} étapes prouvées · Cliquez sur "Tester" pour valider les étapes manquantes`
+              : '○ Non testé — cliquez sur les boutons de test pour prouver le cœur produit'}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function AdminReadiness() {
   const { organization } = useAuth();
