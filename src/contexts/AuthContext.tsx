@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { bootstrapOwner } from '@/lib/bootstrap';
 import type { Profile, UserRole, Organization, AppRole } from '@/types/database';
 
 interface AuthContextType {
@@ -29,45 +30,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = useCallback(async (currentUser: User) => {
     try {
-      // Fetch profile
+      // Use maybeSingle to avoid 406 when no profile row exists yet
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (profileData) {
-        setProfile(profileData as Profile);
-        
-        // Fetch organization if user has one
-        if (profileData.organization_id) {
-          const { data: orgData } = await supabase
-            .from('organizations')
-            .select('*')
-            .eq('id', profileData.organization_id)
-            .single();
-          
-          if (orgData) {
-            setOrganization(orgData as Organization);
-          }
-          
-          // Fetch user roles
-          const { data: rolesData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', userId)
-            .eq('organization_id', profileData.organization_id);
-          
-          if (rolesData) {
-            setRoles(rolesData.map(r => r.role as AppRole));
-          }
+        .eq('id', currentUser.id)
+        .maybeSingle();
+
+      if (!profileData) {
+        // No profile → run bootstrap (idempotent)
+        // This handles the case where user authenticated via persistent session
+        // but bootstrapOwner was never called (e.g. first session after DB reset)
+        try {
+          await bootstrapOwner(currentUser.id, currentUser.email ?? '');
+        } catch (bootstrapErr) {
+          console.warn('[AuthContext] Bootstrap warning (non-fatal):', bootstrapErr);
         }
+        // Re-fetch after bootstrap
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .maybeSingle();
+        if (newProfile) {
+          setProfile(newProfile as Profile);
+          await fetchOrgAndRoles(currentUser.id, newProfile.organization_id);
+        }
+        return;
       }
+
+      setProfile(profileData as Profile);
+      await fetchOrgAndRoles(currentUser.id, profileData.organization_id);
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('[AuthContext] Error fetching user data:', error);
     }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchOrgAndRoles = async (userId: string, orgId: string | null) => {
+    if (!orgId) return;
+
+    const [orgResult, rolesResult] = await Promise.all([
+      supabase.from('organizations').select('*').eq('id', orgId).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', userId).eq('organization_id', orgId),
+    ]);
+
+    if (orgResult.data) setOrganization(orgResult.data as Organization);
+    if (rolesResult.data) setRoles(rolesResult.data.map(r => r.role as AppRole));
   };
 
   useEffect(() => {
@@ -76,11 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
-        // Defer data fetching to avoid deadlock
+
         if (session?.user) {
+          // Defer to avoid Supabase deadlock
           setTimeout(() => {
-            fetchUserData(session.user.id);
+            fetchUserData(session.user);
           }, 0);
         } else {
           setProfile(null);
@@ -96,70 +106,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserData(session.user.id);
+        fetchUserData(session.user);
       }
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchUserData]);
 
   const signUp = async (email: string, password: string, fullName: string, orgName: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName,
-            org_name: orgName,
-          }
-        }
+          data: { full_name: fullName, org_name: orgName },
+        },
       });
-      
+
       if (error) throw error;
-      
+
       if (data.user) {
-        // Create organization
-        const orgSlug = orgName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .insert({ name: orgName, slug: `${orgSlug}-${Date.now()}` })
-          .select()
-          .single();
-        
-        if (orgError) throw orgError;
-        
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: email,
-            full_name: fullName,
-            organization_id: orgData.id,
-          });
-        
-        if (profileError) throw profileError;
-        
-        // Assign admin role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            organization_id: orgData.id,
-            role: 'admin',
-          });
-        
-        if (roleError) throw roleError;
-        
-        // Refresh user data
-        await fetchUserData(data.user.id);
+        // Use bootstrapOwner for consistent setup
+        await bootstrapOwner(data.user.id, email);
+        await fetchUserData(data.user);
       }
-      
+
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -168,11 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       return { error: null };
     } catch (error) {
@@ -188,9 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      await fetchUserData(user.id);
-    }
+    if (user) await fetchUserData(user);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
