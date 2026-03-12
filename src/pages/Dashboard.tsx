@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Shield, 
   AlertTriangle, 
@@ -7,8 +7,13 @@ import {
   Server,
   ArrowRight,
   ListTodo,
-  FlaskConical,
+  Zap,
+  FileText,
+  BarChart3,
+  Play,
+  Loader2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,34 +22,40 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useFindingCounts, useTopPriorityFindings } from '@/hooks/useFindings';
 import { useTaskCounts } from '@/hooks/useRemediation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { generatePortfolioSummary } from '@/lib/api-client';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { organization, profile } = useAuth();
   const { data: findingCounts } = useFindingCounts();
   const { data: topFindings = [] } = useTopPriorityFindings(5);
   const { data: taskCounts } = useTaskCounts();
+
+  // Pipeline live proof state
+  const [pipelineRunning, setPipelineRunning] = useState(false);
+  const [pipelineState, setPipelineState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [pipelineMsg, setPipelineMsg] = useState<string | null>(null);
 
   // Fetch compliance stats
   const { data: complianceStats } = useQuery({
     queryKey: ['compliance-stats', organization?.id],
     queryFn: async () => {
       if (!organization?.id) return null;
-      
       const { data: mappings } = await supabase
         .from('control_mappings')
         .select('status')
         .eq('organization_id', organization.id);
-      
       const { count: totalControls } = await supabase
         .from('compliance_controls')
         .select('*', { count: 'exact', head: true });
-      
       const implemented = mappings?.filter(m => m.status === 'implemented').length ?? 0;
       const inProgress = mappings?.filter(m => m.status === 'in_progress').length ?? 0;
-      
       return {
         total: totalControls ?? 0,
         implemented,
@@ -68,6 +79,62 @@ export default function Dashboard() {
     },
     enabled: !!organization?.id,
   });
+
+  // Pipeline proof status (DB state)
+  const { data: pipelineProof, refetch: refetchProof } = useQuery({
+    queryKey: ['dashboard-pipeline-proof', organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return null;
+      const [runsRes, findingsRes, portfolioRes] = await Promise.all([
+        supabase.from('tool_runs').select('id, status', { count: 'exact', head: true }).eq('organization_id', organization.id),
+        supabase.from('findings').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id),
+        supabase.from('portfolio_summaries').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id),
+      ]);
+      return {
+        runs: runsRes.count ?? 0,
+        findings: findingsRes.count ?? 0,
+        summaries: portfolioRes.count ?? 0,
+      };
+    },
+    enabled: !!organization?.id,
+  });
+
+  // Quick E2E pipeline launcher (uses seed path for speed)
+  const handleQuickPipeline = async () => {
+    if (!organization?.id || pipelineRunning) return;
+    setPipelineRunning(true);
+    setPipelineState('running');
+    setPipelineMsg('Injection du scénario [DEMO]…');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Session expirée');
+      const tok = session.access_token;
+
+      // Step 1: seed demo run
+      const seedRes = await fetch(`${SUPABASE_URL}/functions/v1/seed-demo-run`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+        body: JSON.stringify({ organization_id: organization.id }),
+      });
+      const seedJson = await seedRes.json();
+      if (!seedRes.ok || !seedJson.tool_run_id) throw new Error(seedJson?.error ?? `HTTP ${seedRes.status}`);
+      setPipelineMsg(`Run créé (${seedJson.findings_inserted} findings). Génération synthèse…`);
+
+      // Step 2: portfolio summary
+      await generatePortfolioSummary(organization.id, 'executive_brief');
+
+      setPipelineState('done');
+      setPipelineMsg(`✓ ${seedJson.findings_inserted} findings [DEMO] en DB · synthèse executive générée · pipeline prouvé`);
+      refetchProof();
+      qc.invalidateQueries({ queryKey: ['findings'] });
+      qc.invalidateQueries({ queryKey: ['finding-counts'] });
+    } catch (err) {
+      setPipelineState('error');
+      setPipelineMsg(err instanceof Error ? err.message : 'Erreur');
+    } finally {
+      setPipelineRunning(false);
+    }
+  };
 
   const criticalHighCount = (findingCounts?.critical ?? 0) + (findingCounts?.high ?? 0);
   const riskScore = Math.max(0, 100 - (criticalHighCount * 5));
@@ -194,9 +261,9 @@ export default function Dashboard() {
               <div className="text-center py-8 text-muted-foreground">
                 <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-success" />
                 <p className="mb-4">Aucun finding critique ou élevé à traiter</p>
-                <Button variant="outline" size="sm" onClick={() => navigate('/demo')} className="gap-2">
-                  <FlaskConical className="h-4 w-4 text-warning" />
-                  Voir une démonstration
+                <Button variant="outline" size="sm" onClick={() => navigate('/tools')} className="gap-2">
+                  <Zap className="h-4 w-4" />
+                  Importer un scan
                 </Button>
               </div>
             ) : (
@@ -323,6 +390,110 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Live Proof Panel — Pipeline Produit */}
+        <Card className={`border-2 ${
+          pipelineState === 'done' ? 'border-success/50 bg-success/[0.02]' :
+          pipelineState === 'error' ? 'border-destructive/50 bg-destructive/[0.02]' :
+          pipelineState === 'running' ? 'border-primary/50' :
+          (pipelineProof?.runs ?? 0) > 0 ? 'border-success/30 bg-success/[0.015]' :
+          'border-primary/30'
+        }`}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Preuve Produit Live
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                {pipelineState === 'idle' && (pipelineProof?.runs ?? 0) === 0 && (
+                  <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted">NON LANCÉ</Badge>
+                )}
+                {pipelineState === 'idle' && (pipelineProof?.runs ?? 0) > 0 && (
+                  <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">✓ PIPELINE ACTIF</Badge>
+                )}
+                {pipelineState === 'running' && (
+                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">EN COURS…</Badge>
+                )}
+                {pipelineState === 'done' && (
+                  <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">✓ PROUVÉ</Badge>
+                )}
+                {pipelineState === 'error' && (
+                  <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30">ÉCHEC</Badge>
+                )}
+              </div>
+            </div>
+            <CardDescription>
+              État réel du pipeline : runs · findings · synthèse executive
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* DB state indicators */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Runs en DB</p>
+                <p className={`text-2xl font-black ${(pipelineProof?.runs ?? 0) > 0 ? 'text-success' : 'text-muted-foreground'}`}>
+                  {pipelineProof?.runs ?? 0}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Findings normalisés</p>
+                <p className={`text-2xl font-black ${(pipelineProof?.findings ?? 0) > 0 ? 'text-success' : 'text-muted-foreground'}`}>
+                  {pipelineProof?.findings ?? 0}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Synthèses IA</p>
+                <p className={`text-2xl font-black ${(pipelineProof?.summaries ?? 0) > 0 ? 'text-success' : 'text-muted-foreground'}`}>
+                  {pipelineProof?.summaries ?? 0}
+                </p>
+              </div>
+            </div>
+
+            {/* Pipeline result message */}
+            {pipelineMsg && (
+              <div className={`rounded-lg border px-3 py-2 text-xs font-mono ${
+                pipelineState === 'done' ? 'border-success/30 bg-success/5 text-success' :
+                pipelineState === 'error' ? 'border-destructive/30 bg-destructive/5 text-destructive' :
+                'border-primary/20 bg-primary/5 text-primary'
+              }`}>
+                {pipelineRunning && <Loader2 className="h-3 w-3 animate-spin inline mr-1.5" />}
+                {pipelineMsg}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={handleQuickPipeline}
+                disabled={!organization?.id || pipelineRunning}
+                className="gap-1.5"
+              >
+                {pipelineRunning
+                  ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
+                  : <><Play className="h-4 w-4" />Lancer la preuve live</>}
+              </Button>
+              {(pipelineProof?.summaries ?? 0) > 0 && (
+                <Button size="sm" variant="outline" asChild className="gap-1.5">
+                  <Link to="/report-studio">
+                    <BarChart3 className="h-4 w-4" />Voir la synthèse
+                  </Link>
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" asChild className="gap-1.5 text-xs">
+                <Link to="/admin-readiness">
+                  <FileText className="h-3.5 w-3.5" />Preuve complète →
+                </Link>
+              </Button>
+            </div>
+            {(pipelineProof?.runs ?? 0) === 0 && pipelineState === 'idle' && (
+              <p className="text-[10px] font-mono text-muted-foreground">
+                Aucun run en DB · Cliquez "Lancer la preuve live" pour exécuter le pipeline avec des données [DEMO] fictives et prouver la chaîne de valeur
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
       </div>
     </AppLayout>
   );
