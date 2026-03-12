@@ -444,10 +444,38 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
     return json;
   };
 
-  // Route portfolio summary through Core API if configured, fallback to Edge Function
+  // ── Sovereign external routing — PRODUCTION ENFORCED ──────────────────────
+  // In prod: Core API is MANDATORY. No fallback. Blocking error if not configured or fails.
+  // In dev: fallback to internal Edge Function allowed.
+  const IS_PROD = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) !== 'dev' && !import.meta.env.DEV;
+
   const callPortfolioSummary = async (body: Record<string, unknown>, tok: string) => {
     const coreUrl = (import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '') || null;
-    if (coreUrl && import.meta.env.VITE_PUBLIC_APP_ENV !== 'dev' && !import.meta.env.DEV) {
+
+    if (IS_PROD) {
+      // PRODUCTION: Core API is mandatory — no fallback allowed
+      if (!coreUrl) {
+        throw new Error(
+          '🔒 Souveraineté externe requise — configurez VITE_CORE_API_URL ou core_api_url dans /settings/revenue'
+        );
+      }
+      const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(15000),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          `🔒 Core API externe inaccessible (HTTP ${res.status}) — souveraineté externe requise en prod. Vérifiez ${coreUrl}`
+        );
+      }
+      return { ...json, _routed_to: 'external' };
+    }
+
+    // DEV: try Core API first, fallback to internal Edge Function
+    if (coreUrl) {
       try {
         const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
           method: 'POST',
@@ -460,7 +488,7 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
           return { ...json, _routed_to: 'external' };
         }
       } catch {
-        // fallback to internal Edge Function
+        // fallback to internal Edge Function in dev only
       }
     }
     return callEF('generate-portfolio-summary', body, tok);
