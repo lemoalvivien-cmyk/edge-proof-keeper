@@ -501,6 +501,41 @@ export async function correlateRisks(orgId: string): Promise<CorrelateRisksResul
   return callEdgeFunction<CorrelateRisksResult>('correlate-risks', { organization_id: orgId });
 }
 
+export async function getRiskById(riskId: string): Promise<Risk | null> {
+  const { data, error } = await supabase
+    .from('risk_register')
+    .select('*, assets:asset_id(name, asset_type, identifier)')
+    .eq('id', riskId)
+    .maybeSingle();
+  if (error) throw new Error(`getRiskById error: ${error.message}`);
+  return data as unknown as Risk | null;
+}
+
+export async function getRemediationActions(
+  orgId: string,
+  options?: { status?: string; priority?: string; risk_id?: string; limit?: number }
+): Promise<RemediationAction[]> {
+  let q = supabase
+    .from('remediation_actions')
+    .select('*, risk_register:risk_id(id, title, risk_level, score)')
+    .eq('organization_id', orgId)
+    .order('priority', { ascending: true })
+    .order('due_date', { ascending: true, nullsFirst: false })
+    .limit(options?.limit ?? 200);
+
+  if (options?.status)   q = q.eq('status', options.status);
+  if (options?.priority) q = q.eq('priority', options.priority);
+  if (options?.risk_id)  q = q.eq('risk_id', options.risk_id);
+
+  const { data, error } = await q;
+  if (error) throw new Error(`getRemediationActions error: ${error.message}`);
+  return (data ?? []) as unknown as RemediationAction[];
+}
+
+export async function buildRemediationQueue(orgId: string): Promise<BuildRemediationQueueResult> {
+  return callEdgeFunction<BuildRemediationQueueResult>('build-remediation-queue', { organization_id: orgId });
+}
+
 export async function analyzeSignalWithAI(
   orgId: string,
   signalId: string
