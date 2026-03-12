@@ -48,7 +48,9 @@ interface RuntimeConfigRow {
   support_email: string | null;
   reports_mode: string;
   sales_mode: string;
+  external_sovereign_confirmed_at?: string | null;
 }
+
 
 interface CommercialConfig {
   booking_url: string | null;
