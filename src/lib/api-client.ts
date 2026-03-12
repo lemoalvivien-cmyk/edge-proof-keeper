@@ -298,11 +298,7 @@ export async function getSignals(
 
   const { data, error } = await query;
   if (error) throw new Error(`getSignals error: ${error.message}`);
-  // Map signal_refs → references for type compatibility
-  return (data ?? []).map(row => ({
-    ...row,
-    references: (row as Record<string, unknown>).signal_refs ?? [],
-  })) as unknown as Signal[];
+  return normalizeSignalRows((data ?? []) as Record<string, unknown>[]);
 }
 
 export async function getRisks(
