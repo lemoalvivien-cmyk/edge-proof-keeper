@@ -130,6 +130,8 @@ export type Database = {
           booking_url: string | null
           core_api_url: string | null
           created_at: string
+          demo_data_loaded: boolean
+          demo_data_loaded_at: string | null
           enterprise_checkout_url: string | null
           id: string
           organization_id: string
@@ -145,6 +147,8 @@ export type Database = {
           booking_url?: string | null
           core_api_url?: string | null
           created_at?: string
+          demo_data_loaded?: boolean
+          demo_data_loaded_at?: string | null
           enterprise_checkout_url?: string | null
           id?: string
           organization_id: string
@@ -160,6 +164,8 @@ export type Database = {
           booking_url?: string | null
           core_api_url?: string | null
           created_at?: string
+          demo_data_loaded?: boolean
+          demo_data_loaded_at?: string | null
           enterprise_checkout_url?: string | null
           id?: string
           organization_id?: string
