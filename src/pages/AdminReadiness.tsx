@@ -2886,6 +2886,10 @@ function RlsSecurityPanel({ orgId }: { orgId?: string }) {
 export default function AdminReadiness() {
   const { organization, user, isLoading: authLoading, signOut } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [autoSeedRunning, setAutoSeedRunning] = useState(false);
+  const [autoSeedDone, setAutoSeedDone] = useState(false);
+  const autoSeedFired = useRef(false);
+  const qcMain = useQueryClient();
 
   const runtime = useRuntimeConfig();
   const externalBackendActive = Boolean(runtime.coreApiUrl);
@@ -2894,6 +2898,86 @@ export default function AdminReadiness() {
   const proActive             = Boolean(runtime.proCheckoutUrl);
   const enterpriseActive      = Boolean(runtime.enterpriseCheckoutUrl);
   const configSource          = runtime.configSource;
+
+  // ── Check demo_data_loaded flag ────────────────────────────────────────────
+  const { data: runtimeConfigRow, isLoading: rcLoading } = useQuery({
+    queryKey: ['runtime-config-demo-flag', organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from('app_runtime_config')
+        .select('id, demo_data_loaded, demo_data_loaded_at')
+        .eq('organization_id', organization.id)
+        .maybeSingle();
+      return data ?? null;
+    },
+    enabled: !!organization?.id,
+    staleTime: 60_000,
+  });
+
+  // ── Auto-seed: fires once per org when demo_data_loaded is false/absent ───
+  useEffect(() => {
+    if (autoSeedFired.current) return;
+    if (!organization?.id || !user?.id) return;
+    if (rcLoading) return;
+    // If flag already true → skip
+    if (runtimeConfigRow?.demo_data_loaded === true) {
+      setAutoSeedDone(true);
+      return;
+    }
+
+    autoSeedFired.current = true;
+    setAutoSeedRunning(true);
+
+    const runAutoSeed = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+        const tok = session.access_token;
+        const orgId = organization.id;
+
+        const callEF = async (fn: string, body: Record<string, unknown>) => {
+          const res = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/${fn}`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY_FRONT },
+            body: JSON.stringify(body),
+          });
+          return res.json().catch(() => ({}));
+        };
+
+        // Run all 6 pipeline steps silently
+        await callEF('seed-minimal-data', { organization_id: orgId });
+        await callEF('seed-demo-run', { organization_id: orgId });
+        await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'executive_brief' });
+        await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'technical_brief' });
+        await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'weekly_watch_brief' });
+        await callEF('evaluate-alert-rules', { organization_id: orgId });
+
+        // Persist flag — upsert app_runtime_config
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any)
+          .from('app_runtime_config')
+          .upsert(
+            { organization_id: orgId, demo_data_loaded: true, demo_data_loaded_at: new Date().toISOString() },
+            { onConflict: 'organization_id' }
+          );
+
+        setAutoSeedDone(true);
+        setRefreshKey(k => k + 1);
+        qcMain.invalidateQueries({ queryKey: ['runtime-config-demo-flag', orgId] });
+        qcMain.invalidateQueries({ queryKey: ['sovereign-db-stats', orgId] });
+        qcMain.invalidateQueries({ queryKey: ['decision-layer-stats', orgId] });
+        qcMain.invalidateQueries({ queryKey: ['core-proof-db', orgId] });
+      } catch (_err) {
+        // Silent failure — user can manually trigger via button
+      } finally {
+        setAutoSeedRunning(false);
+      }
+    };
+
+    runAutoSeed();
+  }, [organization?.id, user?.id, rcLoading, runtimeConfigRow?.demo_data_loaded, qcMain]);
 
   const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: ['platform-health-readiness', organization?.id, refreshKey],
