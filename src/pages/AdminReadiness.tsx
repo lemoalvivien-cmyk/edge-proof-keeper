@@ -444,10 +444,38 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
     return json;
   };
 
-  // Route portfolio summary through Core API if configured, fallback to Edge Function
+  // ── Sovereign external routing — PRODUCTION ENFORCED ──────────────────────
+  // In prod: Core API is MANDATORY. No fallback. Blocking error if not configured or fails.
+  // In dev: fallback to internal Edge Function allowed.
+  const IS_PROD = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) !== 'dev' && !import.meta.env.DEV;
+
   const callPortfolioSummary = async (body: Record<string, unknown>, tok: string) => {
     const coreUrl = (import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '') || null;
-    if (coreUrl && import.meta.env.VITE_PUBLIC_APP_ENV !== 'dev' && !import.meta.env.DEV) {
+
+    if (IS_PROD) {
+      // PRODUCTION: Core API is mandatory — no fallback allowed
+      if (!coreUrl) {
+        throw new Error(
+          '🔒 Souveraineté externe requise — configurez VITE_CORE_API_URL ou core_api_url dans /settings/revenue'
+        );
+      }
+      const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(15000),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          `🔒 Core API externe inaccessible (HTTP ${res.status}) — souveraineté externe requise en prod. Vérifiez ${coreUrl}`
+        );
+      }
+      return { ...json, _routed_to: 'external' };
+    }
+
+    // DEV: try Core API first, fallback to internal Edge Function
+    if (coreUrl) {
       try {
         const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
           method: 'POST',
@@ -460,7 +488,7 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
           return { ...json, _routed_to: 'external' };
         }
       } catch {
-        // fallback to internal Edge Function
+        // fallback to internal Edge Function in dev only
       }
     }
     return callEF('generate-portfolio-summary', body, tok);
@@ -769,16 +797,25 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   // Internal sovereign = Edge Functions opérationnel + données DB réelles + flag
   const internalSovereign = demoDataLoaded === true || (hasRealData && (dbStats?.portfolios ?? 0) > 0);
 
+  // App env mode
+  const isDev = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) === 'dev'
+    || import.meta.env.DEV;
+  const isProd = !isDev;
+
+  // In PROD: external sovereign is MANDATORY — no internal fallback accepted
+  // In DEV: internal fallback is acceptable
+  const isSovereign100  = isProd
+    ? externalSovereign                         // prod: only external counts
+    : (externalSovereign || internalSovereign); // dev: either is ok
+
   // Badge priority: external > internal
-  const isSovereign100  = externalSovereign || internalSovereign;
   const sovereignMode   = externalConfirmed ? 'EXTERNE ✓ PING OK'
     : coreConfigured ? 'EXTERNE (ping requis)'
     : internalSovereign ? 'interne + données réelles'
     : null;
 
-  // App env mode
-  const isDev = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) === 'dev'
-    || import.meta.env.DEV;
+  // Prod blocking: Core API not configured at all
+  const prodFallbackBlocked = isProd && !coreConfigured;
 
   // Items definition (dedup — keep only the new version)
   const sovereignItems = [
@@ -787,19 +824,26 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
       icon: <Rocket className="h-4 w-4" />,
       status: (coreConfigured
         ? (pingState === 'ok' ? 'ok' : pingState === 'fail' ? 'fail' : 'warn')
-        : internalSovereign ? 'ok' : 'warn') as Status,
+        : isProd ? 'fail' : 'warn') as Status,
       detail: coreConfigured
         ? pingResult ?? `${coreApiUrl} — cliquez "Ping Core API" pour valider`
-        : internalSovereign
-        ? '✓ Non requis — souveraineté interne active'
-        : '○ Non configuré — ajoutez core_api_url dans /settings/revenue',
+        : isProd
+        ? '🔒 OBLIGATOIRE EN PROD — configurez core_api_url dans /settings/revenue'
+        : '○ Non configuré (optionnel en dev) — ajoutez core_api_url dans /settings/revenue',
       pingable: coreConfigured,
     },
     {
       label: 'Moteur interne (Edge Functions)',
       icon: <Server className="h-4 w-4" />,
-      status: (internalSovereign ? 'ok' : 'warn') as Status,
-      detail: internalSovereign
+      // In prod: internal fallback is BLOCKED — show fail if core not configured
+      status: (isProd
+        ? coreConfigured ? 'ok' : 'fail'
+        : internalSovereign ? 'ok' : 'warn') as Status,
+      detail: isProd
+        ? coreConfigured
+          ? `✓ Edge Functions actives en support · Core API externe obligatoire pour portfolio-summary`
+          : '🔒 Fallback interne désactivé en prod — Core API externe requis'
+        : internalSovereign
         ? `✓ ${dbStats?.portfolios ?? 0} brief(s) · ${dbStats?.risks ?? 0} risque(s) · ${dbStats?.alerts ?? 0} alerte(s) en DB`
         : hasRealData
         ? '⚠ Données présentes mais aucun briefing — lancez le pipeline'
@@ -849,22 +893,37 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   const okCount = sovereignItems.filter(i => i.status === 'ok').length;
   const score   = isSovereign100 ? 100 : Math.round((okCount / sovereignItems.length) * 100);
 
-  const badgeLabel = externalConfirmed
+  // Badge label: prod enforces OBLIGATOIRE wording
+  const badgeLabel = isProd
+    ? externalConfirmed
+      ? '✓ 100% SOUVERAIN EXTERNE OBLIGATOIRE'
+      : prodFallbackBlocked
+      ? '🔒 SOUVERAINETÉ EXTERNE REQUISE'
+      : '⚡ EXTERNE OBLIGATOIRE (ping requis)'
+    : externalConfirmed
     ? `✓ 100% SOUVERAIN EXTERNE${dbConfirmedAt ? ' (persisté)' : ''}`
     : coreConfigured
     ? '⚡ SOUVERAIN EXTERNE (ping requis)'
     : internalSovereign
-    ? '✓ 100% SOUVERAIN INTERNE'
+    ? '✓ 100% SOUVERAIN INTERNE (dev)'
     : '⚠ SOUVERAINETÉ PARTIELLE';
 
-
   return (
-    <Card className={`border-2 ${isSovereign100 ? 'border-success/50 bg-success/[0.01]' : 'border-primary/30 bg-primary/[0.01]'}`}>
+    <Card className={`border-2 ${
+      isSovereign100 ? 'border-success/50 bg-success/[0.01]'
+      : prodFallbackBlocked ? 'border-destructive/50 bg-destructive/[0.02]'
+      : 'border-primary/30 bg-primary/[0.01]'
+    }`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Rocket className="h-5 w-5 text-primary" />
             Sovereign Backend Status
+            {isProd && (
+              <Badge variant="outline" className="text-[10px] border-destructive/40 text-destructive bg-destructive/5 ml-1">
+                PROD — EXTERNE OBLIGATOIRE
+              </Badge>
+            )}
           </CardTitle>
           <div className="flex items-center gap-2">
             {coreConfigured && (
@@ -885,17 +944,22 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
               </Button>
             )}
             <Badge variant="outline" className={`text-xs font-bold ${
-              externalConfirmed
+              isSovereign100
                 ? 'border-success/40 text-success bg-success/5'
+                : prodFallbackBlocked
+                ? 'border-destructive/40 text-destructive bg-destructive/5'
                 : coreConfigured
                 ? 'border-primary/40 text-primary bg-primary/5'
-                : isSovereign100
-                ? 'border-success/40 text-success bg-success/5'
                 : 'border-warning/40 text-warning bg-warning/5'
             }`}>
               {badgeLabel}
             </Badge>
-            <span className={`text-xl font-black ${isSovereign100 ? 'text-success' : score >= 60 ? 'text-warning' : 'text-destructive'}`}>
+            <span className={`text-xl font-black ${
+              isSovereign100 ? 'text-success'
+              : prodFallbackBlocked ? 'text-destructive'
+              : score >= 60 ? 'text-warning'
+              : 'text-destructive'
+            }`}>
               {score}%
             </span>
           </div>
@@ -903,13 +967,40 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
         <CardDescription>
           {coreConfigured
             ? `Core API externe configuré${externalConfirmed ? ' — ping OK · 100% souverain externe' : ' — cliquez Ping pour confirmer la connectivité'}`
-            : 'Moteur interne (Edge Functions) · Core API externe optionnel · données DB réelles'}
-          {!coreConfigured && !isSovereign100 && (
-            <span className="ml-2 text-warning font-medium">· Seed automatique au chargement</span>
-          )}
+            : isProd
+            ? '🔒 PROD : fallback interne désactivé — configurez Core API URL dans /settings/revenue'
+            : 'Moteur interne (Edge Functions) · Core API externe optionnel en dev'}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
+
+        {/* ── RED BLOCKING WARNING in prod when Core API not configured ──────── */}
+        {prodFallbackBlocked && (
+          <div className="mx-6 mt-4 mb-2 rounded-lg border-2 border-destructive/60 bg-destructive/10 px-4 py-3 flex items-start gap-3">
+            <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-destructive">
+                🔒 FALLBACK INTERNE BLOQUÉ EN PRODUCTION
+              </p>
+              <p className="text-xs text-destructive/80 mt-1">
+                En mode production, tous les appels critiques (portfolio-summary, reports) nécessitent une Core API externe.
+                Aucun fallback vers les Edge Functions internes n'est autorisé.
+              </p>
+              <Button
+                size="sm"
+                variant="destructive"
+                asChild
+                className="mt-2 gap-1.5 h-7 text-xs"
+              >
+                <a href="/settings/revenue">
+                  <Settings className="h-3.5 w-3.5" />
+                  Configurer Core API URL → /settings/revenue
+                </a>
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="divide-y divide-border">
           {sovereignItems.map(item => (
             <div key={item.label} className="flex items-center justify-between gap-4 px-6 py-3">
@@ -956,6 +1047,8 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
           <p className="text-[10px] font-mono text-muted-foreground/70">
             {externalConfirmed
               ? `✓ SOUVERAINETÉ EXTERNE CONFIRMÉE${dbConfirmedAt ? ` · persisté le ${new Date(dbConfirmedAt).toLocaleString('fr-FR')}` : ''} · Core API joignable · RLS stricte · multi-tenant`
+              : prodFallbackBlocked
+              ? '🔒 PROD — fallback interne désactivé · configurez Core API pour débloquer'
               : isSovereign100
               ? '✓ SOUVERAINETÉ CONFIRMÉE — moteur opérationnel · données réelles · RLS stricte · multi-tenant'
               : 'Seed automatique actif — données DB réelles en cours de chargement…'}
