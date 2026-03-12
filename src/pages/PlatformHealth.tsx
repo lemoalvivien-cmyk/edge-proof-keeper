@@ -487,6 +487,9 @@ export default function PlatformHealth() {
         {/* ── Watch Brief ──────────────────────────────────────────────── */}
         <WatchBriefSection orgId={orgId} />
 
+        {/* ── Core Proof — Evidence Chain + Portfolio smoke test ─────────── */}
+        <CoreProofBlock orgId={orgId} />
+
         {/* DB Component detail */}
         {health?.components?.tables?.detail && (
           <Card>
