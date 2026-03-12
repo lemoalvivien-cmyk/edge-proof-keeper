@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CheckCircle2, Loader2, Shield, CalendarDays, FlaskConical, ArrowRight, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/tracking';
-import { getBookingUrl } from '@/lib/revenue-links';
+import { usePublicCta } from '@/hooks/usePublicCta';
 import { useNavigate } from 'react-router-dom';
 
 const SUPABASE_URL     = import.meta.env.VITE_SUPABASE_URL     as string;
@@ -58,7 +58,9 @@ function SuccessScreen({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
-  const bookingUrl = getBookingUrl();
+  // DB-aware booking URL via usePublicCta
+  const cta = usePublicCta();
+  const bookingUrl = cta.bookingUrl;
 
   return (
     <div className="py-6 space-y-6">
@@ -85,7 +87,7 @@ function SuccessScreen({
           Étapes suivantes
         </p>
 
-        {/* Primary — Booking (if configured) */}
+        {/* Primary — Booking (DB-aware: shown only if configured in runtime config) */}
         {bookingUrl && (
           <Button
             className="w-full gap-2 h-11 font-semibold neon-glow"

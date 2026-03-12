@@ -1,12 +1,15 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Shield, Check, ArrowRight, ArrowLeft, Zap, Lock, BarChart3, FileText, Users, RefreshCw, Globe, Rocket, Package } from "lucide-react";
+import { useState } from "react";
+import { Shield, Check, ArrowRight, ArrowLeft, Zap, Lock, BarChart3, FileText, Users, RefreshCw, Globe, Rocket, Package, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { FooterSection } from "@/components/landing/FooterSection";
+import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePublicCta } from "@/hooks/usePublicCta";
 
 const features = [
   {
@@ -91,6 +94,11 @@ const addons = [
 
 const Pricing = () => {
   const { user } = useAuth();
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+  const cta = usePublicCta();
+
+  const hasCheckout = Boolean(cta.checkoutUrls.starter);
+  const hasBooking  = Boolean(cta.bookingUrl);
 
   return (
     <div className="min-h-screen bg-background">
@@ -186,8 +194,8 @@ const Pricing = () => {
                       </p>
                     </div>
 
-                    {/* CTA */}
-                    <div className="space-y-4">
+                    {/* CTAs — fully DB-aware via usePublicCta */}
+                    <div className="space-y-3">
                       {user ? (
                         <Button 
                           size="lg" 
@@ -203,23 +211,63 @@ const Pricing = () => {
                         <Button 
                           size="lg" 
                           className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
-                          asChild
+                          disabled={cta.isLoading}
+                          onClick={() =>
+                            cta.handleCheckout('starter', {
+                              sourcePage: '/pricing',
+                              ctaOrigin: 'pricing_page_starter',
+                              onFallback: () => setDemoDialogOpen(true),
+                            })
+                          }
                         >
-                          <Link to="/auth">
-                            Se connecter
-                            <ArrowRight className="w-5 h-5 ml-2" />
-                          </Link>
+                          {hasCheckout ? (
+                            <>Commander — 490€ TTC / an <ArrowRight className="w-5 h-5 ml-2" /></>
+                          ) : hasBooking ? (
+                            <>Prendre rendez-vous <ArrowRight className="w-5 h-5 ml-2" /></>
+                          ) : (
+                            <>Demander l'accès <ArrowRight className="w-5 h-5 ml-2" /></>
+                          )}
+                        </Button>
+                      )}
+
+                      {!user && (
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          className="w-full h-12 text-base gap-2"
+                          disabled={cta.isLoading}
+                          onClick={() =>
+                            cta.handleDemoRequest({
+                              sourcePage: '/pricing',
+                              ctaOrigin: 'pricing_page_demo',
+                              onFallback: () => setDemoDialogOpen(true),
+                            })
+                          }
+                        >
+                          <CalendarDays className="w-4 h-4" />
+                          Parler à un expert
                         </Button>
                       )}
                       
-                      <div className="p-4 rounded-xl bg-primary/10 border border-primary/30 text-center">
-                        <p className="text-sm text-foreground font-medium">
-                          💳 Paiement via lien Stripe externe (V1)
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Paiement intégré prévu V2 (feature flag)
-                        </p>
-                      </div>
+                      {/* Runtime source indicator — visible, honest, testable */}
+                      {!cta.isLoading && (
+                        <div className="p-3 rounded-xl bg-muted/20 border border-border text-center space-y-1">
+                          {hasCheckout && (
+                            <p className="text-xs text-success">✓ Paiement direct activé (Stripe)</p>
+                          )}
+                          {!hasCheckout && hasBooking && (
+                            <p className="text-xs text-primary">📅 Prise de rendez-vous activée</p>
+                          )}
+                          {!hasCheckout && !hasBooking && (
+                            <p className="text-xs text-muted-foreground">
+                              Formulaire de demande (aucun lien commercial configuré)
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground/60">
+                            Source : {cta.configSource}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Trust badges */}
@@ -329,6 +377,13 @@ const Pricing = () => {
       </main>
 
       <FooterSection />
+
+      <DemoRequestDialog
+        open={demoDialogOpen}
+        onOpenChange={setDemoDialogOpen}
+        ctaOrigin="pricing_page_cta"
+        sourcePage="/pricing"
+      />
     </div>
   );
 };

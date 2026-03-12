@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, ArrowRight, Sparkles, FlaskConical, Upload, Calendar, CalendarDays } from "lucide-react";
+import { Shield, ArrowRight, Sparkles, FlaskConical, Upload, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import { trackEvent } from "@/lib/tracking";
-import { openBookingOrFallback } from "@/lib/revenue-links";
-
+import { usePublicCta } from "@/hooks/usePublicCta";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
@@ -22,6 +21,7 @@ const stagger = {
 export function HeroSection() {
   const navigate = useNavigate();
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+  const cta = usePublicCta();
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24">
@@ -75,7 +75,7 @@ export function HeroSection() {
             <span className="text-foreground">à votre Direction</span>
           </motion.h1>
 
-          {/* Value prop — 10 seconds comprehension */}
+          {/* Value prop */}
           <motion.p
             variants={fadeInUp}
             transition={{ duration: 0.5 }}
@@ -86,7 +86,7 @@ export function HeroSection() {
             <span className="text-foreground font-medium">Zéro jargon. 100% auditables.</span>
           </motion.p>
 
-          {/* 3 CTAs maximum */}
+          {/* CTAs — wired to runtime config (DB-aware via usePublicCta) */}
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.5 }}
@@ -106,7 +106,7 @@ export function HeroSection() {
               <ArrowRight className="w-5 h-5" />
             </Button>
 
-            {/* CTA 2 — Tester avec un fichier → demo (public) */}
+            {/* CTA 2 — Tester demo interactive */}
             <Button
               variant="outline"
               size="lg"
@@ -120,14 +120,19 @@ export function HeroSection() {
               Voir une démo interactive
             </Button>
 
-            {/* CTA 3 — Demander démo commerciale */}
+            {/* CTA 3 — Demander démo / booking — DB-aware via usePublicCta */}
             <Button
               variant="ghost"
               size="lg"
               className="h-13 px-6 text-base text-muted-foreground hover:text-foreground gap-2 w-full sm:w-auto"
+              disabled={cta.isLoading}
               onClick={() => {
                 trackEvent('cta_demander_demo', { source_page: '/', cta_origin: 'hero_ghost' });
-                openBookingOrFallback(() => setDemoDialogOpen(true));
+                cta.handleDemoRequest({
+                  sourcePage: '/',
+                  ctaOrigin: 'hero_ghost',
+                  onFallback: () => setDemoDialogOpen(true),
+                });
               }}
             >
               <CalendarDays className="w-5 h-5" />
