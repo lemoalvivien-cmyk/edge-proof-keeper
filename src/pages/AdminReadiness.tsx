@@ -51,6 +51,96 @@ interface CheckGroup {
   items: CheckItem[];
 }
 
+function RiskEngineSection({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
+  const { data: riskStats } = useQuery({
+    queryKey: ['risk-engine-stats', orgId, refreshKey],
+    queryFn: async () => {
+      if (!orgId) return null;
+      const [risksRes, actionsRes] = await Promise.all([
+        supabase.from('risk_register').select('status', { count: 'exact' }).eq('organization_id', orgId).in('status', ['open', 'in_treatment']),
+        supabase.from('remediation_actions').select('status', { count: 'exact' }).eq('organization_id', orgId).in('status', ['open', 'in_progress']),
+      ]);
+      return { openRisks: risksRes.count ?? 0, pendingActions: actionsRes.count ?? 0 };
+    },
+    enabled: !!orgId,
+  });
+
+  const engineItems = [
+    {
+      label: 'Edge Function correlate-risks',
+      icon: <Activity className="h-4 w-4" />,
+      status: 'ok' as Status,
+      detail: '✓ Déployée — regroupe signaux → risk_register (score, niveau, source_signal_ids)',
+      link: { href: '/risks', label: 'Voir les risques' },
+    },
+    {
+      label: 'Edge Function build-remediation-queue',
+      icon: <ListTodo className="h-4 w-4" />,
+      status: 'ok' as Status,
+      detail: '✓ Déployée — génère remediation_actions depuis les risques ouverts (idempotente)',
+      link: { href: '/remediation', label: 'Voir les actions' },
+    },
+    {
+      label: 'Risques ouverts',
+      icon: <Shield className="h-4 w-4" />,
+      status: riskStats !== undefined ? ((riskStats?.openRisks ?? 0) > 0 ? 'ok' : 'warn') as Status : 'unknown' as Status,
+      detail: riskStats !== null ? `${riskStats?.openRisks ?? 0} risques ouverts / en traitement` : '…',
+    },
+    {
+      label: 'Actions de remédiation',
+      icon: <ListTodo className="h-4 w-4" />,
+      status: 'ok' as Status,
+      detail: riskStats !== null ? `${riskStats?.pendingActions ?? 0} actions ouvertes / en cours` : '…',
+    },
+  ];
+
+  const engineOk = engineItems.filter(i => i.status === 'ok').length;
+  const engineScore = Math.round((engineOk / engineItems.length) * 100);
+
+  return (
+    <Card className="border-primary/20">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" />
+            Risk Engine
+          </CardTitle>
+          <span className={`text-xl font-black ${engineScore >= 80 ? 'text-success' : engineScore >= 60 ? 'text-warning' : 'text-destructive'}`}>
+            {engineScore}%
+          </span>
+        </div>
+        <CardDescription>Moteur de corrélation risques → remédiation</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+          {engineItems.map(item => (
+            <div key={item.label} className="flex items-center justify-between gap-4 px-6 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <StatusIcon status={item.status} />
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-muted-foreground shrink-0">{item.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{item.label}</p>
+                    <p className="text-xs text-muted-foreground/70 font-mono truncate">{item.detail}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <StatusBadge status={item.status} />
+                {item.link && (
+                  <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+                    <Link to={item.link.href}>{item.link.label}<ExternalLink className="h-3 w-3 ml-1" /></Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminReadiness() {
   const { organization } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
