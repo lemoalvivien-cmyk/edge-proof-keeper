@@ -3362,7 +3362,30 @@ export default function AdminReadiness() {
         )}
 
         {/* ── FULL PIPELINE LAUNCHER — bouton unique "Lancer le pipeline complet" ── */}
-        <FullPipelineLauncher orgId={organization?.id} onComplete={() => setRefreshKey(k => k + 1)} />
+        {/* Auto-seed indicator */}
+        {autoSeedRunning && (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-3 flex items-center gap-3">
+            <Loader2 className="h-4 w-4 text-primary animate-spin shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-primary">Initialisation automatique en cours…</p>
+              <p className="text-xs text-muted-foreground">Chargement des données démo (risks, alertes, briefs) — aucune action requise</p>
+            </div>
+          </div>
+        )}
+        {(autoSeedDone || runtimeConfigRow?.demo_data_loaded) && !autoSeedRunning && (
+          <div className="rounded-lg border border-success/40 bg-success/5 px-5 py-3 flex items-center gap-3">
+            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-success">Données démo chargées automatiquement</p>
+              <p className="text-xs text-muted-foreground">Risks · Alertes · Briefs · Platform Health — visibles immédiatement dans Report Studio et Platform Health</p>
+            </div>
+          </div>
+        )}
+        <FullPipelineLauncher
+          orgId={organization?.id}
+          onComplete={() => setRefreshKey(k => k + 1)}
+          demoAlreadyLoaded={autoSeedDone || runtimeConfigRow?.demo_data_loaded === true}
+        />
 
         {/* ── PREUVE FINALE LIVE — panneau de capture automatique ─────────── */}
         {/* Distinct des scénarios seedés · Polling automatique 15s · Honnête */}
