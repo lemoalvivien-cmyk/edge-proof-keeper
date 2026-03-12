@@ -1776,7 +1776,7 @@ function RlsSecurityPanel({ orgId }: { orgId?: string }) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function AdminReadiness() {
-  const { organization } = useAuth();
+  const { organization, user } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
 
   const runtime = useRuntimeConfig();
