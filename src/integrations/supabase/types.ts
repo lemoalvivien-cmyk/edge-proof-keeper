@@ -68,6 +68,62 @@ export type Database = {
           },
         ]
       }
+      app_runtime_config: {
+        Row: {
+          ai_gateway_url: string | null
+          booking_url: string | null
+          core_api_url: string | null
+          created_at: string
+          enterprise_checkout_url: string | null
+          id: string
+          organization_id: string
+          pro_checkout_url: string | null
+          reports_mode: string
+          sales_mode: string
+          starter_checkout_url: string | null
+          support_email: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_gateway_url?: string | null
+          booking_url?: string | null
+          core_api_url?: string | null
+          created_at?: string
+          enterprise_checkout_url?: string | null
+          id?: string
+          organization_id: string
+          pro_checkout_url?: string | null
+          reports_mode?: string
+          sales_mode?: string
+          starter_checkout_url?: string | null
+          support_email?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_gateway_url?: string | null
+          booking_url?: string | null
+          core_api_url?: string | null
+          created_at?: string
+          enterprise_checkout_url?: string | null
+          id?: string
+          organization_id?: string
+          pro_checkout_url?: string | null
+          reports_mode?: string
+          sales_mode?: string
+          starter_checkout_url?: string | null
+          support_email?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_runtime_config_org"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_type: string

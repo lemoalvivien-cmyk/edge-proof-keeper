@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +11,13 @@ import {
   generateExecutiveReport,
   generateTechnicalReport,
   isExternalBackendConfigured,
+  setRuntimeApiUrls,
   type ExecutiveReportResult,
   type TechnicalReportResult,
   type TechnicalFinding,
+  type ReportsMode,
 } from '@/lib/api-client';
+import { useRuntimeConfig } from '@/hooks/useRuntimeConfig';
 import { supabase } from '@/integrations/supabase/client';
 import {
   FileText,
@@ -30,7 +33,10 @@ import {
   Wrench,
   Server,
   ClipboardList,
+  Zap,
+  ExternalLink,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 type ReportStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -58,16 +64,29 @@ function RiskBadge({ level }: { level: string }) {
   );
 }
 
+function GeneratedByBadge({ by }: { by?: string }) {
+  if (!by) return null;
+  return (
+    <Badge variant="outline" className={`text-xs gap-1 ${by === 'external' ? 'border-success/40 text-success' : 'border-primary/40 text-primary'}`}>
+      <Zap className="h-3 w-3" />
+      {by === 'external' ? 'Backend externe' : 'Moteur interne'}
+    </Badge>
+  );
+}
+
 function ExecutiveReport({ data }: { data: ExecutiveReportResult }) {
   return (
     <div className="space-y-4 mt-4">
       <div className="rounded-lg border border-border bg-card p-5 space-y-3">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
             <FileText className="h-4 w-4 text-primary" />
             Résumé exécutif
           </h2>
-          <RiskBadge level={data.risk_level} />
+          <div className="flex items-center gap-2">
+            <RiskBadge level={data.risk_level} />
+            <GeneratedByBadge by={data.generated_by} />
+          </div>
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">{data.summary}</p>
       </div>
@@ -86,7 +105,7 @@ function ExecutiveReport({ data }: { data: ExecutiveReportResult }) {
             <ShieldAlert className="h-4 w-4 text-primary" />
             Priorités immédiates
           </h3>
-      <ul className="space-y-1.5">
+          <ul className="space-y-1.5">
             {data.top_priorities.map((p, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                 <span className="mt-0.5 h-4 w-4 rounded-full border border-primary/30 bg-primary/5 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
@@ -156,10 +175,13 @@ function TechnicalReport({ data }: { data: TechnicalReportResult }) {
   return (
     <div className="space-y-4 mt-4">
       <div className="rounded-lg border border-border bg-card p-5 space-y-2">
-        <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
-          <ListChecks className="h-4 w-4 text-primary" />
-          Résumé technique
-        </h2>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <ListChecks className="h-4 w-4 text-primary" />
+            Résumé technique
+          </h2>
+          <GeneratedByBadge by={data.generated_by} />
+        </div>
         <p className="text-sm text-muted-foreground leading-relaxed">{data.summary}</p>
       </div>
 
@@ -190,7 +212,30 @@ export default function ReportStudio() {
   const [executiveError, setExecutiveError] = useState<string | null>(null);
   const [technicalError, setTechnicalError] = useState<string | null>(null);
 
-  const backendConfigured = isExternalBackendConfigured();
+  const runtimeConfig = useRuntimeConfig();
+  const reportsMode: ReportsMode = runtimeConfig.reportsMode;
+  const externalBackendAvailable = Boolean(runtimeConfig.coreApiUrl) || isExternalBackendConfigured();
+
+  // Inject runtime URLs into api-client module
+  useEffect(() => {
+    setRuntimeApiUrls(runtimeConfig.coreApiUrl, runtimeConfig.aiGatewayUrl);
+  }, [runtimeConfig.coreApiUrl, runtimeConfig.aiGatewayUrl]);
+
+  // Derived mode labels
+  const modeLabel = {
+    external_only:      'Backend externe (obligatoire)',
+    internal_fallback:  'Fallback interne actif',
+    internal_only:      'Moteur interne (Edge Functions)',
+  }[reportsMode];
+
+  const modeVariant = reportsMode === 'external_only' && !externalBackendAvailable
+    ? 'destructive'
+    : reportsMode === 'internal_fallback'
+    ? 'warning'
+    : 'ok';
+
+  const canGenerate =
+    reportsMode !== 'external_only' || externalBackendAvailable;
 
   const getToken = async (): Promise<string | undefined> => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -211,7 +256,7 @@ export default function ReportStudio() {
     try {
       const token = await getToken();
       if (!token) throw new Error('Session expirée — veuillez vous reconnecter.');
-      const result = await generateExecutiveReport(toolRunId.trim(), token);
+      const result = await generateExecutiveReport(toolRunId.trim(), token, reportsMode);
       setExecutiveResult(result);
       setExecutiveStatus('success');
     } catch (err) {
@@ -231,7 +276,7 @@ export default function ReportStudio() {
     try {
       const token = await getToken();
       if (!token) throw new Error('Session expirée — veuillez vous reconnecter.');
-      const result = await generateTechnicalReport(toolRunId.trim(), token);
+      const result = await generateTechnicalReport(toolRunId.trim(), token, reportsMode);
       setTechnicalResult(result);
       setTechnicalStatus('success');
     } catch (err) {
@@ -244,24 +289,60 @@ export default function ReportStudio() {
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         {/* Header */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight">Report Studio</h1>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <FileText className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl font-bold tracking-tight">Report Studio</h1>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Génère les rapports DG/PDG et DSI pour votre Direction.
+            </p>
           </div>
-          <p className="text-muted-foreground text-sm">
-            Génère les rapports DG/PDG et DSI via votre backend externe.
-          </p>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={`text-xs gap-1 ${
+                modeVariant === 'ok' || modeVariant === 'warning'
+                  ? 'border-primary/40 text-primary'
+                  : 'border-destructive/40 text-destructive'
+              }`}
+            >
+              <Zap className="h-3 w-3" />
+              {modeLabel}
+            </Badge>
+          </div>
         </div>
 
-        {/* Backend config warning */}
-        {!backendConfigured && (
-          <Alert variant="default" className="border-warning/40 bg-warning/5">
-            <AlertTriangle className="h-4 w-4 text-warning" />
-            <AlertDescription className="text-warning-foreground">
-              <strong>Backend externe non configuré.</strong> Définissez{' '}
-              <code className="font-mono text-xs bg-muted px-1 rounded">VITE_CORE_API_URL</code> pour
-              activer la génération de rapports via votre proxy IA.
+        {/* Mode banner */}
+        {reportsMode === 'external_only' && !externalBackendAvailable && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Mode « external_only » actif mais backend externe non configuré.</strong>{' '}
+              <Link to="/settings/revenue" className="underline">Configurez l'URL du backend</Link>{' '}
+              ou changez le mode en <code className="font-mono text-xs bg-muted px-1 rounded">internal_fallback</code> dans Revenue Settings.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {reportsMode === 'internal_fallback' && !externalBackendAvailable && (
+          <Alert className="border-primary/30 bg-primary/5">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-foreground">
+              <strong>Mode fallback interne actif.</strong>{' '}
+              Les rapports sont générés par le moteur IA interne (Edge Functions Gemini).{' '}
+              Pour activer un backend externe, <Link to="/settings/revenue" className="underline">configurez l'URL</Link>.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {reportsMode === 'internal_only' && (
+          <Alert className="border-primary/30 bg-primary/5">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-foreground">
+              <strong>Moteur interne actif.</strong>{' '}
+              Les rapports sont générés directement via les Edge Functions Gemini. Aucun backend externe requis.
             </AlertDescription>
           </Alert>
         )}
@@ -305,13 +386,27 @@ export default function ReportStudio() {
           <CardContent className="flex flex-col gap-3">
             <Button
               onClick={handleGenerateExecutive}
-              disabled={!backendConfigured || !toolRunId || executiveStatus === 'loading'}
+              disabled={!canGenerate || !toolRunId || executiveStatus === 'loading'}
               className="w-full"
             >
               {executiveStatus === 'loading' ? (
                 <><Loader2 className="h-4 w-4 animate-spin mr-2" />Génération…</>
-              ) : 'Générer rapport DG / PDG'}
+              ) : canGenerate ? 'Générer rapport DG / PDG' : 'Backend non disponible'}
             </Button>
+
+            {!canGenerate && (
+              <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/30 border border-border">
+                <p className="text-xs text-muted-foreground">
+                  Configurez le backend ou changez le mode reporting.
+                </p>
+                <Button variant="ghost" size="sm" className="h-7 text-xs shrink-0" asChild>
+                  <Link to="/settings/revenue">
+                    Configurer
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            )}
 
             {executiveStatus === 'error' && executiveError && (
               <div className="flex items-start gap-2 text-sm text-destructive">
@@ -341,12 +436,12 @@ export default function ReportStudio() {
             <Button
               variant="outline"
               onClick={handleGenerateTechnical}
-              disabled={!backendConfigured || !toolRunId || technicalStatus === 'loading'}
+              disabled={!canGenerate || !toolRunId || technicalStatus === 'loading'}
               className="w-full"
             >
               {technicalStatus === 'loading' ? (
                 <><Loader2 className="h-4 w-4 animate-spin mr-2" />Génération…</>
-              ) : 'Générer rapport DSI'}
+              ) : canGenerate ? 'Générer rapport DSI' : 'Backend non disponible'}
             </Button>
 
             {technicalStatus === 'error' && technicalError && (
@@ -368,9 +463,11 @@ export default function ReportStudio() {
         <div className="flex gap-2 text-xs text-muted-foreground">
           <Info className="h-4 w-4 shrink-0 mt-0.5" />
           <p>
-            Ce studio appelle exclusivement <code className="font-mono">VITE_CORE_API_URL/v1/reports/*</code>.
-            Le frontend ne contacte jamais de fournisseur IA directement.
-            Votre backend proxy est responsable de la génération et du stockage.
+            Mode actif : <strong>{modeLabel}</strong>.{' '}
+            {reportsMode === 'internal_fallback' || reportsMode === 'internal_only'
+              ? 'Le moteur interne utilise les Edge Functions Gemini — aucune donnée ne quitte votre périmètre Lovable Cloud.'
+              : 'Le backend externe est responsable de la génération et du stockage des rapports.'}
+            {' '}<Link to="/settings/revenue" className="underline">Modifier les paramètres →</Link>
           </p>
         </div>
       </div>

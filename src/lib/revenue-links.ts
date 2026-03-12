@@ -1,21 +1,28 @@
 /**
  * revenue-links.ts
  * Single source of truth for all commercial URLs (booking, checkout).
- * Values come from Vite env variables — never hardcoded.
- * DB-level overrides are handled by useCommercialConfig (takes priority at runtime).
+ *
+ * Runtime priority (from useRuntimeConfig):
+ *   1. app_runtime_config DB row
+ *   2. commercial_config  DB row (legacy)
+ *   3. Vite env variables
+ *   4. safe null / fallback
+ *
+ * These helpers operate on env vars only (synchronous, no React context).
+ * For the full DB-aware config, use useRuntimeConfig() hook in components.
  *
  * Usage:
  *   import { getBookingUrl, getCheckoutUrl, openBookingOrFallback } from '@/lib/revenue-links';
  */
 
 export interface RevenueLinks {
-  bookingUrl: string | null;
-  starterCheckoutUrl: string | null;
-  proCheckoutUrl: string | null;
-  enterpriseCheckoutUrl: string | null;
+  bookingUrl:             string | null;
+  starterCheckoutUrl:     string | null;
+  proCheckoutUrl:         string | null;
+  enterpriseCheckoutUrl:  string | null;
 }
 
-/** Read all commercial URLs from env */
+/** Read all commercial URLs from env (synchronous fallback, no DB). */
 export function getRevenueLinks(): RevenueLinks {
   return {
     bookingUrl:             import.meta.env.VITE_BOOKING_URL             || null,
@@ -25,17 +32,17 @@ export function getRevenueLinks(): RevenueLinks {
   };
 }
 
-/** Convenience: booking URL only */
+/** Convenience: booking URL from env only */
 export function getBookingUrl(): string | null {
   return import.meta.env.VITE_BOOKING_URL || null;
 }
 
-/** Whether booking URL is configured */
+/** Whether booking URL is configured (env) */
 export function hasBookingUrl(): boolean {
   return Boolean(import.meta.env.VITE_BOOKING_URL);
 }
 
-/** Convenience: checkout by plan */
+/** Convenience: checkout by plan (env only) */
 export type PlanKey = 'starter' | 'pro' | 'enterprise';
 export function getCheckoutUrl(plan: PlanKey = 'starter'): string | null {
   const map: Record<PlanKey, string> = {
@@ -46,12 +53,12 @@ export function getCheckoutUrl(plan: PlanKey = 'starter'): string | null {
   return map[plan] || null;
 }
 
-/** Whether a specific plan's checkout URL is configured */
+/** Whether a specific plan's checkout URL is configured (env) */
 export function hasCheckoutUrl(plan: PlanKey): boolean {
   return Boolean(getCheckoutUrl(plan));
 }
 
-/** Whether any checkout URL is configured */
+/** Whether any checkout URL is configured (env) */
 export function hasAnyCheckout(): boolean {
   return !!(
     import.meta.env.VITE_STARTER_CHECKOUT_URL ||
@@ -61,11 +68,12 @@ export function hasAnyCheckout(): boolean {
 }
 
 /**
- * Open booking URL in new tab, or call fallback (e.g. open dialog).
+ * Open booking URL (env) in new tab, or call fallback.
  * Returns true if booking URL was used, false if fallback was called.
+ * NOTE: For DB-aware booking, pass the url from useRuntimeConfig() directly.
  */
-export function openBookingOrFallback(fallback: () => void): boolean {
-  const url = getBookingUrl();
+export function openBookingOrFallback(fallback: () => void, overrideUrl?: string | null): boolean {
+  const url = overrideUrl ?? getBookingUrl();
   if (url) {
     window.open(url, '_blank', 'noopener,noreferrer');
     return true;
@@ -75,11 +83,12 @@ export function openBookingOrFallback(fallback: () => void): boolean {
 }
 
 /**
- * Open a checkout URL or call fallback.
+ * Open a checkout URL (env) or call fallback.
  * Returns true if checkout URL was used.
+ * NOTE: For DB-aware checkout, pass the url from useRuntimeConfig() directly.
  */
-export function openCheckoutOrFallback(plan: PlanKey, fallback: () => void): boolean {
-  const url = getCheckoutUrl(plan);
+export function openCheckoutOrFallback(plan: PlanKey, fallback: () => void, overrideUrl?: string | null): boolean {
+  const url = overrideUrl ?? getCheckoutUrl(plan);
   if (url) {
     window.open(url, '_blank', 'noopener,noreferrer');
     return true;
