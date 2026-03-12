@@ -2227,6 +2227,9 @@ export default function AdminReadiness() {
           </Card>
         ))}
 
+        {/* ── AUTH LIVE DIAGNOSTIC — session, user_id, org_id, requested_by ─ */}
+        <AuthLiveDiagPanel user={user ?? null} organization={organization ?? null} />
+
         {/* ── PIPELINE RÉEL — preuve sans injection directe ──────────────── */}
         <RealPipelinePanel orgId={organization?.id} onRefresh={() => setRefreshKey(k => k + 1)} />
 
