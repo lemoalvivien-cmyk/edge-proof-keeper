@@ -1,23 +1,11 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Quote, Building2, Users, ShieldCheck } from "lucide-react";
+import { Quote, Building2, Users, ShieldCheck, Star } from "lucide-react";
 
 const stats = [
-  {
-    icon: Building2,
-    value: "500+",
-    label: "Entreprises protégées",
-  },
-  {
-    icon: ShieldCheck,
-    value: "99.8%",
-    label: "Taux de conformité atteint",
-  },
-  {
-    icon: Users,
-    value: "10min",
-    label: "Pour votre premier rapport",
-  },
+  { icon: Building2, value: "500+", label: "Entreprises protégées", color: "text-primary" },
+  { icon: ShieldCheck, value: "99.8%", label: "Taux de conformité atteint", color: "text-success" },
+  { icon: Users, value: "10min", label: "Pour votre premier rapport", color: "text-accent" },
 ];
 
 const testimonials = [
@@ -26,56 +14,56 @@ const testimonials = [
     author: "Marie D.",
     role: "CEO, TechStartup SAS",
     avatar: "MD",
+    stars: 5,
   },
   {
     quote: "L'Evidence Vault m'a sauvé lors de notre dernier audit. Toutes les preuves étaient là, horodatées et hashées.",
     author: "Thomas B.",
     role: "DSI, IndustriePME",
     avatar: "TB",
+    stars: 5,
   },
   {
-    quote: "Notre assureur nous a demandé des preuves de maturité cyber. SENTINEL EDGE nous a permis de les fournir en 24h.",
+    quote: "Notre assureur demandait des preuves de maturité cyber. SENTINEL EDGE nous a permis de les fournir en 24h.",
     author: "Sophie L.",
     role: "DAF, Commerce SARL",
     avatar: "SL",
+    stars: 5,
   },
 ];
 
-const logos = [
-  "TechCorp",
-  "InnovateSAS",
-  "SecurePME",
-  "DataFirst",
-  "CloudFrance",
-  "CyberSafe",
-];
+const logos = ["TechCorp", "InnovateSAS", "SecurePME", "DataFirst", "CloudFrance", "CyberSafe"];
 
 export function SocialProofSection() {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const isInView = useInView(ref, { once: true, amount: 0.15 });
 
   return (
-    <section ref={ref} className="relative py-24 overflow-hidden bg-secondary/20">
-      <div className="container px-4">
-        <div className="max-w-5xl mx-auto space-y-16">
-          {/* Logos */}
+    <section ref={ref} className="relative py-28 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-secondary/20 to-transparent" />
+
+      <div className="container relative px-4">
+        <div className="max-w-6xl mx-auto space-y-20">
+
+          {/* Logos row */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <p className="text-sm text-muted-foreground mb-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-8">
               Ils nous font confiance
             </p>
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+            <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
               {logos.map((logo, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={isInView ? { opacity: 0.5, y: 0 } : {}}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  className="text-lg font-semibold text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={isInView ? { opacity: 0.4, y: 0 } : {}}
+                  transition={{ duration: 0.4, delay: index * 0.06 }}
+                  whileHover={{ opacity: 0.8 }}
+                  className="font-mono text-sm font-semibold text-muted-foreground tracking-wider cursor-default transition-all"
                 >
                   {logo}
                 </motion.div>
@@ -83,22 +71,20 @@ export function SocialProofSection() {
             </div>
           </motion.div>
 
-          {/* Stats */}
-          <div className="grid sm:grid-cols-3 gap-6">
+          {/* Stat cards */}
+          <div className="grid sm:grid-cols-3 gap-4">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 24 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-                className="text-center p-6 rounded-xl glass-card"
+                transition={{ duration: 0.5, delay: 0.2 + index * 0.1, ease: "easeOut" }}
+                className="group relative p-6 rounded-2xl glass-card border border-border hover:border-primary/20 text-center transition-all duration-300 card-3d"
               >
-                <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="w-6 h-6 text-primary" />
+                <div className={`w-12 h-12 mx-auto mb-4 rounded-xl bg-secondary/50 flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
+                  <stat.icon className="w-5 h-5" />
                 </div>
-                <div className="text-3xl md:text-4xl font-bold text-gradient mb-2">
-                  {stat.value}
-                </div>
+                <div className={`text-4xl font-bold font-mono stat-number mb-1`}>{stat.value}</div>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
               </motion.div>
             ))}
@@ -107,40 +93,44 @@ export function SocialProofSection() {
           {/* Testimonials */}
           <div className="space-y-8">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
+              initial={{ opacity: 0, y: 16 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.3 }}
               className="text-center"
             >
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
                 Ce qu'en disent nos clients
               </h2>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-5">
               {testimonials.map((testimonial, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 36 }}
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                  className="relative p-6 rounded-xl glass-card"
+                  transition={{ duration: 0.6, delay: 0.4 + index * 0.12, ease: "easeOut" }}
+                  className="relative p-6 rounded-2xl glass-card border border-border hover:border-primary/20 transition-all duration-300 card-3d group"
                 >
-                  <Quote className="w-8 h-8 text-primary/30 mb-4" />
-                  <p className="text-foreground mb-6 leading-relaxed">
+                  {/* Stars */}
+                  <div className="flex gap-0.5 mb-4">
+                    {Array.from({ length: testimonial.stars }).map((_, i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-warning text-warning" />
+                    ))}
+                  </div>
+
+                  <Quote className="w-7 h-7 text-primary/20 mb-3" />
+                  <p className="text-foreground/80 mb-6 leading-relaxed text-sm">
                     "{testimonial.quote}"
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold text-sm">
+
+                  <div className="flex items-center gap-3 pt-4 border-t border-border/60">
+                    <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xs">
                       {testimonial.avatar}
                     </div>
                     <div>
-                      <p className="font-medium text-foreground text-sm">
-                        {testimonial.author}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {testimonial.role}
-                      </p>
+                      <p className="font-semibold text-foreground text-sm">{testimonial.author}</p>
+                      <p className="text-xs text-muted-foreground">{testimonial.role}</p>
                     </div>
                   </div>
                 </motion.div>
