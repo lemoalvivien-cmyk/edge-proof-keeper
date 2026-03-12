@@ -488,6 +488,326 @@ function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refresh
   );
 }
 
+// ── Demo E2E Panel ─────────────────────────────────────────────────────────────
+// Orchestre le scénario de bout en bout depuis l'interface admin.
+// Étapes : seed-demo-run → normalize → generate-portfolio-summary → verify-evidence-chain
+// Tout est explicitement marqué [DEMO] dans les données injectées.
+// Multi-tenant strict : chaque seed est scoped à l'org de l'utilisateur courant.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type StepState = 'idle' | 'running' | 'done' | 'error' | 'skipped';
+
+interface E2EStep {
+  id: string;
+  label: string;
+  description: string;
+  state: StepState;
+  result: string | null;
+}
+
+const SUPABASE_URL_FRONT = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY_FRONT = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
+function StepStateIcon({ state }: { state: StepState }) {
+  if (state === 'done')    return <CheckCircle2 className="h-5 w-5 text-success" />;
+  if (state === 'error')   return <XCircle className="h-5 w-5 text-destructive" />;
+  if (state === 'running') return <Loader2 className="h-5 w-5 text-primary animate-spin" />;
+  if (state === 'skipped') return <Info className="h-5 w-5 text-muted-foreground" />;
+  return <div className="h-5 w-5 rounded-full border-2 border-muted" />;
+}
+
+function StepStateBadge({ state }: { state: StepState }) {
+  const cfg: Record<StepState, { label: string; cls: string }> = {
+    idle:    { label: 'En attente',    cls: 'bg-muted/50 text-muted-foreground border-muted' },
+    running: { label: 'En cours…',    cls: 'bg-primary/10 text-primary border-primary/30' },
+    done:    { label: '✓ PROUVÉ',     cls: 'bg-success/10 text-success border-success/30' },
+    error:   { label: 'ÉCHEC',        cls: 'bg-destructive/10 text-destructive border-destructive/30' },
+    skipped: { label: 'NON APPLICABLE', cls: 'bg-muted/40 text-muted-foreground border-muted/60' },
+  };
+  const c = cfg[state];
+  return <Badge variant="outline" className={`text-xs font-bold shrink-0 ${c.cls}`}>{c.label}</Badge>;
+}
+
+function DemoE2EPanel({ orgId, onRefresh }: { orgId?: string; onRefresh: () => void }) {
+  const qc = useQueryClient();
+
+  const initialSteps: E2EStep[] = [
+    { id: 'seed',       label: 'Seed démo — injecter un run avec findings', description: 'Appel seed-demo-run · 6 findings [DEMO] structurés · marqués fictifs · loggés en evidence_log', state: 'idle', result: null },
+    { id: 'normalize',  label: 'Vérification findings en DB',                description: 'Requête directe findings WHERE tool_run_id = runId · compte les lignes réelles', state: 'idle', result: null },
+    { id: 'portfolio',  label: 'Génération synthèse executive (portfolio)',   description: 'Appel generate-portfolio-summary · fallback déterministe ou IA Gemini · persisté en portfolio_summaries', state: 'idle', result: null },
+    { id: 'chain',      label: 'Vérification evidence chain (SHA-256)',       description: 'Appel verify-evidence-chain · vérifie l\'intégrité cryptographique de l\'evidence_log', state: 'idle', result: null },
+    { id: 'output',     label: 'Sortie métier visible dans Report Studio',    description: 'Vérifie qu\'au moins une synthèse est disponible et navigable dans Report Studio', state: 'idle', result: null },
+  ];
+
+  const [steps, setSteps] = useState<E2EStep[]>(initialSteps);
+  const [running, setRunning] = useState(false);
+  const [toolRunId, setToolRunId] = useState<string | null>(null);
+  const [overallState, setOverallState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+
+  const updateStep = (id: string, patch: Partial<E2EStep>) =>
+    setSteps(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+
+  const getToken = async (): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Non authentifié');
+    return session.access_token;
+  };
+
+  const handleRunE2E = async () => {
+    if (!orgId || running) return;
+    // Reset
+    setSteps(initialSteps);
+    setToolRunId(null);
+    setRunning(true);
+    setOverallState('running');
+
+    let runId: string | null = null;
+    let hasError = false;
+
+    try {
+      // ── ÉTAPE 1 : Seed démo run ───────────────────────────────────────────
+      updateStep('seed', { state: 'running' });
+      const tok = await getToken();
+      const seedRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/seed-demo-run`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tok}`,
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_ANON_KEY_FRONT,
+        },
+        body: JSON.stringify({ organization_id: orgId }),
+      });
+      const seedJson = await seedRes.json();
+      if (!seedRes.ok || !seedJson.tool_run_id) {
+        const detail = seedJson?.error ?? `HTTP ${seedRes.status}`;
+        updateStep('seed', { state: 'error', result: `✗ Erreur : ${detail}` });
+        ['normalize', 'portfolio', 'chain', 'output'].forEach(id => updateStep(id, { state: 'skipped', result: 'Étape précédente échouée' }));
+        hasError = true;
+      } else {
+        runId = seedJson.tool_run_id;
+        setToolRunId(runId);
+        updateStep('seed', {
+          state: 'done',
+          result: `✓ run_id=${runId?.slice(0, 8)}… · ${seedJson.findings_inserted ?? 0} findings · ${seedJson.counts?.critical ?? 0} critique(s) · ${seedJson.counts?.high ?? 0} élevé(s) · [DEMO]`,
+        });
+      }
+
+      // ── ÉTAPE 2 : Vérification findings en DB ─────────────────────────────
+      if (!hasError && runId) {
+        updateStep('normalize', { state: 'running' });
+        const { count: findCount, error: findErr } = await supabase
+          .from('findings')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .eq('tool_run_id', runId);
+
+        if (findErr || findCount === null) {
+          updateStep('normalize', { state: 'error', result: `✗ Requête findings échouée : ${findErr?.message ?? 'count null'}` });
+          hasError = true;
+        } else if (findCount === 0) {
+          updateStep('normalize', { state: 'error', result: '✗ 0 findings trouvés en DB — le seed a peut-être échoué silencieusement' });
+          hasError = true;
+        } else {
+          updateStep('normalize', { state: 'done', result: `✓ ${findCount} finding(s) réellement présents en DB pour ce run` });
+        }
+      }
+
+      // ── ÉTAPE 3 : Génération synthèse portfolio ────────────────────────────
+      if (!hasError) {
+        updateStep('portfolio', { state: 'running' });
+        try {
+          const portResult = await generatePortfolioSummary(orgId, 'executive_brief');
+          updateStep('portfolio', {
+            state: 'done',
+            result: `✓ executive_brief généré · ${portResult.ai_used ? `IA: ${portResult.model_name}` : 'fallback déterministe'} · ${portResult.source_snapshot?.open_risks ?? 0} risque(s) · persisté en portfolio_summaries`,
+          });
+          qc.invalidateQueries({ queryKey: ['decision-layer-stats', orgId] });
+          qc.invalidateQueries({ queryKey: ['core-proof-db', orgId] });
+        } catch (portErr) {
+          updateStep('portfolio', { state: 'error', result: `✗ ${portErr instanceof Error ? portErr.message : 'Erreur inconnue'}` });
+          hasError = true;
+        }
+      }
+
+      // ── ÉTAPE 4 : Vérification evidence chain ─────────────────────────────
+      if (!hasError) {
+        updateStep('chain', { state: 'running' });
+        try {
+          const chainResult = await verifyEvidenceChain({ organization_id: orgId });
+          if (chainResult.is_valid) {
+            updateStep('chain', {
+              state: 'done',
+              result: `✓ Chaîne intègre · ${chainResult.last_seq ?? 0} entrée(s) · tête: ${chainResult.head_hash?.slice(0, 12) ?? 'GENESIS'}…`,
+            });
+          } else {
+            updateStep('chain', {
+              state: 'error',
+              result: `⚠ Discordance à seq #${chainResult.first_bad_seq} — intégrité compromise`,
+            });
+            hasError = true;
+          }
+        } catch (chainErr) {
+          updateStep('chain', { state: 'error', result: `✗ ${chainErr instanceof Error ? chainErr.message : 'Erreur inconnue'}` });
+          hasError = true;
+        }
+      }
+
+      // ── ÉTAPE 5 : Vérification sortie métier ──────────────────────────────
+      if (!hasError) {
+        updateStep('output', { state: 'running' });
+        const { count: portCount } = await supabase
+          .from('portfolio_summaries')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .eq('summary_type', 'executive_brief');
+
+        if ((portCount ?? 0) > 0) {
+          updateStep('output', {
+            state: 'done',
+            result: `✓ ${portCount} synthèse(s) executive_brief disponible(s) · accessible dans Report Studio · prêt à montrer à un client`,
+          });
+        } else {
+          updateStep('output', { state: 'error', result: '✗ Aucune synthèse en DB — l\'étape portfolio a peut-être échoué silencieusement' });
+          hasError = true;
+        }
+      }
+
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erreur imprévue';
+      setSteps(prev => prev.map(s => s.state === 'running' ? { ...s, state: 'error', result: `✗ ${msg}` } : s));
+      hasError = true;
+    }
+
+    setOverallState(hasError ? 'error' : 'done');
+    setRunning(false);
+    onRefresh();
+  };
+
+  const handleReset = () => {
+    setSteps(initialSteps);
+    setToolRunId(null);
+    setOverallState('idle');
+  };
+
+  const doneCount = steps.filter(s => s.state === 'done').length;
+  const allDone = doneCount === steps.length;
+
+  return (
+    <Card className="border-2 border-primary/40 bg-primary/[0.02]">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Rocket className="h-5 w-5 text-primary" />
+            Scénario E2E — Preuve de Valeur Opérationnelle
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={`text-xs font-bold ${
+              allDone ? 'bg-success/10 text-success border-success/30' :
+              overallState === 'error' ? 'bg-destructive/10 text-destructive border-destructive/30' :
+              overallState === 'running' ? 'bg-primary/10 text-primary border-primary/30' :
+              'bg-muted/50 text-muted-foreground border-muted'
+            }`}>
+              {allDone ? '✓ BOUT-EN-BOUT PROUVÉ' : overallState === 'error' ? 'PARTIEL — VOIR ERREURS' : overallState === 'running' ? 'EN COURS…' : 'NON LANCÉ'}
+            </Badge>
+            <span className="text-sm font-bold text-muted-foreground">{doneCount}/{steps.length}</span>
+          </div>
+        </div>
+        <CardDescription>
+          Seed DEMO → Findings DB → Synthèse Portfolio → Evidence Chain → Sortie métier visible
+          {toolRunId && (
+            <span className="ml-2 font-mono text-[10px] text-muted-foreground/60">run_id: {toolRunId.slice(0, 8)}…</span>
+          )}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="p-0">
+        {/* Avertissement DEMO explicite */}
+        <div className="mx-6 my-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-2">
+          <p className="text-xs font-medium text-warning flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            Données explicitement marquées [DEMO] — fictives, non représentatives d'une infrastructure réelle
+          </p>
+        </div>
+
+        <div className="divide-y divide-border">
+          {steps.map((step, i) => (
+            <div key={step.id} className="flex items-start gap-4 px-6 py-4">
+              <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                <span className="text-xs font-mono text-muted-foreground/50 w-4 text-right">{i + 1}</span>
+                <StepStateIcon state={step.state} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">{step.label}</p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">{step.description}</p>
+                {step.result && (
+                  <p className={`text-xs font-mono mt-1 ${
+                    step.state === 'done' ? 'text-success' :
+                    step.state === 'error' ? 'text-destructive' :
+                    'text-muted-foreground'
+                  }`}>
+                    {step.result}
+                  </p>
+                )}
+              </div>
+              <StepStateBadge state={step.state} />
+            </div>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-wrap gap-2 px-6 py-4 border-t border-border bg-muted/20">
+          <Button
+            size="sm"
+            onClick={handleRunE2E}
+            disabled={!orgId || running}
+            className="gap-1.5"
+          >
+            {running
+              ? <><Loader2 className="h-4 w-4 animate-spin" />Exécution en cours…</>
+              : <><Play className="h-4 w-4" />Lancer le scénario E2E</>}
+          </Button>
+
+          {overallState !== 'idle' && !running && (
+            <Button size="sm" variant="outline" onClick={handleReset} className="gap-1.5 text-xs">
+              <RefreshCw className="h-3.5 w-3.5" />Réinitialiser
+            </Button>
+          )}
+
+          {allDone && (
+            <Button size="sm" variant="outline" asChild className="gap-1.5 text-xs">
+              <Link to="/report-studio">
+                <BarChart3 className="h-3.5 w-3.5" />
+                Voir la sortie dans Report Studio
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          )}
+
+          <Button size="sm" variant="ghost" asChild className="text-xs">
+            <Link to="/runs"><FileText className="h-3.5 w-3.5 mr-1" />Runs<ExternalLink className="h-3 w-3 ml-1" /></Link>
+          </Button>
+          <Button size="sm" variant="ghost" asChild className="text-xs">
+            <Link to="/evidence"><Hash className="h-3.5 w-3.5 mr-1" />Evidence<ExternalLink className="h-3 w-3 ml-1" /></Link>
+          </Button>
+        </div>
+
+        {/* Honest state qualifier */}
+        <div className="px-6 py-3 border-t border-border bg-muted/10">
+          <p className="text-[10px] text-muted-foreground font-mono">
+            {allDone
+              ? '✓ Scénario E2E complet prouvé — seed → findings → synthèse → chain → sortie métier — toutes étapes vérifiées'
+              : overallState === 'error'
+              ? '⚠ Partiel — certaines étapes ont échoué. Les runs [DEMO] précédents restent visibles dans /runs et /evidence.'
+              : overallState === 'idle'
+              ? '○ Non lancé — cliquez sur "Lancer le scénario E2E" pour prouver la chaîne complète de valeur'
+              : '↻ En cours — chaque étape est vérifiée en temps réel avec une vraie requête DB ou Edge Function'}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Core Proof Panel — preuve live du cœur produit ────────────────────────────
 type ProofStatus = 'idle' | 'running' | 'proven' | 'partial' | 'failed' | 'unverifiable';
 
