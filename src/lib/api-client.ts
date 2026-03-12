@@ -543,10 +543,7 @@ export async function getRelatedSignals(
     .order('detected_at', { ascending: false });
 
   if (error) throw new Error(`getRelatedSignals signals error: ${error.message}`);
-  return (data ?? []).map(row => ({
-    ...row,
-    references: (row as Record<string, unknown>).signal_refs ?? [],
-  })) as unknown as Signal[];
+  return normalizeSignalRows((data ?? []) as Record<string, unknown>[]);
 }
 
 export async function runEntityCorrelation(
