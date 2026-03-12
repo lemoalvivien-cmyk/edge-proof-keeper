@@ -600,10 +600,13 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
           <Button
             onClick={handleLaunch}
             disabled={!orgId || running}
+            variant={isLoaded && demoAlreadyLoaded && overall === 'idle' ? 'outline' : 'default'}
             className="gap-2"
           >
             {running
               ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
+              : isLoaded && demoAlreadyLoaded && overall === 'idle'
+              ? <><RefreshCw className="h-4 w-4" />Relancer le pipeline</>
               : <><Rocket className="h-4 w-4" />Lancer le pipeline complet</>}
           </Button>
           {overall !== 'idle' && !running && (
@@ -611,12 +614,12 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
               <RefreshCw className="h-3.5 w-3.5" />Réinitialiser
             </Button>
           )}
-          {allDone && (
+          {(isLoaded) && (
             <Button size="sm" variant="outline" asChild className="gap-1.5 text-xs">
               <Link to="/report-studio"><BarChart3 className="h-3.5 w-3.5" />Report Studio<ArrowRight className="h-3.5 w-3.5" /></Link>
             </Button>
           )}
-          {allDone && (
+          {(isLoaded) && (
             <Button size="sm" variant="outline" asChild className="gap-1.5 text-xs">
               <Link to="/platform-health"><Activity className="h-3.5 w-3.5" />Platform Health<ArrowRight className="h-3.5 w-3.5" /></Link>
             </Button>
@@ -624,7 +627,9 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
         </div>
         <div className="px-6 py-3 border-t border-border bg-muted/10">
           <p className="text-[10px] font-mono text-muted-foreground/70">
-            {allDone
+            {isLoaded && demoAlreadyLoaded && overall === 'idle'
+              ? '✓ DÉMO AUTO-CHARGÉE — données réelles en DB · briefs disponibles · souveraineté interne 100%'
+              : isLoaded
               ? '✓ PIPELINE COMPLET PROUVÉ — données DB réelles · 3 briefs persistés · alertes évaluées · visible dans Report Studio + Platform Health'
               : overall === 'error'
               ? '⚠ Partiel — certaines étapes ont échoué. Les données déjà créées restent en DB.'
