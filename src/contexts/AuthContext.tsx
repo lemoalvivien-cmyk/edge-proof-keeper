@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { bootstrapOwner } from '@/lib/bootstrap';
@@ -30,9 +30,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ── Anti-concurrence : évite les double-appels bootstrap simultanés ──────────
+  // Clé = userId, valeur = Promise en cours
+  const bootstrapInFlight = useRef<Map<string, Promise<void>>>(new Map());
+
+  const fetchOrgAndRoles = async (userId: string, orgId: string | null) => {
+    if (!orgId) return;
+
+    const [orgResult, rolesResult] = await Promise.all([
+      supabase.from('organizations').select('*').eq('id', orgId).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', userId).eq('organization_id', orgId),
+    ]);
+
+    if (orgResult.data) setOrganization(orgResult.data as Organization);
+    if (rolesResult.data) setRoles(rolesResult.data.map(r => r.role as AppRole));
+  };
+
   const fetchUserData = useCallback(async (currentUser: User) => {
     try {
-      // Use maybeSingle to avoid 406 when no profile row exists yet
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -40,14 +55,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (!profileData) {
-        // No profile → run bootstrap (idempotent)
-        // This handles the case where user authenticated via persistent session
-        // but bootstrapOwner was never called (e.g. first session after DB reset)
-        try {
-          await bootstrapOwner(currentUser.id, currentUser.email ?? '');
-        } catch (bootstrapErr) {
-          console.warn('[AuthContext] Bootstrap warning (non-fatal):', bootstrapErr);
+        // ── Bootstrap avec protection anti-concurrence ───────────────────────
+        // Si un bootstrap est déjà en cours pour ce user, on attend sa fin
+        // au lieu d'en lancer un second (qui serait bloqué par la RLS).
+        const inFlight = bootstrapInFlight.current.get(currentUser.id);
+        if (inFlight) {
+          try { await inFlight; } catch { /* ignore, handled below */ }
+        } else {
+          const bootstrapPromise = bootstrapOwner(currentUser.id, currentUser.email ?? '')
+            .then(() => { /* ok */ })
+            .catch((bootstrapErr) => {
+              console.warn('[AuthContext] Bootstrap warning (non-fatal):', bootstrapErr);
+            })
+            .finally(() => {
+              bootstrapInFlight.current.delete(currentUser.id);
+            });
+          bootstrapInFlight.current.set(currentUser.id, bootstrapPromise);
+          await bootstrapPromise;
         }
+
         // Re-fetch after bootstrap
         const { data: newProfile } = await supabase
           .from('profiles')
@@ -68,19 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchOrgAndRoles = async (userId: string, orgId: string | null) => {
-    if (!orgId) return;
-
-    const [orgResult, rolesResult] = await Promise.all([
-      supabase.from('organizations').select('*').eq('id', orgId).maybeSingle(),
-      supabase.from('user_roles').select('role').eq('user_id', userId).eq('organization_id', orgId),
-    ]);
-
-    if (orgResult.data) setOrganization(orgResult.data as Organization);
-    if (rolesResult.data) setRoles(rolesResult.data.map(r => r.role as AppRole));
-  };
-
   useEffect(() => {
+    let initialSessionHandled = false;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -88,6 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          // Skip INITIAL_SESSION if getSession already handled it
+          if (event === 'INITIAL_SESSION' && initialSessionHandled) return;
           // Defer to avoid Supabase deadlock
           setTimeout(() => {
             fetchUserData(session.user);
@@ -103,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      initialSessionHandled = true;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -130,7 +149,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       if (data.user) {
-        // Use bootstrapOwner for consistent setup
         await bootstrapOwner(data.user.id, email);
         await fetchUserData(data.user);
       }
