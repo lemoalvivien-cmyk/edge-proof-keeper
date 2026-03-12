@@ -95,7 +95,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    let initialSessionHandled = false;
+    // ── Anti-race : un seul fetchUserData par utilisateur en parallèle ────────
+    // getSession() est la source de vérité initiale.
+    // onAuthStateChange(INITIAL_SESSION) est ignoré car getSession() le couvre déjà.
+    // Les événements suivants (SIGNED_IN, TOKEN_REFRESHED, etc.) sont traités normalement.
+    let initialFetchStarted = false;
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -104,9 +108,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Skip INITIAL_SESSION if getSession already handled it
-          if (event === 'INITIAL_SESSION' && initialSessionHandled) return;
-          // Defer to avoid Supabase deadlock
+          // INITIAL_SESSION is always covered by getSession() below — skip to avoid double-fetch
+          if (event === 'INITIAL_SESSION') return;
+          // All other events (SIGNED_IN after signup/login, TOKEN_REFRESHED, etc.)
           setTimeout(() => {
             fetchUserData(session.user);
           }, 0);
@@ -119,15 +123,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // THEN check for existing session
+    // getSession() is the authoritative initial check — always runs, never skipped
     supabase.auth.getSession().then(({ data: { session } }) => {
-      initialSessionHandled = true;
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserData(session.user);
+      if (!initialFetchStarted) {
+        initialFetchStarted = true;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchUserData(session.user);
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
