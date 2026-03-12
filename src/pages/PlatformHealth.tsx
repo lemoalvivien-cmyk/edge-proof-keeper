@@ -13,9 +13,11 @@ import {
   runStaleRiskCheck,
   evaluateAlertRules,
   updateAlertStatus,
+  getLatestPortfolioSummary,
 } from "@/lib/api-client";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import type { WeeklyWatchBriefResult } from "@/types/engine";
 import {
   Activity,
   AlertTriangle,
@@ -32,9 +34,115 @@ import {
   Clock,
   Server,
   Loader2,
+  Eye,
+  ArrowRight,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type SeverityKey = "critical" | "high" | "medium" | "low";
+
+// ── Watch Brief sub-component ─────────────────────────────────────────────────
+function WatchBriefSection({ orgId }: { orgId?: string }) {
+  const { data: brief, isLoading } = useQuery({
+    queryKey: ["weekly-watch-brief", orgId],
+    queryFn: () => getLatestPortfolioSummary(orgId!, "weekly_watch_brief"),
+    enabled: !!orgId,
+    staleTime: 5 * 60_000,
+  });
+
+  const output = brief?.output_json as WeeklyWatchBriefResult | undefined;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Watch Brief hebdomadaire
+            </CardTitle>
+            <CardDescription>
+              Dernière synthèse opérationnelle générée{brief?.created_at ? ` · ${new Date(brief.created_at).toLocaleString("fr-FR")}` : ""}
+            </CardDescription>
+          </div>
+          <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+            <Link to="/report-studio">
+              Report Studio <ArrowRight className="h-3 w-3 ml-1" />
+            </Link>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        ) : !brief || !output ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Eye className="h-8 w-8 text-muted-foreground/40 mb-2" />
+            <p className="text-sm font-medium text-muted-foreground">Aucun watch brief disponible</p>
+            <p className="text-xs text-muted-foreground/70 mt-1 mb-3">Générez une synthèse depuis Report Studio</p>
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/report-studio">Générer un Watch Brief</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Headline */}
+            <p className="text-sm font-semibold leading-snug">{output.headline}</p>
+
+            {/* New alerts summary */}
+            {output.new_alerts_summary && (
+              <div className="rounded-lg border border-border bg-muted/20 p-3">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Résumé alertes</p>
+                <p className="text-sm">{output.new_alerts_summary}</p>
+              </div>
+            )}
+
+            {/* Top changes */}
+            {output.top_changes && output.top_changes.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">Changements notables</p>
+                <ul className="space-y-1">
+                  {output.top_changes.map((change, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <span className="text-primary mt-0.5 shrink-0">·</span>
+                      <span>{change}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Top actions this week */}
+            {output.top_actions_this_week && output.top_actions_this_week.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">Actions prioritaires cette semaine</p>
+                <ul className="space-y-1">
+                  {output.top_actions_this_week.map((action, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <Badge variant="outline" className="text-[10px] px-1 py-0 shrink-0 mt-0.5 border-primary/30 text-primary">
+                        {i + 1}
+                      </Badge>
+                      <span>{action}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Period label */}
+            {brief.period_label && (
+              <p className="text-[10px] text-muted-foreground/60 font-mono">{brief.period_label}</p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 const SEVERITY_CONFIG: Record<SeverityKey, { label: string; className: string; dot: string }> = {
   critical: { label: "Critique", className: "bg-destructive/10 text-destructive border-destructive/30", dot: "bg-destructive" },
@@ -375,6 +483,9 @@ export default function PlatformHealth() {
             )}
           </CardContent>
         </Card>
+
+        {/* ── Watch Brief ──────────────────────────────────────────────── */}
+        <WatchBriefSection orgId={orgId} />
 
         {/* DB Component detail */}
         {health?.components?.tables?.detail && (
