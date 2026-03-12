@@ -878,9 +878,13 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
   const doneCount = steps.filter(s => s.state === 'done').length;
   const allDone = doneCount === steps.length;
 
-  // Prérequis bloquant : nuclei doit être présent avant d'activer le bouton
-  const nucleiReady = !nucleiLoading && nucleiTool !== null && nucleiTool !== undefined;
-  const pipelineBlocked = !nucleiReady;
+  // Prérequis bloquant : session requise, puis nuclei doit être dans tools_catalog
+  // nucleiError = auth error (session expirée) ou vraie absence
+  const sessionMissing = !orgId;
+  const nucleiQueryFailed = !!nucleiError;  // auth error ou réseau
+  const nucleiAbsent = !nucleiLoading && !nucleiQueryFailed && nucleiTool === null;
+  const nucleiReady = !nucleiLoading && !nucleiQueryFailed && nucleiTool !== null && nucleiTool !== undefined;
+  const pipelineBlocked = sessionMissing || nucleiQueryFailed || nucleiAbsent;
 
   return (
     <Card className="border-2 border-success/40 bg-success/[0.02]">
