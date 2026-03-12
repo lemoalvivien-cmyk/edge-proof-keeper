@@ -264,7 +264,8 @@ const Pricing = () => {
                             </p>
                           )}
                           <p className="text-xs text-muted-foreground/60">
-                            Source : {cta.configSource}
+                            Config : {cta.configSource}
+                            {cta.tenantResolved ? ' · tenant résolu' : ' · fallback env'}
                           </p>
                         </div>
                       )}
