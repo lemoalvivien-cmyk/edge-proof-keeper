@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
-import { openBookingOrFallback, getCheckoutUrl } from "@/lib/revenue-links";
-import { trackEvent } from "@/lib/tracking";
-
+import { usePublicCta } from "@/hooks/usePublicCta";
 
 const features = [
   "Diagnostic cyber complet",
@@ -27,6 +25,10 @@ export function PricingSection() {
   const isInView = useInView(ref, { once: true, amount: 0.2 });
   const { user } = useAuth();
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+  const cta = usePublicCta();
+
+  const hasCheckout = Boolean(cta.checkoutUrls.starter);
+  const hasBooking  = Boolean(cta.bookingUrl);
 
   return (
     <section ref={ref} className="relative py-24 overflow-hidden" id="pricing">
@@ -95,7 +97,7 @@ export function PricingSection() {
                   ))}
                 </div>
 
-                {/* CTA */}
+                {/* CTA — fully DB-aware via usePublicCta */}
                 <div className="space-y-3">
                   {user ? (
                     <Button
@@ -108,14 +110,18 @@ export function PricingSection() {
                         <ArrowRight className="w-5 h-5 ml-2" />
                       </Link>
                     </Button>
-                  ) : getCheckoutUrl('starter') ? (
+                  ) : hasCheckout ? (
                     <Button
                       size="lg"
                       className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
-                      onClick={() => {
-                        trackEvent('checkout_click', { source_page: '/pricing', cta_origin: 'pricing_starter' });
-                        window.open(getCheckoutUrl('starter')!, '_blank', 'noopener,noreferrer');
-                      }}
+                      disabled={cta.isLoading}
+                      onClick={() =>
+                        cta.handleCheckout('starter', {
+                          sourcePage: '/#pricing',
+                          ctaOrigin: 'pricing_section_starter',
+                          onFallback: () => setDemoDialogOpen(true),
+                        })
+                      }
                     >
                       Commander — 490€ TTC / an
                       <ArrowRight className="w-5 h-5 ml-2" />
@@ -124,10 +130,14 @@ export function PricingSection() {
                     <Button
                       size="lg"
                       className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
-                      onClick={() => {
-                        trackEvent('checkout_click', { source_page: '/pricing', cta_origin: 'pricing_starter_fallback' });
-                        openBookingOrFallback(() => setDemoDialogOpen(true));
-                      }}
+                      disabled={cta.isLoading}
+                      onClick={() =>
+                        cta.handleCheckout('starter', {
+                          sourcePage: '/#pricing',
+                          ctaOrigin: 'pricing_section_starter_fallback',
+                          onFallback: () => setDemoDialogOpen(true),
+                        })
+                      }
                     >
                       Obtenir l'accès
                       <ArrowRight className="w-5 h-5 ml-2" />
@@ -138,19 +148,34 @@ export function PricingSection() {
                     variant="outline"
                     size="lg"
                     className="w-full h-12 text-base border-primary/40 text-primary hover:bg-primary/10 gap-2"
-                    onClick={() => {
-                      trackEvent('cta_demander_demo', { source_page: '/pricing', cta_origin: 'pricing_expert_cta' });
-                      openBookingOrFallback(() => setDemoDialogOpen(true));
-                    }}
+                    disabled={cta.isLoading}
+                    onClick={() =>
+                      cta.handleDemoRequest({
+                        sourcePage: '/#pricing',
+                        ctaOrigin: 'pricing_section_expert',
+                        onFallback: () => setDemoDialogOpen(true),
+                      })
+                    }
                   >
                     <CalendarDays className="w-5 h-5" />
                     Parler à un expert — démo personnalisée
                   </Button>
 
-                  {!getCheckoutUrl('starter') && (
-                    <div className="p-3 rounded-xl bg-primary/10 border border-primary/30 text-center">
+                  {/* Runtime source indicator — visible & testable */}
+                  {!cta.isLoading && !hasCheckout && !hasBooking && (
+                    <div className="p-3 rounded-xl bg-muted/30 border border-border text-center">
                       <p className="text-xs text-muted-foreground">
-                        💳 Paiement via lien Stripe — configurez <code className="font-mono text-xs">VITE_STARTER_CHECKOUT_URL</code> pour activer le checkout direct
+                        💳 Aucun lien de paiement configuré —{" "}
+                        <Link to="/settings/revenue" className="underline hover:text-primary">
+                          configurer dans Paramètres
+                        </Link>
+                      </p>
+                    </div>
+                  )}
+                  {!cta.isLoading && !hasCheckout && hasBooking && (
+                    <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 text-center">
+                      <p className="text-xs text-muted-foreground">
+                        📅 Paiement par prise de rendez-vous (booking actif)
                       </p>
                     </div>
                   )}
@@ -164,8 +189,8 @@ export function PricingSection() {
       <DemoRequestDialog
         open={demoDialogOpen}
         onOpenChange={setDemoDialogOpen}
-        ctaOrigin="pricing_cta"
-        sourcePage="/pricing"
+        ctaOrigin="pricing_section_cta"
+        sourcePage="/#pricing"
       />
     </section>
   );
