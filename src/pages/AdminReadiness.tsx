@@ -488,11 +488,288 @@ function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refresh
   );
 }
 
+// ── Real Pipeline Panel ───────────────────────────────────────────────────────
+// Prouve le VRAI pipeline sans injection directe de findings :
+//   1. create-tool-run → tool_run en awaiting_upload
+//   2. Télécharge le fixture JSON depuis get-demo-fixture (artefact fictif explicitement marqué)
+//   3. upload-tool-run-artifact → stocke le fichier, set normalized_output, status=done
+//   4. normalize-tool-run → lit normalized_output.findings → insère en DB
+//   5. Vérifie que les findings existent vraiment en DB
+//   6. Génération de synthèse portfolio
+//
+// DISTINCTION AVEC DEMO E2E PANEL :
+//   - Demo E2E : seed direct → injection bypass pipeline réel (rapide, mais court-circuite normalize)
+//   - Real Pipeline : passe par upload-tool-run-artifact + normalize-tool-run (pipeline réel complet)
+// ─────────────────────────────────────────────────────────────────────────────
+function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: () => void }) {
+  const qc = useQueryClient();
+  type PipeStep = { id: string; label: string; description: string; state: StepState; result: string | null };
+
+  const initialSteps: PipeStep[] = [
+    { id: 'create_run',  label: '① create-tool-run — créer un run awaiting_upload',  description: 'Crée un tool_run réel via l\'Edge Function. Aucune injection directe.', state: 'idle', result: null },
+    { id: 'upload',      label: '② upload-tool-run-artifact — uploader le fixture',   description: 'Télécharge le fixture [DEMO] depuis get-demo-fixture puis l\'uploade via le vrai endpoint upload.', state: 'idle', result: null },
+    { id: 'normalize',   label: '③ normalize-tool-run — normaliser → findings en DB', description: 'Lit normalized_output du run et insère les findings canoniques en DB via le pipeline réel.', state: 'idle', result: null },
+    { id: 'verify_db',   label: '④ Vérifier findings issus du pipeline réel',         description: 'Requête directe sur findings WHERE tool_run_id = runId. Les findings doivent venir de normalize, pas d\'une injection.', state: 'idle', result: null },
+    { id: 'portfolio',   label: '⑤ generate-portfolio-summary — sortie métier',       description: 'Génère une synthèse executive depuis les données réelles en DB.', state: 'idle', result: null },
+  ];
+
+  const [steps, setSteps] = useState<PipeStep[]>(initialSteps);
+  const [running, setRunning] = useState(false);
+  const [overallState, setOverallState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+
+  const updateStep = (id: string, patch: Partial<PipeStep>) =>
+    setSteps(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+
+  const getToken = async (): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Non authentifié');
+    return session.access_token;
+  };
+
+  // Find nuclei tool slug
+  const { data: tools } = useQuery({
+    queryKey: ['tools-catalog-nuclei'],
+    queryFn: async () => {
+      const { data } = await supabase.from('tools_catalog').select('id, slug, name').limit(10);
+      return data ?? [];
+    },
+  });
+
+  const handleRunRealPipeline = async () => {
+    if (!orgId || running) return;
+    setSteps(initialSteps);
+    setRunning(true);
+    setOverallState('running');
+
+    let runId: string | null = null;
+    let hasError = false;
+
+    try {
+      const tok = await getToken();
+      const toolSlug = tools?.[0]?.slug ?? 'nuclei';
+
+      // ── ÉTAPE 1 : create-tool-run ─────────────────────────────────────────
+      updateStep('create_run', { state: 'running' });
+      const createRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/create-tool-run`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY_FRONT },
+        body: JSON.stringify({ organization_id: orgId, tool_slug: toolSlug, mode: 'import_json' }),
+      });
+      const createJson = await createRes.json();
+      if (!createRes.ok || !createJson.tool_run_id) {
+        updateStep('create_run', { state: 'error', result: `✗ ${createJson?.error ?? `HTTP ${createRes.status}`}` });
+        ['upload', 'normalize', 'verify_db', 'portfolio'].forEach(id => updateStep(id, { state: 'skipped', result: 'Étape précédente échouée' }));
+        hasError = true;
+      } else {
+        runId = createJson.tool_run_id;
+        updateStep('create_run', { state: 'done', result: `✓ run_id=${runId?.slice(0, 8)}… · status=awaiting_upload · pipeline réel initié` });
+      }
+
+      // ── ÉTAPE 2 : get-demo-fixture + upload réel ──────────────────────────
+      if (!hasError && runId) {
+        updateStep('upload', { state: 'running' });
+        try {
+          // Télécharger le fixture JSON (artefact fictif marqué [DEMO])
+          const fixtureRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/get-demo-fixture`, {
+            headers: { apikey: SUPABASE_ANON_KEY_FRONT },
+          });
+          if (!fixtureRes.ok) throw new Error(`Fixture fetch failed: HTTP ${fixtureRes.status}`);
+          const fixtureBlob = await fixtureRes.blob();
+          const fixtureFile = new File([fixtureBlob], 'demo-fixture-nuclei.json', { type: 'application/json' });
+
+          // Uploader via le vrai endpoint upload-tool-run-artifact
+          const formData = new FormData();
+          formData.append('tool_run_id', runId);
+          formData.append('file', fixtureFile);
+          const uploadRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/upload-tool-run-artifact`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${tok}`, apikey: SUPABASE_ANON_KEY_FRONT },
+            body: formData,
+          });
+          const uploadJson = await uploadRes.json();
+          if (!uploadRes.ok) throw new Error(uploadJson?.error ?? `HTTP ${uploadRes.status}`);
+          updateStep('upload', {
+            state: 'done',
+            result: `✓ Artefact [DEMO] uploadé · hash=${uploadJson.artifact_hash?.slice(0, 12)}… · status=done · ${uploadJson.summary?.total ?? 0} findings dans normalized_output`,
+          });
+        } catch (uploadErr) {
+          updateStep('upload', { state: 'error', result: `✗ ${uploadErr instanceof Error ? uploadErr.message : 'Erreur upload'}` });
+          ['normalize', 'verify_db', 'portfolio'].forEach(id => updateStep(id, { state: 'skipped', result: 'Étape précédente échouée' }));
+          hasError = true;
+        }
+      }
+
+      // ── ÉTAPE 3 : normalize-tool-run (pipeline réel) ──────────────────────
+      if (!hasError && runId) {
+        updateStep('normalize', { state: 'running' });
+        try {
+          const normRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/normalize-tool-run`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY_FRONT },
+            body: JSON.stringify({ tool_run_id: runId }),
+          });
+          const normJson = await normRes.json();
+          if (!normRes.ok) throw new Error(normJson?.error ?? `HTTP ${normRes.status}`);
+          updateStep('normalize', {
+            state: 'done',
+            result: `✓ ${normJson.findings_count} findings normalisés · critical=${normJson.counts?.critical ?? 0} · high=${normJson.counts?.high ?? 0} · confidence=${normJson.confidence}`,
+          });
+        } catch (normErr) {
+          updateStep('normalize', { state: 'error', result: `✗ ${normErr instanceof Error ? normErr.message : 'Erreur normalize'}` });
+          ['verify_db', 'portfolio'].forEach(id => updateStep(id, { state: 'skipped', result: 'Étape précédente échouée' }));
+          hasError = true;
+        }
+      }
+
+      // ── ÉTAPE 4 : vérification DB findings issus du pipeline ──────────────
+      if (!hasError && runId) {
+        updateStep('verify_db', { state: 'running' });
+        const { count: findCount, error: findErr } = await supabase
+          .from('findings')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .eq('tool_run_id', runId);
+
+        if (findErr) {
+          updateStep('verify_db', { state: 'error', result: `✗ Requête DB échouée : ${findErr.message}` });
+          hasError = true;
+        } else if ((findCount ?? 0) === 0) {
+          // DISTINCTION HONNÊTE : 0 findings ≠ erreur technique → donnée manquante
+          updateStep('verify_db', { state: 'error', result: '✗ 0 findings en DB pour ce run — données manquantes (pas une erreur technique)' });
+          hasError = true;
+        } else {
+          updateStep('verify_db', {
+            state: 'done',
+            result: `✓ PIPELINE RÉEL PROUVÉ — ${findCount} findings en DB issus de normalize-tool-run, pas d'injection directe`,
+          });
+          qc.invalidateQueries({ queryKey: ['core-proof-db', orgId] });
+        }
+      }
+
+      // ── ÉTAPE 5 : génération synthèse métier ──────────────────────────────
+      if (!hasError) {
+        updateStep('portfolio', { state: 'running' });
+        try {
+          const portResult = await generatePortfolioSummary(orgId!, 'executive_brief');
+          updateStep('portfolio', {
+            state: 'done',
+            result: `✓ executive_brief généré · ${portResult.ai_used ? `IA: ${portResult.model_name}` : 'fallback déterministe'} · persisté en portfolio_summaries · sortie métier disponible`,
+          });
+          qc.invalidateQueries({ queryKey: ['decision-layer-stats', orgId] });
+        } catch (portErr) {
+          updateStep('portfolio', { state: 'error', result: `✗ ${portErr instanceof Error ? portErr.message : 'Erreur'}` });
+          hasError = true;
+        }
+      }
+
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erreur imprévue';
+      setSteps(prev => prev.map(s => s.state === 'running' ? { ...s, state: 'error', result: `✗ ${msg}` } : s));
+      hasError = true;
+    }
+
+    setOverallState(hasError ? 'error' : 'done');
+    setRunning(false);
+    onRefresh();
+  };
+
+  const doneCount = steps.filter(s => s.state === 'done').length;
+  const allDone = doneCount === steps.length;
+
+  return (
+    <Card className="border-2 border-success/40 bg-success/[0.02]">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Zap className="h-5 w-5 text-success" />
+            Pipeline Réel — Preuve Sans Injection
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={`text-xs font-bold ${
+              allDone ? 'bg-success/10 text-success border-success/30' :
+              overallState === 'error' ? 'bg-destructive/10 text-destructive border-destructive/30' :
+              overallState === 'running' ? 'bg-primary/10 text-primary border-primary/30' :
+              'bg-muted/50 text-muted-foreground border-muted'
+            }`}>
+              {allDone ? '✓ PIPELINE RÉEL PROUVÉ' : overallState === 'error' ? 'PARTIEL — VOIR ERREURS' : overallState === 'running' ? 'EN COURS…' : 'NON LANCÉ'}
+            </Badge>
+            <span className="text-sm font-bold text-muted-foreground">{doneCount}/{steps.length}</span>
+          </div>
+        </div>
+        <CardDescription>
+          <span className="font-semibold text-success">Pipeline réel</span> : create-tool-run → upload-artifact → normalize-tool-run → findings DB → synthèse
+          <span className="ml-2 text-xs text-muted-foreground">(distinct du scénario seedé ci-dessous)</span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        {/* Avertissement fixture explicite */}
+        <div className="mx-6 my-3 rounded-lg border border-success/20 bg-success/5 px-4 py-2">
+          <p className="text-xs font-medium text-success/80 flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            Artefact [DEMO] chargé depuis get-demo-fixture — JSON fictif explicite · Pipeline upload + normalize réellement traversé
+          </p>
+        </div>
+
+        <div className="divide-y divide-border">
+          {steps.map((step, i) => (
+            <div key={step.id} className="flex items-start gap-4 px-6 py-4">
+              <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                <span className="text-xs font-mono text-muted-foreground/50 w-4 text-right">{i + 1}</span>
+                <StepStateIcon state={step.state} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">{step.label}</p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">{step.description}</p>
+                {step.result && (
+                  <p className={`text-xs font-mono mt-1 ${
+                    step.state === 'done' ? 'text-success' :
+                    step.state === 'error' ? 'text-destructive' :
+                    'text-muted-foreground'
+                  }`}>
+                    {step.result}
+                  </p>
+                )}
+              </div>
+              <StepStateBadge state={step.state} />
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2 px-6 py-4 border-t border-border bg-muted/20">
+          <Button size="sm" onClick={handleRunRealPipeline} disabled={!orgId || running} className="gap-1.5">
+            {running
+              ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
+              : <><Zap className="h-4 w-4" />Lancer le pipeline réel</>}
+          </Button>
+          {overallState !== 'idle' && !running && (
+            <Button size="sm" variant="outline" onClick={() => { setSteps(initialSteps); setOverallState('idle'); }} className="gap-1.5 text-xs">
+              <RefreshCw className="h-3.5 w-3.5" />Réinitialiser
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" asChild className="text-xs">
+            <Link to="/runs"><FileText className="h-3.5 w-3.5 mr-1" />Voir les runs<ExternalLink className="h-3 w-3 ml-1" /></Link>
+          </Button>
+        </div>
+
+        <div className="px-6 py-3 border-t border-border bg-muted/10">
+          <p className="text-[10px] text-muted-foreground font-mono">
+            {allDone
+              ? '✓ PIPELINE RÉEL PROUVÉ — upload-artifact + normalize-tool-run traversés · findings issus du pipeline, pas d\'injection directe'
+              : overallState === 'error'
+              ? '⚠ Partiel — vérifiez les erreurs. Un 0-findings indique des données manquantes, pas une erreur technique.'
+              : '○ Non lancé — cliquez pour prouver le pipeline réel sans contournement'}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Demo E2E Panel ─────────────────────────────────────────────────────────────
 // Orchestre le scénario de bout en bout depuis l'interface admin.
-// Étapes : seed-demo-run → normalize → generate-portfolio-summary → verify-evidence-chain
-// Tout est explicitement marqué [DEMO] dans les données injectées.
-// Multi-tenant strict : chaque seed est scoped à l'org de l'utilisateur courant.
+// ATTENTION : Ce panneau INJECTE directement les findings via seed-demo-run,
+// court-circuitant upload-tool-run-artifact et normalize-tool-run.
+// Utilisez le "Pipeline Réel" ci-dessus pour prouver le flux complet sans injection.
 // ─────────────────────────────────────────────────────────────────────────────
 
 type StepState = 'idle' | 'running' | 'done' | 'error' | 'skipped';
