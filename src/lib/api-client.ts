@@ -686,6 +686,54 @@ export async function evaluateAlertRules(orgId: string): Promise<EvaluateAlertRu
   return callEdgeFunction<EvaluateAlertRulesResult>('evaluate-alert-rules', { organization_id: orgId });
 }
 
+// ─── Portfolio Intelligence API ───────────────────────────────────────────────
+
+export async function generatePortfolioSummary(
+  orgId: string,
+  summaryType: PortfolioSummaryType,
+  periodLabel?: string
+): Promise<GeneratePortfolioSummaryResult> {
+  return callEdgeFunction<GeneratePortfolioSummaryResult>('generate-portfolio-summary', {
+    organization_id: orgId,
+    summary_type:    summaryType,
+    ...(periodLabel ? { period_label: periodLabel } : {}),
+  });
+}
+
+export async function getLatestPortfolioSummary(
+  orgId: string,
+  summaryType: PortfolioSummaryType
+): Promise<PortfolioSummary | null> {
+  const { data, error } = await supabase
+    .from('portfolio_summaries')
+    .select('*')
+    .eq('organization_id', orgId)
+    .eq('summary_type', summaryType)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`getLatestPortfolioSummary error: ${error.message}`);
+  return data as unknown as PortfolioSummary | null;
+}
+
+export async function getPortfolioSummaries(
+  orgId: string,
+  options?: { summaryType?: PortfolioSummaryType; limit?: number }
+): Promise<PortfolioSummary[]> {
+  let q = supabase
+    .from('portfolio_summaries')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: false })
+    .limit(options?.limit ?? 20);
+
+  if (options?.summaryType) q = q.eq('summary_type', options.summaryType);
+
+  const { data, error } = await q;
+  if (error) throw new Error(`getPortfolioSummaries error: ${error.message}`);
+  return (data ?? []) as unknown as PortfolioSummary[];
+}
+
 // ─── Entity Graph API ─────────────────────────────────────────────────────────
 
 export async function getSignalById(signalId: string): Promise<Signal | null> {
