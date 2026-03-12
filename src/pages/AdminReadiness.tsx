@@ -696,6 +696,10 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
   const doneCount = steps.filter(s => s.state === 'done').length;
   const allDone = doneCount === steps.length;
 
+  // Prérequis bloquant : nuclei doit être présent avant d'activer le bouton
+  const nucleiReady = !nucleiLoading && nucleiTool !== null && nucleiTool !== undefined;
+  const pipelineBlocked = !nucleiReady;
+
   return (
     <Card className="border-2 border-success/40 bg-success/[0.02]">
       <CardHeader className="pb-3">
@@ -722,8 +726,43 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
+
+        {/* ── Prérequis catalogue — état visible et honnête ── */}
+        <div className={`mx-6 my-3 rounded-lg border px-4 py-2.5 ${
+          nucleiLoading ? 'border-muted/40 bg-muted/10' :
+          nucleiReady ? 'border-success/30 bg-success/5' :
+          'border-destructive/40 bg-destructive/5'
+        }`}>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <p className={`text-xs font-medium flex items-center gap-1.5 ${
+              nucleiLoading ? 'text-muted-foreground' :
+              nucleiReady ? 'text-success/80' : 'text-destructive'
+            }`}>
+              {nucleiLoading
+                ? <><Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />Vérification tools_catalog…</>
+                : nucleiReady
+                ? <><CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    tools_catalog ✓ — nuclei (id: {nucleiTool?.id?.slice(0, 8)}…) · {catalogCount ?? '?'} outils actifs · Outil pipeline : <span className="font-mono">nuclei</span> [seed idempotent garanti]
+                  </>
+                : <><XCircle className="h-3.5 w-3.5 shrink-0" />
+                    PRÉREQUIS MANQUANT — nuclei absent de tools_catalog · create-tool-run retournera 404 · Relancez la migration seed
+                  </>}
+            </p>
+            {nucleiReady && (
+              <Badge variant="outline" className="text-[10px] font-mono border-success/30 text-success shrink-0">
+                seed démo · non mensonger
+              </Badge>
+            )}
+          </div>
+          {nucleiReady && (
+            <p className="text-[10px] font-mono text-muted-foreground mt-1">
+              Outil standard projectdiscovery/nuclei · Données catalogue publiques · Pas une donnée client · Seed idempotent (ON CONFLICT DO NOTHING)
+            </p>
+          )}
+        </div>
+
         {/* Avertissement fixture explicite */}
-        <div className="mx-6 my-3 rounded-lg border border-success/20 bg-success/5 px-4 py-2">
+        <div className="mx-6 mb-3 rounded-lg border border-success/20 bg-success/5 px-4 py-2">
           <p className="text-xs font-medium text-success/80 flex items-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
             Artefact [DEMO] chargé depuis get-demo-fixture — JSON fictif explicite · Pipeline upload + normalize réellement traversé
@@ -756,9 +795,17 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
         </div>
 
         <div className="flex flex-wrap gap-2 px-6 py-4 border-t border-border bg-muted/20">
-          <Button size="sm" onClick={handleRunRealPipeline} disabled={!orgId || running} className="gap-1.5">
+          <Button
+            size="sm"
+            onClick={handleRunRealPipeline}
+            disabled={!orgId || running || pipelineBlocked}
+            className="gap-1.5"
+            title={pipelineBlocked ? 'nuclei manquant dans tools_catalog — pipeline bloqué' : undefined}
+          >
             {running
               ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
+              : pipelineBlocked
+              ? <><XCircle className="h-4 w-4" />Catalogue manquant — pipeline bloqué</>
               : <><Zap className="h-4 w-4" />Lancer le pipeline réel</>}
           </Button>
           {overallState !== 'idle' && !running && (
@@ -769,15 +816,20 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
           <Button size="sm" variant="ghost" asChild className="text-xs">
             <Link to="/runs"><FileText className="h-3.5 w-3.5 mr-1" />Voir les runs<ExternalLink className="h-3 w-3 ml-1" /></Link>
           </Button>
+          <Button size="sm" variant="ghost" asChild className="text-xs">
+            <Link to="/tools"><Database className="h-3.5 w-3.5 mr-1" />Catalogue outils<ExternalLink className="h-3 w-3 ml-1" /></Link>
+          </Button>
         </div>
 
         <div className="px-6 py-3 border-t border-border bg-muted/10">
           <p className="text-[10px] text-muted-foreground font-mono">
-            {allDone
+            {pipelineBlocked
+              ? '✗ BLOQUÉ — nuclei absent de tools_catalog · Ajoutez-le via la migration seed ou manuellement dans /tools'
+              : allDone
               ? '✓ PIPELINE RÉEL PROUVÉ — upload-artifact + normalize-tool-run traversés · findings issus du pipeline, pas d\'injection directe'
               : overallState === 'error'
               ? '⚠ Partiel — vérifiez les erreurs. Un 0-findings indique des données manquantes, pas une erreur technique.'
-              : '○ Non lancé — cliquez pour prouver le pipeline réel sans contournement'}
+              : '○ Non lancé — cliquez pour prouver le pipeline réel sans contournement · nuclei confirmed in catalog'}
           </p>
         </div>
       </CardContent>
