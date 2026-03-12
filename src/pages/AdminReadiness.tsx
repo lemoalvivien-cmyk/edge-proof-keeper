@@ -73,7 +73,13 @@ export default function AdminReadiness() {
   const { organization } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const coreApiConfigured = Boolean(import.meta.env.VITE_CORE_API_URL);
+  const coreApiConfigured    = Boolean(import.meta.env.VITE_CORE_API_URL);
+  const aiGatewayConfigured  = Boolean(import.meta.env.VITE_AI_GATEWAY_URL ?? import.meta.env.VITE_CORE_API_URL);
+  const bookingEnvConfigured      = Boolean(import.meta.env.VITE_BOOKING_URL);
+  const starterCheckoutConfigured = Boolean(import.meta.env.VITE_STARTER_CHECKOUT_URL);
+  const proCheckoutConfigured     = Boolean(import.meta.env.VITE_PRO_CHECKOUT_URL);
+  const enterpriseCheckoutConfigured = Boolean(import.meta.env.VITE_ENTERPRISE_CHECKOUT_URL);
+
   const { config: commercial } = useCommercialConfig();
 
   const { data: health, isLoading: healthLoading } = useQuery({
