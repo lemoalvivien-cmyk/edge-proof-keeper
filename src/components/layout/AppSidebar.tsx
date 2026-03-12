@@ -183,7 +183,7 @@ export function AppSidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start"
-          onClick={() => signOut()}
+          onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4 mr-2" />
           Déconnexion
