@@ -283,14 +283,15 @@ export default function AdminReadiness() {
   const readiness = readinessLabels[globalStatus];
 
   // ── Revenue Operating Readiness items ─────────────────────────────────────
+  // Effective = DB override if present, else env var. Both layers shown explicitly.
   const revenueItems = [
     {
-      label: 'Config commerciale (DB)',
+      label: 'Config commerciale (DB override)',
       icon: <Settings className="h-4 w-4" />,
       status: commercial.fromDb ? 'ok' as Status : 'warn' as Status,
       detail: commercial.fromDb
-        ? 'Revenue Settings configurés en base'
-        : 'Non configuré — utilise variables env',
+        ? 'Revenue Settings configurés en base — priorité sur env vars'
+        : 'Non configuré en base — env vars utilisées comme fallback',
       link: { href: '/settings/revenue', label: 'Configurer' },
     },
     {
@@ -298,38 +299,52 @@ export default function AdminReadiness() {
       icon: <CalendarDays className="h-4 w-4" />,
       status: commercial.bookingUrl ? 'ok' as Status : 'warn' as Status,
       detail: commercial.bookingUrl
-        ? `✓ ${commercial.bookingUrl.slice(0, 45)}${commercial.bookingUrl.length > 45 ? '…' : ''}`
-        : 'Non défini — fallback vers formulaire démo',
+        ? `✓ configurée (${commercial.fromDb ? 'DB' : 'env VITE_BOOKING_URL'}) — ${commercial.bookingUrl.slice(0, 40)}…`
+        : `✗ VITE_BOOKING_URL non défini${bookingEnvConfigured ? ' (incohérence détectée)' : ''} — fallback formulaire actif`,
     },
     {
-      label: 'Checkout Starter',
+      label: 'Checkout Starter (VITE_STARTER_CHECKOUT_URL)',
       icon: <ShoppingCart className="h-4 w-4" />,
       status: commercial.starterCheckoutUrl ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.starterCheckoutUrl ? 'Configuré' : 'Non défini',
+      detail: commercial.starterCheckoutUrl
+        ? `✓ configuré (${commercial.fromDb ? 'DB' : 'env'})`
+        : `✗ Non défini — CTA pricing utilise le fallback booking/formulaire`,
     },
     {
-      label: 'Checkout Pro',
+      label: 'Checkout Pro (VITE_PRO_CHECKOUT_URL)',
       icon: <ShoppingCart className="h-4 w-4" />,
       status: commercial.proCheckoutUrl ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.proCheckoutUrl ? 'Configuré' : 'Non défini',
+      detail: commercial.proCheckoutUrl
+        ? `✓ configuré (${commercial.fromDb ? 'DB' : 'env'})`
+        : '✗ Non défini',
     },
     {
-      label: 'Checkout Enterprise',
+      label: 'Checkout Enterprise (VITE_ENTERPRISE_CHECKOUT_URL)',
       icon: <ShoppingCart className="h-4 w-4" />,
       status: commercial.enterpriseCheckoutUrl ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.enterpriseCheckoutUrl ? 'Configuré' : 'Non défini',
+      detail: commercial.enterpriseCheckoutUrl
+        ? `✓ configuré (${commercial.fromDb ? 'DB' : 'env'})`
+        : '✗ Non défini',
+    },
+    {
+      label: 'Backend externe (VITE_CORE_API_URL)',
+      icon: <Database className="h-4 w-4" />,
+      status: coreApiConfigured ? 'ok' as Status : 'warn' as Status,
+      detail: coreApiConfigured
+        ? '✓ Report Studio opérationnel — génération rapports IA active'
+        : '✗ Non défini — Report Studio en mode lecture seule, génération désactivée',
     },
     {
       label: 'Capture lead opérationnelle',
       icon: <Users className="h-4 w-4" />,
       status: 'ok' as Status,
-      detail: 'Edge function submit-sales-lead — validation, dédup, scoring',
+      detail: '✓ Edge function submit-sales-lead — validation, dédup, scoring',
     },
     {
       label: 'Pipeline leads accessible',
       icon: <TrendingUp className="h-4 w-4" />,
       status: 'ok' as Status,
-      detail: '/admin/leads — owner, priorité, SLA, actions rapides',
+      detail: '✓ /admin/leads — owner, priorité, SLA 24h/72h, actions rapides',
       link: { href: '/admin/leads', label: 'Pipeline' },
     },
     {
@@ -339,16 +354,16 @@ export default function AdminReadiness() {
       detail: `${conversionData?.total ?? 0} événements · taux formulaire ${conversionData?.conversionRate ?? 0}%`,
     },
     {
-      label: 'Next step post-soumission',
-      icon: <CalendarDays className="h-4 w-4" />,
+      label: 'CTA tunnel de vente',
+      icon: <MousePointerClick className="h-4 w-4" />,
       status: 'ok' as Status,
-      detail: 'Écran succès avec RDV / Démo / Offres',
+      detail: '✓ Hero / Pricing / Demo — booking ou formulaire, zéro impasse',
     },
     {
       label: 'Mode vente',
       icon: <Zap className="h-4 w-4" />,
       status: commercial.salesEnabled ? 'ok' as Status : 'warn' as Status,
-      detail: commercial.salesEnabled ? 'Activé' : 'Désactivé',
+      detail: commercial.salesEnabled ? '✓ Activé' : '✗ Désactivé',
     },
   ];
 
