@@ -34,7 +34,30 @@ export async function bootstrapOwner(userId: string, email: string): Promise<Boo
     return { orgId: existingProfile.organization_id, isFirstRun: false };
   }
 
+  // ── 1b. Always check existing roles before attempting org INSERT ───────────
+  // The hardened RLS policy (NOT EXISTS user_roles) blocks INSERT if the user
+  // already has any role. This covers two recovery scenarios:
+  //   a) Profile exists without org_id (stale state)
+  //   b) No profile at all but user has roles (race condition / partial bootstrap)
+  // In both cases: recover the org from user_roles instead of creating a new one.
+  const { data: existingRole } = await supabase
+    .from('user_roles')
+    .select('organization_id')
+    .eq('user_id', userId)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingRole?.organization_id) {
+    // User already has a role → recover org, patch profile, ensure config stub
+    await supabase
+      .from('profiles')
+      .upsert({ id: userId, email, organization_id: existingRole.organization_id }, { onConflict: 'id' });
+    await ensureRuntimeConfigStub(existingRole.organization_id);
+    return { orgId: existingRole.organization_id, isFirstRun: false };
+  }
+
   // ── 2. Create organization ─────────────────────────────────────────────────
+  // At this point: user has 0 roles → RLS policy allows the INSERT (bootstrap window is open)
   const baseSlug = email
     .split('@')[0]
     .toLowerCase()
