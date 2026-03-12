@@ -216,6 +216,11 @@ import type {
   IngestSourcePayloadResult,
   SyncPublicIntelResult,
   SyncCustomerAuthorizedResult,
+  EntityNode,
+  EntityEdge,
+  SignalEntityLink,
+  CorrelateEntitiesResult,
+  EntityGraphSummary,
 } from '@/types/engine';
 
 async function getSupabaseToken(): Promise<string> {
