@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPlatformHealth } from '@/lib/api-client';
+import { useCommercialConfig } from '@/hooks/useCommercialConfig';
 import {
   CheckCircle2,
   XCircle,
@@ -30,9 +31,9 @@ import {
   CalendarDays,
   ShoppingCart,
   Zap,
+  Settings,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getRevenueLinks } from '@/lib/revenue-links';
 
 type Status = 'ok' | 'warn' | 'fail' | 'unknown';
 
@@ -73,8 +74,7 @@ export default function AdminReadiness() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const coreApiConfigured = Boolean(import.meta.env.VITE_CORE_API_URL);
-  const revenue = getRevenueLinks();
-
+  const { config: commercial } = useCommercialConfig();
 
   const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: ['platform-health-readiness', organization?.id, refreshKey],
@@ -99,7 +99,6 @@ export default function AdminReadiness() {
       const avgScore  = total > 0
         ? Math.round(leads.reduce((s, l) => s + (l.lead_score ?? 0), 0) / total)
         : 0;
-      // Top CTA
       const ctaCounts: Record<string, number> = {};
       leads.forEach(l => {
         const k = l.cta_origin ?? 'unknown';
@@ -113,28 +112,44 @@ export default function AdminReadiness() {
     },
   });
 
-  // Conversion events top CTA
-  const { data: topEvents } = useQuery({
-    queryKey: ['top-conversion-events', refreshKey],
+  // Conversion events
+  const { data: conversionData } = useQuery({
+    queryKey: ['conversion-analytics', refreshKey],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any)
         .from('conversion_events')
-        .select('event_name, cta_origin')
-        .limit(200);
-      if (!data) return [];
-      const counts: Record<string, number> = {};
-      (data as { event_name: string }[]).forEach(e => {
-        counts[e.event_name] = (counts[e.event_name] ?? 0) + 1;
+        .select('event_name, cta_origin, source_page')
+        .limit(500);
+      if (!data) return null;
+      type Row = { event_name: string; cta_origin: string | null; source_page: string | null };
+      const rows = data as Row[];
+
+      const eventCounts: Record<string, number> = {};
+      const ctaCounts: Record<string, number> = {};
+      const pageCounts: Record<string, number> = {};
+
+      rows.forEach(r => {
+        eventCounts[r.event_name] = (eventCounts[r.event_name] ?? 0) + 1;
+        if (r.cta_origin) ctaCounts[r.cta_origin] = (ctaCounts[r.cta_origin] ?? 0) + 1;
+        if (r.source_page) pageCounts[r.source_page] = (pageCounts[r.source_page] ?? 0) + 1;
       });
-      return Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
+
+      const topEvents = Object.entries(eventCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      const topCtaOrigins = Object.entries(ctaCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const topPages = Object.entries(pageCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+      const dialogOpens    = eventCounts['demo_dialog_open']   ?? 0;
+      const dialogSubmits  = eventCounts['demo_dialog_submit'] ?? 0;
+      const conversionRate = dialogOpens > 0 ? Math.round((dialogSubmits / dialogOpens) * 100) : 0;
+
+      return { topEvents, topCtaOrigins, topPages, dialogOpens, dialogSubmits, conversionRate, total: rows.length };
     },
   });
 
   const healthOk = !healthLoading && !!health;
 
+  // ── Check groups ─────────────────────────────────────────────────────────
   const groups: CheckGroup[] = [
     {
       title: 'Infrastructure & Backend',
@@ -144,7 +159,9 @@ export default function AdminReadiness() {
           label: 'Base de données Lovable Cloud',
           description: 'Connexion active',
           status: healthOk ? 'ok' : healthLoading ? 'unknown' : 'fail',
-          detail: healthOk ? `${health?.org_counts?.open_signals ?? 0} signaux · ${health?.org_counts?.open_risks ?? 0} risques ouverts` : undefined,
+          detail: healthOk
+            ? `${health?.org_counts?.open_signals ?? 0} signaux · ${health?.org_counts?.open_risks ?? 0} risques`
+            : undefined,
         },
         {
           label: 'Backend externe (VITE_CORE_API_URL)',
@@ -156,7 +173,7 @@ export default function AdminReadiness() {
           label: 'IA moteur interne (Lovable API)',
           description: 'Analyse de signaux et remédiation IA',
           status: 'ok',
-          detail: "LOVABLE_API_KEY present — prêt à l'emploi",
+          detail: "LOVABLE_API_KEY présent — prêt à l'emploi",
         },
       ],
     },
@@ -182,7 +199,9 @@ export default function AdminReadiness() {
           label: 'Moteur de signaux',
           description: 'Ingestion, corrélation, registre de risques',
           status: healthOk ? 'ok' : 'unknown',
-          detail: healthOk ? `${health?.org_counts?.open_signals ?? 0} signaux · ${health?.org_counts?.open_risks ?? 0} risques` : undefined,
+          detail: healthOk
+            ? `${health?.org_counts?.open_signals ?? 0} signaux · ${health?.org_counts?.open_risks ?? 0} risques`
+            : undefined,
         },
       ],
     },
@@ -209,7 +228,7 @@ export default function AdminReadiness() {
           label: 'Tracking conversions',
           description: 'Événements CTA enregistrés',
           status: 'ok',
-          detail: 'Table conversion_events active — tracking anonyme',
+          detail: `conversion_events actif — ${conversionData?.total ?? '…'} événements total`,
         },
       ],
     },
@@ -248,16 +267,87 @@ export default function AdminReadiness() {
   const total     = allItems.length;
   const readinessScore = Math.round((okCount / total) * 100);
 
-  const globalStatus: Status =
-    failCount > 0 ? 'fail' :
-    warnCount > 0 ? 'warn' : 'ok';
+  const globalStatus: Status = failCount > 0 ? 'fail' : warnCount > 0 ? 'warn' : 'ok';
 
-  const readinessLabels: Record<string, { demo: Status; sale: Status; onboarding: Status }> = {
-    fail:    { demo: 'fail', sale: 'fail',  onboarding: 'fail' },
-    warn:    { demo: 'ok',   sale: 'warn',  onboarding: 'warn' },
-    ok:      { demo: 'ok',   sale: 'ok',    onboarding: coreApiConfigured ? 'ok' : 'warn' },
+  const readinessLabels = {
+    fail:  { demo: 'fail' as Status, sale: 'fail' as Status,  onboarding: 'fail' as Status },
+    warn:  { demo: 'ok'  as Status, sale: 'warn' as Status,  onboarding: 'warn' as Status },
+    ok:    { demo: 'ok'  as Status, sale: 'ok'  as Status,  onboarding: coreApiConfigured ? 'ok' as Status : 'warn' as Status },
   };
   const readiness = readinessLabels[globalStatus];
+
+  // ── Revenue Operating Readiness items ─────────────────────────────────────
+  const revenueItems = [
+    {
+      label: 'Config commerciale (DB)',
+      icon: <Settings className="h-4 w-4" />,
+      status: commercial.fromDb ? 'ok' as Status : 'warn' as Status,
+      detail: commercial.fromDb
+        ? 'Revenue Settings configurés en base'
+        : 'Non configuré — utilise variables env',
+      link: { href: '/settings/revenue', label: 'Configurer' },
+    },
+    {
+      label: 'Booking URL',
+      icon: <CalendarDays className="h-4 w-4" />,
+      status: commercial.bookingUrl ? 'ok' as Status : 'warn' as Status,
+      detail: commercial.bookingUrl
+        ? `✓ ${commercial.bookingUrl.slice(0, 45)}${commercial.bookingUrl.length > 45 ? '…' : ''}`
+        : 'Non défini — fallback vers formulaire démo',
+    },
+    {
+      label: 'Checkout Starter',
+      icon: <ShoppingCart className="h-4 w-4" />,
+      status: commercial.starterCheckoutUrl ? 'ok' as Status : 'warn' as Status,
+      detail: commercial.starterCheckoutUrl ? 'Configuré' : 'Non défini',
+    },
+    {
+      label: 'Checkout Pro',
+      icon: <ShoppingCart className="h-4 w-4" />,
+      status: commercial.proCheckoutUrl ? 'ok' as Status : 'warn' as Status,
+      detail: commercial.proCheckoutUrl ? 'Configuré' : 'Non défini',
+    },
+    {
+      label: 'Checkout Enterprise',
+      icon: <ShoppingCart className="h-4 w-4" />,
+      status: commercial.enterpriseCheckoutUrl ? 'ok' as Status : 'warn' as Status,
+      detail: commercial.enterpriseCheckoutUrl ? 'Configuré' : 'Non défini',
+    },
+    {
+      label: 'Capture lead opérationnelle',
+      icon: <Users className="h-4 w-4" />,
+      status: 'ok' as Status,
+      detail: 'Edge function submit-sales-lead — validation, dédup, scoring',
+    },
+    {
+      label: 'Pipeline leads accessible',
+      icon: <TrendingUp className="h-4 w-4" />,
+      status: 'ok' as Status,
+      detail: '/admin/leads — owner, priorité, SLA, actions rapides',
+      link: { href: '/admin/leads', label: 'Pipeline' },
+    },
+    {
+      label: 'Analytics conversions',
+      icon: <BarChart3 className="h-4 w-4" />,
+      status: (conversionData?.total ?? 0) > 0 ? 'ok' as Status : 'warn' as Status,
+      detail: `${conversionData?.total ?? 0} événements · taux formulaire ${conversionData?.conversionRate ?? 0}%`,
+    },
+    {
+      label: 'Next step post-soumission',
+      icon: <CalendarDays className="h-4 w-4" />,
+      status: 'ok' as Status,
+      detail: 'Écran succès avec RDV / Démo / Offres',
+    },
+    {
+      label: 'Mode vente',
+      icon: <Zap className="h-4 w-4" />,
+      status: commercial.salesEnabled ? 'ok' as Status : 'warn' as Status,
+      detail: commercial.salesEnabled ? 'Activé' : 'Désactivé',
+    },
+  ];
+
+  const revenueOk = revenueItems.filter(i => i.status === 'ok').length;
+  const revenueScore = Math.round((revenueOk / revenueItems.length) * 100);
 
   return (
     <AppLayout>
@@ -275,12 +365,11 @@ export default function AdminReadiness() {
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => setRefreshKey(k => k + 1)}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Actualiser
+            <RefreshCw className="h-4 w-4 mr-2" />Actualiser
           </Button>
         </div>
 
-        {/* Readiness Score */}
+        {/* Global Score */}
         <Card className="border-border">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center gap-6">
@@ -295,46 +384,34 @@ export default function AdminReadiness() {
 
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
                 {[
-                  { label: 'Prêt pour la démo',         status: readiness.demo,        icon: <FlaskConical className="h-4 w-4" /> },
-                  { label: 'Prêt pour la vente',         status: readiness.sale,        icon: <BarChart3 className="h-4 w-4" /> },
-                  { label: "Prêt pour l'onboarding",     status: readiness.onboarding,  icon: <Users className="h-4 w-4" /> },
+                  { label: 'Prêt pour la démo',       status: readiness.demo,       icon: <FlaskConical className="h-4 w-4" /> },
+                  { label: 'Prêt pour la vente',       status: readiness.sale,       icon: <BarChart3 className="h-4 w-4" /> },
+                  { label: "Prêt pour l'onboarding",   status: readiness.onboarding, icon: <Users className="h-4 w-4" /> },
                 ].map(item => (
                   <div key={item.label} className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3">
-                    <StatusIcon status={item.status as Status} />
+                    <StatusIcon status={item.status} />
                     <div>
                       <p className="text-sm font-medium text-foreground">{item.label}</p>
-                      <StatusBadge status={item.status as Status} />
+                      <StatusBadge status={item.status} />
                     </div>
                   </div>
                 ))}
               </div>
 
               <div className="flex gap-4 shrink-0 text-center">
-                <div>
-                  <p className="text-2xl font-bold text-success">{okCount}</p>
-                  <p className="text-xs text-muted-foreground">OK</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-warning">{warnCount}</p>
-                  <p className="text-xs text-muted-foreground">Attention</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-destructive">{failCount}</p>
-                  <p className="text-xs text-muted-foreground">Échec</p>
-                </div>
+                <div><p className="text-2xl font-bold text-success">{okCount}</p><p className="text-xs text-muted-foreground">OK</p></div>
+                <div><p className="text-2xl font-bold text-warning">{warnCount}</p><p className="text-xs text-muted-foreground">Attention</p></div>
+                <div><p className="text-2xl font-bold text-destructive">{failCount}</p><p className="text-xs text-muted-foreground">Échec</p></div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Groups */}
+        {/* Standard groups */}
         {groups.map(group => (
           <Card key={group.title}>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                {group.icon}
-                {group.title}
-              </CardTitle>
+              <CardTitle className="text-base flex items-center gap-2">{group.icon}{group.title}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-border">
@@ -345,9 +422,7 @@ export default function AdminReadiness() {
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground">{item.label}</p>
                         <p className="text-xs text-muted-foreground">{item.description}</p>
-                        {item.detail && (
-                          <p className="text-xs text-muted-foreground/70 mt-0.5 font-mono">{item.detail}</p>
-                        )}
+                        {item.detail && <p className="text-xs text-muted-foreground/70 mt-0.5 font-mono">{item.detail}</p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -368,40 +443,84 @@ export default function AdminReadiness() {
           </Card>
         ))}
 
-        {/* ── Revenue Readiness ─────────────────────────────────────────────── */}
+        {/* ── Revenue Operating Readiness ─────────────────────────────────── */}
         <Card className="border-primary/20">
           <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-primary" />
+                Revenue Operating Readiness
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <span className={`text-xl font-black ${revenueScore >= 80 ? 'text-success' : revenueScore >= 60 ? 'text-warning' : 'text-destructive'}`}>
+                  {revenueScore}%
+                </span>
+                <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+                  <Link to="/settings/revenue">
+                    <Settings className="h-3 w-3 mr-1" />Configurer
+                  </Link>
+                </Button>
+              </div>
+            </div>
+            <CardDescription>Liens commerciaux, pipeline et tunnel de conversion</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {revenueItems.map(item => (
+                <div key={item.label} className="flex items-center justify-between gap-4 px-6 py-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <StatusIcon status={item.status} />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-muted-foreground shrink-0">{item.icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{item.label}</p>
+                        <p className="text-xs text-muted-foreground/70 font-mono truncate">{item.detail}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <StatusBadge status={item.status} />
+                    {item.link && (
+                      <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+                        <Link to={item.link.href}>
+                          {item.link.label}
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Lead KPIs ────────────────────────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-primary" />
-              Revenue Readiness
+              <Users className="h-5 w-5 text-primary" />
+              KPI Leads
             </CardTitle>
-            <CardDescription>KPIs commerciaux et état du pipeline</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* KPI grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { label: 'Total leads',  value: leadStats?.total ?? 0,     icon: <Users className="h-4 w-4 text-primary" />,    cls: '' },
-                { label: 'Nouveaux',     value: leadStats?.newLeads ?? 0,   icon: <MessageSquare className="h-4 w-4 text-primary" />, cls: 'text-primary' },
-                { label: 'Qualifiés',    value: leadStats?.qualified ?? 0,  icon: <TrendingUp className="h-4 w-4 text-warning" />,    cls: 'text-warning' },
-                { label: 'Score moyen',  value: `${leadStats?.avgScore ?? 0}/100`, icon: <Star className="h-4 w-4 text-success" />, cls: 'text-success' },
+                { label: 'Total leads',  value: leadStats?.total ?? 0,      icon: <Users className="h-4 w-4 text-primary" />,          cls: '' },
+                { label: 'Nouveaux',     value: leadStats?.newLeads ?? 0,   icon: <MessageSquare className="h-4 w-4 text-primary" />,   cls: 'text-primary' },
+                { label: 'Qualifiés',    value: leadStats?.qualified ?? 0,  icon: <TrendingUp className="h-4 w-4 text-warning" />,       cls: 'text-warning' },
+                { label: 'Score moyen',  value: `${leadStats?.avgScore ?? 0}/100`, icon: <Star className="h-4 w-4 text-success" />,   cls: 'text-success' },
               ].map(k => (
                 <div key={k.label} className="rounded-lg border border-border bg-muted/20 px-4 py-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    {k.icon}
-                    <span className="text-xs text-muted-foreground">{k.label}</span>
-                  </div>
+                  <div className="flex items-center gap-2 mb-1">{k.icon}<span className="text-xs text-muted-foreground">{k.label}</span></div>
                   <p className={`text-2xl font-black ${k.cls}`}>{k.value}</p>
                 </div>
               ))}
             </div>
-
-            {/* Top CTAs */}
             {leadStats?.topCta && leadStats.topCta.length > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <MousePointerClick className="h-3.5 w-3.5" />
-                  CTAs les plus performants (leads)
+                  <MousePointerClick className="h-3.5 w-3.5" />CTAs les plus performants (leads générés)
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {leadStats.topCta.map(cta => (
@@ -410,16 +529,45 @@ export default function AdminReadiness() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* ── Conversion Analytics ─────────────────────────────────────────── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Conversion Analytics
+            </CardTitle>
+            <CardDescription>Clics et comportement depuis la landing · {conversionData?.total ?? 0} événements</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {/* Funnel KPIs */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border border-border bg-muted/20 px-4 py-3 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Ouvertures formulaire</p>
+                <p className="text-2xl font-black">{conversionData?.dialogOpens ?? 0}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/20 px-4 py-3 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Soumissions réussies</p>
+                <p className="text-2xl font-black text-success">{conversionData?.dialogSubmits ?? 0}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/20 px-4 py-3 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Taux formulaire</p>
+                <p className={`text-2xl font-black ${(conversionData?.conversionRate ?? 0) >= 30 ? 'text-success' : 'text-warning'}`}>
+                  {conversionData?.conversionRate ?? 0}%
+                </p>
+              </div>
+            </div>
 
             {/* Top events */}
-            {topEvents && topEvents.length > 0 && (
+            {conversionData?.topEvents && conversionData.topEvents.length > 0 && (
               <div>
                 <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <BarChart3 className="h-3.5 w-3.5" />
-                  Événements de conversion (clics)
+                  <MousePointerClick className="h-3.5 w-3.5" />Top événements
                 </p>
                 <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-                  {topEvents.map(([name, count]) => (
+                  {conversionData.topEvents.map(([name, count]) => (
                     <div key={name} className="flex items-center justify-between px-4 py-2">
                       <span className="text-xs font-mono text-muted-foreground">{name}</span>
                       <span className="text-sm font-bold">{count}</span>
@@ -429,94 +577,45 @@ export default function AdminReadiness() {
               </div>
             )}
 
-            {/* Revenue Activation checklist */}
-            <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5 mb-3">
-                <Zap className="h-3.5 w-3.5" />
-                Activation commerciale
-              </p>
-              <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-                {[
-                  {
-                    label: 'Capture lead opérationnelle',
-                    icon: <Users className="h-4 w-4" />,
-                    status: 'ok' as Status,
-                    detail: 'Edge function submit-sales-lead — validation, dédup, scoring',
-                  },
-                  {
-                    label: 'Pipeline leads accessible',
-                    icon: <TrendingUp className="h-4 w-4" />,
-                    status: 'ok' as Status,
-                    detail: '/admin/leads — actions rapides, filtres, statuts',
-                  },
-                  {
-                    label: 'CTA tracking actif',
-                    icon: <MousePointerClick className="h-4 w-4" />,
-                    status: 'ok' as Status,
-                    detail: 'conversion_events — booking, submit, démo, pricing',
-                  },
-                  {
-                    label: 'Next step post-soumission',
-                    icon: <CalendarDays className="h-4 w-4" />,
-                    status: 'ok' as Status,
-                    detail: 'Écran succès avec RDV / Démo / Offres',
-                  },
-                  {
-                    label: 'Booking direct (VITE_BOOKING_URL)',
-                    icon: <CalendarDays className="h-4 w-4" />,
-                    status: revenue.bookingUrl ? 'ok' as Status : 'warn' as Status,
-                    detail: revenue.bookingUrl
-                      ? `Configuré — ${revenue.bookingUrl}`
-                      : 'Non défini — fallback vers formulaire démo',
-                  },
-                  {
-                    label: 'Checkout Starter (VITE_STARTER_CHECKOUT_URL)',
-                    icon: <ShoppingCart className="h-4 w-4" />,
-                    status: revenue.starterCheckoutUrl ? 'ok' as Status : 'warn' as Status,
-                    detail: revenue.starterCheckoutUrl
-                      ? 'Configuré'
-                      : 'Non défini — fallback formulaire démo',
-                  },
-                  {
-                    label: 'Checkout Pro (VITE_PRO_CHECKOUT_URL)',
-                    icon: <ShoppingCart className="h-4 w-4" />,
-                    status: revenue.proCheckoutUrl ? 'ok' as Status : 'warn' as Status,
-                    detail: revenue.proCheckoutUrl
-                      ? 'Configuré'
-                      : 'Non défini — fallback formulaire démo',
-                  },
-                  {
-                    label: 'Checkout Enterprise (VITE_ENTERPRISE_CHECKOUT_URL)',
-                    icon: <ShoppingCart className="h-4 w-4" />,
-                    status: revenue.enterpriseCheckoutUrl ? 'ok' as Status : 'warn' as Status,
-                    detail: revenue.enterpriseCheckoutUrl
-                      ? 'Configuré'
-                      : 'Non défini — fallback formulaire démo',
-                  },
-                  {
-                    label: 'Report Studio',
-                    icon: <BarChart3 className="h-4 w-4" />,
-                    status: coreApiConfigured ? 'ok' as Status : 'warn' as Status,
-                    detail: coreApiConfigured ? 'Opérationnel' : 'Nécessite VITE_CORE_API_URL',
-                  },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center justify-between gap-4 px-4 py-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <StatusIcon status={item.status} />
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-muted-foreground shrink-0">{item.icon}</span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{item.label}</p>
-                          <p className="text-xs text-muted-foreground/70 font-mono truncate">{item.detail}</p>
-                        </div>
-                      </div>
+            {/* Top CTA origins */}
+            {conversionData?.topCtaOrigins && conversionData.topCtaOrigins.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5" />Top CTA origins
+                </p>
+                <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
+                  {conversionData.topCtaOrigins.map(([cta, count]) => (
+                    <div key={cta} className="flex items-center justify-between px-4 py-2">
+                      <span className="text-xs font-mono text-muted-foreground">{cta}</span>
+                      <span className="text-sm font-bold">{count}</span>
                     </div>
-                    <StatusBadge status={item.status} />
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
+            {/* Top pages */}
+            {conversionData?.topPages && conversionData.topPages.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <Navigation className="h-3.5 w-3.5" />Pages sources
+                </p>
+                <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
+                  {conversionData.topPages.map(([page, count]) => (
+                    <div key={page} className="flex items-center justify-between px-4 py-2">
+                      <span className="text-xs font-mono text-muted-foreground">{page}</span>
+                      <span className="text-sm font-bold">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!conversionData && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Aucun événement de conversion enregistré pour l'instant.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -535,8 +634,7 @@ export default function AdminReadiness() {
             <CardContent>
               <Button size="sm" asChild>
                 <Link to="/admin/leads">
-                  <Users className="h-4 w-4 mr-2" />
-                  Gérer les leads
+                  <Users className="h-4 w-4 mr-2" />Gérer les leads
                 </Link>
               </Button>
             </CardContent>
