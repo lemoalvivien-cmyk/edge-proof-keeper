@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPlatformHealth, generatePortfolioSummary, verifyEvidenceChain } from '@/lib/api-client';
+import { getPlatformHealth, generatePortfolioSummary, verifyEvidenceChain, IS_PROD } from '@/lib/api-client';
 import { useRuntimeConfig } from '@/hooks/useRuntimeConfig';
 import { BootstrapBanner } from '@/components/ui/BootstrapBanner';
 import {
@@ -445,53 +445,17 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
   };
 
   // ── Sovereign external routing — PRODUCTION ENFORCED ──────────────────────
+  // IS_PROD is imported from api-client.ts — single source of truth.
   // In prod: Core API is MANDATORY. No fallback. Blocking error if not configured or fails.
   // In dev: fallback to internal Edge Function allowed.
-  const IS_PROD = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) !== 'dev' && !import.meta.env.DEV;
 
+  // Delegate to the sovereign-aware generatePortfolioSummary in api-client
+  // which: reads DB runtime config + env var, enforces IS_PROD blocking, no redundant routing logic here.
   const callPortfolioSummary = async (body: Record<string, unknown>, tok: string) => {
-    const coreUrl = (import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '') || null;
-
-    if (IS_PROD) {
-      // PRODUCTION: Core API is mandatory — no fallback allowed
-      if (!coreUrl) {
-        throw new Error(
-          '🔒 Souveraineté externe requise — configurez VITE_CORE_API_URL ou core_api_url dans /settings/revenue'
-        );
-      }
-      const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(15000),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(
-          `🔒 Core API externe inaccessible (HTTP ${res.status}) — souveraineté externe requise en prod. Vérifiez ${coreUrl}`
-        );
-      }
-      return { ...json, _routed_to: 'external' };
-    }
-
-    // DEV: try Core API first, fallback to internal Edge Function
-    if (coreUrl) {
-      try {
-        const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-          signal: AbortSignal.timeout(15000),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          return { ...json, _routed_to: 'external' };
-        }
-      } catch {
-        // fallback to internal Edge Function in dev only
-      }
-    }
-    return callEF('generate-portfolio-summary', body, tok);
+    const orgId_ = body.organization_id as string;
+    const summaryType = body.summary_type as import('@/types/engine').PortfolioSummaryType;
+    const result = await generatePortfolioSummary(orgId_, summaryType, undefined, tok);
+    return result;
   };
 
   const handleLaunch = async () => {
@@ -797,10 +761,9 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   // Internal sovereign = Edge Functions opérationnel + données DB réelles + flag
   const internalSovereign = demoDataLoaded === true || (hasRealData && (dbStats?.portfolios ?? 0) > 0);
 
-  // App env mode
-  const isDev = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) === 'dev'
-    || import.meta.env.DEV;
-  const isProd = !isDev;
+  // App env mode — use IS_PROD from api-client.ts (single source of truth)
+  const isDev = !IS_PROD;
+  const isProd = IS_PROD;
 
   // In PROD: external sovereign is MANDATORY — no internal fallback accepted
   // In DEV: internal fallback is acceptable
@@ -3205,12 +3168,27 @@ export default function AdminReadiness() {
           return res.json().catch(() => ({}));
         };
 
-        // Run all 6 pipeline steps silently
+        // ① Seed structural data — always via internal EF (no sensitive routing)
         await callEF('seed-minimal-data', { organization_id: orgId });
         await callEF('seed-demo-run', { organization_id: orgId });
-        await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'executive_brief' });
-        await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'technical_brief' });
-        await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'weekly_watch_brief' });
+
+        // ② Portfolio summaries — respect sovereign routing
+        //    PROD: Core API mandatory — generatePortfolioSummary from api-client enforces IS_PROD
+        //    DEV:  direct internal EF call allowed
+        if (!IS_PROD) {
+          // DEV only: call internal EF directly
+          await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'executive_brief' });
+          await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'technical_brief' });
+          await callEF('generate-portfolio-summary', { organization_id: orgId, summary_type: 'weekly_watch_brief' });
+        } else {
+          // PROD: sovereign-aware function — throws if Core API not configured
+          // Swallow errors at auto-seed level; user must trigger FullPipelineLauncher manually if Core API absent
+          await generatePortfolioSummary(orgId, 'executive_brief', undefined, tok).catch(() => {});
+          await generatePortfolioSummary(orgId, 'technical_brief', undefined, tok).catch(() => {});
+          await generatePortfolioSummary(orgId, 'weekly_watch_brief', undefined, tok).catch(() => {});
+        }
+
+        // ③ Alert rules — always internal (monitoring EF, not a portfolio report)
         await callEF('evaluate-alert-rules', { organization_id: orgId });
 
         // Persist flag — upsert app_runtime_config
@@ -3229,7 +3207,7 @@ export default function AdminReadiness() {
         qcMain.invalidateQueries({ queryKey: ['decision-layer-stats', orgId] });
         qcMain.invalidateQueries({ queryKey: ['core-proof-db', orgId] });
       } catch (_err) {
-        // Silent failure — user can manually trigger via button
+        // Silent failure — user can manually trigger via FullPipelineLauncher button
       } finally {
         setAutoSeedRunning(false);
       }
