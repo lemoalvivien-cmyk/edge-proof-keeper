@@ -1702,7 +1702,10 @@ export default function AdminReadiness() {
           </Card>
         ))}
 
-        {/* ── SCÉNARIO E2E — preuve de valeur opérationnelle ─────────────── */}
+        {/* ── PIPELINE RÉEL — preuve sans injection directe ──────────────── */}
+        <RealPipelinePanel orgId={organization?.id} onRefresh={() => setRefreshKey(k => k + 1)} />
+
+        {/* ── SCÉNARIO E2E SEEDÉ — marqué explicitement DEMO ─────────────── */}
         <DemoE2EPanel orgId={organization?.id} onRefresh={() => setRefreshKey(k => k + 1)} />
 
         {/* ── PREUVE DU CŒUR PRODUIT — matrice live ──────────────────────── */}
