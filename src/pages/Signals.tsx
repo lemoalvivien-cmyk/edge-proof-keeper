@@ -5,12 +5,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   getSignals,
   getSignalEntities,
+  getRelatedSignals,
   runEntityCorrelation,
 } from '@/lib/api-client';
+import {
+  formatConfidence,
+  formatSignalDate,
+} from '@/lib/engine-normalizers';
 import type { Signal, SignalEntityLink, EntityNode } from '@/types/engine';
 import {
   AlertTriangle,
   ChevronRight,
+  ChevronDown,
   Filter,
   Loader2,
   RefreshCw,
@@ -116,20 +122,6 @@ function EntityTypeBadge({ type }: { type: string }) {
   );
 }
 
-function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString('fr-FR', {
-      day: '2-digit', month: '2-digit', year: '2-digit',
-      hour: '2-digit', minute: '2-digit',
-    });
-  } catch { return iso; }
-}
-
-function confidence(score?: number | null) {
-  if (score == null) return null;
-  return `${Math.round(score * 100)}%`;
-}
-
 // ─── Signal Row ───────────────────────────────────────────────────────────────
 
 function SignalRow({
@@ -164,11 +156,11 @@ function SignalRow({
             )}
             {signal.confidence_score != null && (
               <span className="text-xs text-muted-foreground">
-                confiance {confidence(signal.confidence_score)}
+                confiance {formatConfidence(signal.confidence_score)}
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{formatDate(signal.detected_at)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{formatSignalDate(signal.detected_at)}</p>
         </div>
         <ChevronRight className={cn(
           'h-4 w-4 text-muted-foreground flex-shrink-0 mt-1 transition-transform',
@@ -195,6 +187,116 @@ function EntityLinkItem({ link }: { link: SignalEntityLink }) {
   );
 }
 
+// ─── Related Signals by Entity ────────────────────────────────────────────────
+
+function RelatedSignalsByEntity({
+  entityNodeId,
+  entityValue,
+  orgId,
+  currentSignalId,
+  onSelectSignal,
+}: {
+  entityNodeId: string;
+  entityValue: string;
+  orgId: string;
+  currentSignalId: string;
+  onSelectSignal: (id: string) => void;
+}) {
+  const { data: related, isLoading } = useQuery({
+    queryKey: ['related-signals', entityNodeId, orgId],
+    queryFn: () => getRelatedSignals(orgId, entityNodeId),
+    staleTime: 60_000,
+  });
+
+  // Exclude current signal from pivot list
+  const others = (related ?? []).filter(s => s.id !== currentSignalId);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" /> Chargement…
+      </div>
+    );
+  }
+
+  if (!others.length) {
+    return (
+      <p className="text-xs text-muted-foreground py-1 pl-1">
+        Aucun autre signal partage cette entité.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      {others.slice(0, 5).map(s => (
+        <button
+          key={s.id}
+          onClick={() => onSelectSignal(s.id)}
+          className="w-full text-left flex items-center gap-2 py-1 px-2 rounded hover:bg-muted/40 transition-colors"
+        >
+          <span className={cn('h-1.5 w-1.5 rounded-full flex-shrink-0', SEVERITY_DOT[s.severity] ?? SEVERITY_DOT.info)} />
+          <span className="text-xs text-foreground truncate flex-1">{s.title}</span>
+          <SeverityBadge severity={s.severity} />
+        </button>
+      ))}
+      {others.length > 5 && (
+        <p className="text-xs text-muted-foreground pl-2">+{others.length - 5} autres…</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Pivot Item (expandable) ──────────────────────────────────────────────────
+
+function PivotEntityItem({
+  link,
+  orgId,
+  currentSignalId,
+  onSelectSignal,
+}: {
+  link: SignalEntityLink;
+  orgId: string;
+  currentSignalId: string;
+  onSelectSignal: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const node = link.entity_node as EntityNode | undefined;
+  if (!node) return null;
+
+  return (
+    <div className="rounded-md border border-border/60 overflow-hidden">
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted/30 transition-colors"
+      >
+        {ENTITY_ICON[node.entity_type] ?? <Shield className="h-3 w-3" />}
+        <span className="font-mono truncate flex-1 text-left">{node.canonical_value}</span>
+        <EntityTypeBadge type={node.entity_type} />
+        {expanded
+          ? <ChevronDown className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+          : <ChevronRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+        }
+      </button>
+
+      {expanded && (
+        <div className="border-t border-border/40 bg-muted/10 px-3 py-2">
+          <p className="text-xs text-muted-foreground mb-2 font-medium">
+            Signaux partageant cette entité :
+          </p>
+          <RelatedSignalsByEntity
+            entityNodeId={node.id}
+            entityValue={node.canonical_value}
+            orgId={orgId}
+            currentSignalId={currentSignalId}
+            onSelectSignal={onSelectSignal}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Signal Detail Panel ──────────────────────────────────────────────────────
 
 function SignalDetail({
@@ -202,11 +304,13 @@ function SignalDetail({
   orgId,
   onRunCorrelation,
   correlating,
+  onSelectSignal,
 }: {
   signal: Signal;
   orgId: string;
   onRunCorrelation: () => void;
   correlating: boolean;
+  onSelectSignal: (id: string) => void;
 }) {
   const { data: links, isLoading: entitiesLoading } = useQuery({
     queryKey: ['signal-entities', signal.id, orgId],
@@ -236,12 +340,12 @@ function SignalDetail({
           <StatusBadge status={signal.status} />
           {signal.confidence_score != null && (
             <span className="text-xs text-muted-foreground self-center">
-              {confidence(signal.confidence_score)} confiance
+              {formatConfidence(signal.confidence_score)} confiance
             </span>
           )}
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Détecté le {formatDate(signal.detected_at)}
+          Détecté le {formatSignalDate(signal.detected_at)}
           {signal.data_sources && ` · ${signal.data_sources.name}`}
         </p>
       </div>
@@ -350,24 +454,25 @@ function SignalDetail({
             )}
           </section>
 
-          {/* Pivot: signals sharing same entities */}
+          {/* Pivot panel — wired to getRelatedSignals */}
           {links && links.length > 0 && (
             <section>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-                <Zap className="h-3 w-3" /> Pivots disponibles
+                <Zap className="h-3 w-3" /> Pivots — signaux liés par entité
               </h3>
-              <div className="space-y-1">
-                {links.map(link => {
-                  const node = link.entity_node as EntityNode | undefined;
-                  if (!node) return null;
-                  return (
-                    <div key={link.id} className="flex items-center gap-2 py-1 px-2 text-xs text-muted-foreground rounded hover:bg-muted/30">
-                      {ENTITY_ICON[node.entity_type] ?? <Shield className="h-3 w-3" />}
-                      <span className="font-mono truncate flex-1">{node.canonical_value}</span>
-                      <span className="text-primary text-xs cursor-pointer hover:underline">→ autres signaux</span>
-                    </div>
-                  );
-                })}
+              <p className="text-xs text-muted-foreground mb-3">
+                Cliquez sur une entité pour voir les autres signaux qui la partagent.
+              </p>
+              <div className="space-y-2">
+                {links.map(link => (
+                  <PivotEntityItem
+                    key={link.id}
+                    link={link}
+                    orgId={orgId}
+                    currentSignalId={signal.id}
+                    onSelectSignal={onSelectSignal}
+                  />
+                ))}
               </div>
             </section>
           )}
@@ -419,6 +524,7 @@ export default function SignalsPage() {
         description: `${result.signals_processed} signaux · ${result.nodes_created} nœuds · ${result.links_created} liens`,
       });
       queryClient.invalidateQueries({ queryKey: ['signal-entities'] });
+      queryClient.invalidateQueries({ queryKey: ['related-signals'] });
       queryClient.invalidateQueries({ queryKey: ['signals', orgId] });
     },
     onError: (err: Error) => {
@@ -461,6 +567,9 @@ export default function SignalsPage() {
     high:     signals.filter(s => s.severity === 'high').length,
     new:      signals.filter(s => s.status === 'new').length,
   }), [signals]);
+
+  // When user pivots to another signal, select it
+  const handleSelectSignal = (id: string) => setSelectedId(id);
 
   if (!user) return null;
 
@@ -629,6 +738,7 @@ export default function SignalsPage() {
                   correlationMutation.mutate({ signalId: selectedSignal.id })
                 }
                 correlating={correlationMutation.isPending}
+                onSelectSignal={handleSelectSignal}
               />
             </div>
           )}
