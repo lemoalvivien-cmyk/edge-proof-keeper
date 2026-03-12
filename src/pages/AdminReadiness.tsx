@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,7 @@ import {
   FlaskConical, Users, MessageSquare, Navigation, BarChart3, Loader2,
   ExternalLink, TrendingUp, DollarSign, MousePointerClick, Star,
   CalendarDays, ShoppingCart, Zap, Settings, Server, Brain, Activity, ListTodo,
-  Bell, Info, Link2, FileText, Play, Hash, Lock, Rocket, ArrowRight,
+  Bell, Info, Link2, FileText, Play, Hash, Lock, Rocket, ArrowRight, LogIn,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
