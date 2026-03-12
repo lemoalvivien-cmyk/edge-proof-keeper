@@ -915,20 +915,31 @@ function RealPipelinePanel({ orgId, onRefresh }: { orgId?: string; onRefresh: ()
 
         {/* ── Prérequis catalogue — état visible et honnête ── */}
         <div className={`mx-6 my-3 rounded-lg border px-4 py-2.5 ${
+          sessionMissing ? 'border-destructive/40 bg-destructive/5' :
           nucleiLoading ? 'border-muted/40 bg-muted/10' :
           nucleiReady ? 'border-success/30 bg-success/5' :
+          nucleiQueryFailed ? 'border-warning/40 bg-warning/5' :
           'border-destructive/40 bg-destructive/5'
         }`}>
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <p className={`text-xs font-medium flex items-center gap-1.5 ${
+              sessionMissing ? 'text-destructive' :
               nucleiLoading ? 'text-muted-foreground' :
-              nucleiReady ? 'text-success/80' : 'text-destructive'
+              nucleiReady ? 'text-success/80' :
+              nucleiQueryFailed ? 'text-warning' :
+              'text-destructive'
             }`}>
-              {nucleiLoading
+              {sessionMissing
+                ? <><XCircle className="h-3.5 w-3.5 shrink-0" />SESSION EXPIRÉE — Reconnectez-vous pour activer le pipeline</>
+                : nucleiLoading
                 ? <><Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />Vérification tools_catalog…</>
                 : nucleiReady
                 ? <><CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                     tools_catalog ✓ — nuclei (id: {nucleiTool?.id?.slice(0, 8)}…) · {catalogCount ?? '?'} outils actifs · Outil pipeline : <span className="font-mono">nuclei</span> [seed idempotent garanti]
+                  </>
+                : nucleiQueryFailed
+                ? <><AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    ERREUR QUERY — Session peut-être expirée · Reconnectez-vous et rechargez
                   </>
                 : <><XCircle className="h-3.5 w-3.5 shrink-0" />
                     PRÉREQUIS MANQUANT — nuclei absent de tools_catalog · create-tool-run retournera 404 · Relancez la migration seed
