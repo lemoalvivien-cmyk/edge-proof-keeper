@@ -667,7 +667,7 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
 }
 
 // ── Sovereign Backend Status Panel ────────────────────────────────────────────
-// Affiche 100% SOUVERAIN EXTERNE si Core API configuré + ping OK.
+// Affiche 100% SOUVERAIN EXTERNE si Core API configuré + ping OK OU confirmation DB persistée.
 // Affiche 100% SOUVERAIN INTERNE si moteur Edge Functions opérationnel + données DB > 0.
 // Badge EXTERNE prioritaire sur INTERNE.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -681,6 +681,25 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   // ── Ping Core API state ─────────────────────────────────────────────────────
   const [pingState,  setPingState]  = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
   const [pingResult, setPingResult] = useState<string | null>(null);
+
+  // ── Read persistent sovereign confirmation from DB (badge survives reload) ───
+  const { data: rtConfig, refetch: refetchRt } = useQuery({
+    queryKey: ['sovereign-rt-config', orgId],
+    queryFn: async () => {
+      if (!orgId) return null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from('app_runtime_config')
+        .select('external_sovereign_confirmed_at, core_api_url')
+        .eq('organization_id', orgId)
+        .maybeSingle();
+      return data ?? null;
+    },
+    enabled: !!orgId,
+    staleTime: 60_000,
+  });
+
+  const dbConfirmedAt: string | null = rtConfig?.external_sovereign_confirmed_at ?? null;
 
   const handlePing = async () => {
     if (!coreApiUrl) return;
@@ -696,6 +715,16 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
         const body = await res.json().catch(() => ({}));
         setPingState('ok');
         setPingResult(`✓ HTTP ${res.status} · ${ms}ms · ${body.status ?? 'up'}`);
+        // Persist confirmation to DB — badge permanent après reload
+        if (orgId) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any).from('app_runtime_config').upsert({
+            organization_id: orgId,
+            core_api_url: coreApiUrl,
+            external_sovereign_confirmed_at: new Date().toISOString(),
+          }, { onConflict: 'organization_id' });
+          refetchRt();
+        }
       } else {
         setPingState('fail');
         setPingResult(`✗ HTTP ${res.status} · ${ms}ms`);
@@ -709,33 +738,13 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   // DB counters — prouve que le moteur interne tourne réellement
   const { data: dbStats } = useQuery({
     queryKey: ['sovereign-db-stats', orgId],
-    queryFn: async () => {
-      if (!orgId) return null;
-      const [risksRes, alertsRes, portfolioRes, snapshotRes] = await Promise.all([
-        supabase.from('risk_register').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
-        supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
-        supabase.from('portfolio_summaries').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
-        supabase.from('platform_health_snapshots').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
-      ]);
-      return {
-        risks:      risksRes.count ?? 0,
-        alerts:     alertsRes.count ?? 0,
-        portfolios: portfolioRes.count ?? 0,
-        snapshots:  snapshotRes.count ?? 0,
-      };
-    },
-    enabled: !!orgId,
-    staleTime: 30_000,
-  });
-
-  const hasRealData = (dbStats?.risks ?? 0) > 0 || (dbStats?.portfolios ?? 0) > 0;
-
+...
   const coreConfigured    = !!coreApiUrl;
   const aiConfigured      = !!aiGatewayUrl;
   const lovableGateway    = !aiGatewayUrl || aiGatewayUrl.includes('lovable.dev');
-  // External sovereign = Core API configured + ping succeeded (or not yet tested)
-  const externalSovereign = coreConfigured && (pingState === 'ok' || pingState === 'idle');
-  const externalConfirmed = coreConfigured && pingState === 'ok';
+  // External sovereign = Core API configured + (DB confirmed OR ping succeeded this session)
+  const externalConfirmed = coreConfigured && (!!dbConfirmedAt || pingState === 'ok');
+  const externalSovereign = externalConfirmed;
 
   // Internal sovereign = Edge Functions opérationnel + données DB réelles + flag
   const internalSovereign = demoDataLoaded === true || (hasRealData && (dbStats?.portfolios ?? 0) > 0);
