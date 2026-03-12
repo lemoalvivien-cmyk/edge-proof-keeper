@@ -1,26 +1,34 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Building2, Monitor, Scale } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Building2, Monitor, Scale, Sparkles } from "lucide-react";
 
 const audiences = [
   {
     icon: Building2,
     title: "Direction Générale",
     benefit: "Pilotage sans jargon",
-    description: "Tableaux de bord exécutifs, indicateurs clairs, preuves de diligence pour les régulateurs.",
+    description: "Tableaux de bord exécutifs, indicateurs clairs, preuves de diligence pour les régulateurs et assureurs.",
+    color: "text-primary",
+    glow: "hsl(185 100% 52%)",
+    badge: "CEO · DG · DAF",
   },
   {
     icon: Monitor,
     title: "DSI / RSSI",
-    benefit: "Visibilité technique",
-    description: "Rapports détaillés, suivi des vulnérabilités, intégration des outils existants.",
+    benefit: "Visibilité technique totale",
+    description: "Rapports détaillés, suivi des vulnérabilités CVE, intégration des outils existants via Imports Hub.",
+    color: "text-accent",
+    glow: "hsl(258 90% 66%)",
+    badge: "DSI · RSSI · Tech",
   },
   {
     icon: Scale,
     title: "Juridique / DPO",
     benefit: "Conformité documentée",
-    description: "Evidence Vault, proof packs exportables, traçabilité pour audits RGPD/NIS2.",
+    description: "Evidence Vault, proof packs exportables, traçabilité complète pour audits RGPD & NIS2.",
+    color: "text-success",
+    glow: "hsl(158 80% 46%)",
+    badge: "DPO · Juridique · Audit",
   },
 ];
 
@@ -29,52 +37,64 @@ export function AudienceSection() {
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   return (
-    <section ref={ref} className="relative py-24 overflow-hidden">
+    <section ref={ref} className="relative py-28 overflow-hidden">
       <div className="container px-4">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-center mb-14 space-y-4"
           >
-            <span className="inline-block px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full mb-4">
+            <div className="label-badge label-badge-purple mx-auto w-fit">
+              <Sparkles className="w-3 h-3" />
               Pour qui ?
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Une plateforme pour <span className="text-gradient">toute l'entreprise</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Une plateforme pour{" "}
+              <span className="text-gradient">toute l'entreprise</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Chaque rôle trouve sa valeur dans SENTINEL EDGE.
+              Chaque rôle trouve sa valeur. Direction, tech, juridique : une vision unifiée du risque cyber.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-5">
             {audiences.map((audience, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 40 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{ duration: 0.6, delay: index * 0.12, ease: "easeOut" }}
+                className="group relative p-6 rounded-2xl glass-card border border-border hover:border-primary/20 transition-all duration-500 card-3d overflow-hidden"
               >
-                <Card className="h-full border-2 hover:border-primary/50 transition-all duration-300 group">
-                  <CardContent className="p-6 space-y-4">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                      <audience.icon className="w-7 h-7" />
+                {/* Hover glow */}
+                <div
+                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{ background: `radial-gradient(circle at 30% 20%, ${audience.glow}12 0%, transparent 60%)` }}
+                />
+
+                <div className="relative space-y-4">
+                  {/* Icon + badge */}
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center ${audience.color} group-hover:scale-110 transition-transform duration-300`}
+                      style={{ background: `${audience.glow}18`, border: `1px solid ${audience.glow}25` }}
+                    >
+                      <audience.icon className="w-5 h-5" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">
-                        {audience.title}
-                      </h3>
-                      <p className="text-sm font-medium text-primary">
-                        {audience.benefit}
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {audience.description}
-                    </p>
-                  </CardContent>
-                </Card>
+                    <span className="text-[10px] text-muted-foreground/60 font-mono bg-secondary/50 px-2 py-1 rounded-full">
+                      {audience.badge}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">{audience.title}</h3>
+                    <p className={`text-sm font-semibold mt-0.5 ${audience.color}`}>{audience.benefit}</p>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground leading-relaxed">{audience.description}</p>
+                </div>
               </motion.div>
             ))}
           </div>

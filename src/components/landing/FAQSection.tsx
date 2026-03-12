@@ -1,5 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { HelpCircle } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -38,7 +39,7 @@ const faqs = [
   },
   {
     question: "Comment fonctionne le paiement ?",
-    answer: "Le paiement sera bientôt disponible via Stripe. En attendant, vous pouvez demander l'activation de votre compte et nous vous contacterons sous 24h pour finaliser votre inscription.",
+    answer: "Paiement sécurisé via Stripe. Vous pouvez également demander une démo personnalisée et nous vous contacterons sous 24h pour finaliser votre accès.",
   },
 ];
 
@@ -47,20 +48,22 @@ export function FAQSection() {
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   return (
-    <section ref={ref} id="faq" className="relative py-24 overflow-hidden">
-      <div className="container px-4">
+    <section ref={ref} id="faq" className="relative py-28 overflow-hidden">
+      <div className="absolute inset-0 grid-pattern opacity-40" />
+
+      <div className="container relative px-4">
         <div className="max-w-3xl mx-auto">
-          {/* Section header */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="text-center space-y-4 mb-12"
           >
-            <span className="inline-block px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">
+            <div className="label-badge label-badge-cyan mx-auto w-fit">
+              <HelpCircle className="w-3 h-3" />
               FAQ
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold">
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               Questions <span className="text-gradient">fréquentes</span>
             </h2>
             <p className="text-lg text-muted-foreground">
@@ -68,25 +71,24 @@ export function FAQSection() {
             </p>
           </motion.div>
 
-          {/* FAQ Accordion */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
           >
-            <Accordion type="single" collapsible className="space-y-4">
+            <Accordion type="single" collapsible className="space-y-3">
               {faqs.map((faq, index) => (
-                <AccordionItem 
-                  key={index} 
+                <AccordionItem
+                  key={index}
                   value={`item-${index}`}
-                  className="glass-card rounded-xl px-6 border-glass-border data-[state=open]:border-primary/30 transition-colors"
+                  className="glass-card rounded-xl px-5 border border-border data-[state=open]:border-primary/30 data-[state=open]:bg-primary/3 transition-all duration-300"
                 >
-                  <AccordionTrigger className="text-left hover:no-underline py-6">
-                    <span className="font-semibold text-foreground pr-4">
+                  <AccordionTrigger className="text-left hover:no-underline py-5 group">
+                    <span className="font-medium text-foreground/85 group-hover:text-foreground transition-colors pr-4 text-sm leading-relaxed">
                       {faq.question}
                     </span>
                   </AccordionTrigger>
-                  <AccordionContent className="pb-6 text-muted-foreground leading-relaxed">
+                  <AccordionContent className="pb-5 text-sm text-muted-foreground leading-relaxed">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
