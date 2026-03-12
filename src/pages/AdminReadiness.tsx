@@ -1624,7 +1624,7 @@ function CoreProofPanel({ orgId, refreshKey }: { orgId?: string; refreshKey: num
   );
 }
 
-// ── Live Proof Panel — capture automatique de la preuve finale ────────────────
+// ── Live Proof Panel — capture automatique + lancement inline ────────────────
 // Distingue explicitement :
 //   - PRÊT POUR EXÉCUTION LIVE  (session + org résolus, aucun run live encore)
 //   - EXÉCUTION EN COURS         (run détecté, pipeline en cours)
@@ -1637,13 +1637,149 @@ function CoreProofPanel({ orgId, refreshKey }: { orgId?: string; refreshKey: num
 //   - findings présents via normalize (count > 0 pour ce run)
 //   - au moins un portfolio_summary généré après ce run
 //
+// LANCEMENT INLINE : état READY expose un bouton unique qui exécute le pipeline
+//   complet sans navigation. Après reconnexion → admin-readiness → 1 clic = preuve.
+//
 // Ce panneau NE SE DONNE JAMAIS une apparence de victoire si les données manquent.
 // ─────────────────────────────────────────────────────────────────────────────
 function LiveProofPanel({ user, organization }: {
   user: import('@supabase/supabase-js').User | null;
   organization: { id: string; name: string } | null;
 }) {
+  const qc = useQueryClient();
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Inline pipeline execution state ────────────────────────────────────────
+  // Allows one-click proof from READY state without scrolling to RealPipelinePanel
+  const [inlinePipeRunning, setInlinePipeRunning] = useState(false);
+  const [inlinePipeStatus, setInlinePipeStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [inlinePipeSteps, setInlinePipeSteps] = useState<Array<{ label: string; state: StepState; result: string | null }>>([]);
+  const [inlinePipeError, setInlinePipeError] = useState<string | null>(null);
+
+  const handleInlinePipeline = async () => {
+    if (!organization?.id || inlinePipeRunning) return;
+    setInlinePipeRunning(true);
+    setInlinePipeStatus('running');
+    setInlinePipeError(null);
+    setInlinePipeSteps([
+      { label: '① create-tool-run', state: 'running', result: null },
+      { label: '② upload fixture', state: 'idle', result: null },
+      { label: '③ normalize → findings', state: 'idle', result: null },
+      { label: '④ vérifier findings DB', state: 'idle', result: null },
+      { label: '⑤ portfolio summary', state: 'idle', result: null },
+    ]);
+
+    const updateInlineStep = (idx: number, state: StepState, result: string) => {
+      setInlinePipeSteps(prev => prev.map((s, i) => i === idx ? { ...s, state, result } : i === idx + 1 && state !== 'error' ? { ...s, state: 'running' } : s));
+    };
+
+    let runId: string | null = null;
+    let hasError = false;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Session absente — reconnectez-vous');
+      const tok = session.access_token;
+
+      // ① create-tool-run
+      const createRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/create-tool-run`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY_FRONT },
+        body: JSON.stringify({ organization_id: organization.id, tool_slug: 'nuclei', mode: 'import_json' }),
+      });
+      const createJson = await createRes.json();
+      if (!createRes.ok || !createJson.tool_run_id) {
+        updateInlineStep(0, 'error', `✗ ${createJson?.error ?? `HTTP ${createRes.status}`}`);
+        hasError = true;
+      } else {
+        runId = createJson.tool_run_id;
+        updateInlineStep(0, 'done', `✓ run_id=${runId?.slice(0, 8)}… · awaiting_upload`);
+      }
+
+      // ② upload fixture
+      if (!hasError && runId) {
+        const fixtureRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/get-demo-fixture`, {
+          headers: { apikey: SUPABASE_ANON_KEY_FRONT },
+        });
+        if (!fixtureRes.ok) {
+          updateInlineStep(1, 'error', `✗ Fixture HTTP ${fixtureRes.status}`);
+          hasError = true;
+        } else {
+          const fixtureBlob = await fixtureRes.blob();
+          const fixtureFile = new File([fixtureBlob], 'demo-fixture-nuclei.json', { type: 'application/json' });
+          const formData = new FormData();
+          formData.append('tool_run_id', runId);
+          formData.append('file', fixtureFile);
+          const uploadRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/upload-tool-run-artifact`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${tok}`, apikey: SUPABASE_ANON_KEY_FRONT },
+            body: formData,
+          });
+          const uploadJson = await uploadRes.json();
+          if (!uploadRes.ok) {
+            updateInlineStep(1, 'error', `✗ ${uploadJson?.error ?? `HTTP ${uploadRes.status}`}`);
+            hasError = true;
+          } else {
+            updateInlineStep(1, 'done', `✓ artifact uploadé · ${uploadJson.summary?.total ?? 0} findings bruts`);
+          }
+        }
+      }
+
+      // ③ normalize
+      if (!hasError && runId) {
+        const normRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/normalize-tool-run`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY_FRONT },
+          body: JSON.stringify({ tool_run_id: runId }),
+        });
+        const normJson = await normRes.json();
+        if (!normRes.ok) {
+          updateInlineStep(2, 'error', `✗ ${normJson?.error ?? `HTTP ${normRes.status}`}`);
+          hasError = true;
+        } else {
+          updateInlineStep(2, 'done', `✓ ${normJson.findings_count} findings normalisés`);
+        }
+      }
+
+      // ④ verify DB findings
+      if (!hasError && runId) {
+        const { count: findCount, error: findErr } = await supabase
+          .from('findings')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organization.id)
+          .eq('tool_run_id', runId);
+        if (findErr || (findCount ?? 0) === 0) {
+          updateInlineStep(3, 'error', `✗ ${findErr?.message ?? '0 findings en DB'}`);
+          hasError = true;
+        } else {
+          updateInlineStep(3, 'done', `✓ ${findCount} findings en DB · requested_by=${user?.id?.slice(0, 8)}…`);
+        }
+      }
+
+      // ⑤ portfolio summary
+      if (!hasError) {
+        try {
+          const portResult = await generatePortfolioSummary(organization.id, 'executive_brief');
+          setInlinePipeSteps(prev => prev.map((s, i) => i === 4 ? { ...s, state: 'done', result: `✓ executive_brief · ${portResult.ai_used ? portResult.model_name : 'fallback'}` } : s));
+          qc.invalidateQueries({ queryKey: ['decision-layer-stats', organization.id] });
+          qc.invalidateQueries({ queryKey: ['core-proof-db', organization.id] });
+        } catch (portErr) {
+          setInlinePipeSteps(prev => prev.map((s, i) => i === 4 ? { ...s, state: 'error', result: `✗ ${portErr instanceof Error ? portErr.message : 'Erreur'}` } : s));
+          hasError = true;
+        }
+      }
+
+    } catch (err) {
+      setInlinePipeError(err instanceof Error ? err.message : 'Erreur imprévue');
+      hasError = true;
+    }
+
+    setInlinePipeStatus(hasError ? 'error' : 'done');
+    setInlinePipeRunning(false);
+
+    // Refresh live proof after pipeline completes
+    setTimeout(() => { refetchLiveProof(); }, 1500);
+  };
 
   // Preuve finale : dernier tool_run live avec ses métriques
   const { data: liveProof, refetch: refetchLiveProof, isLoading } = useQuery({
@@ -1736,16 +1872,18 @@ function LiveProofPanel({ user, organization }: {
   const pipelineRunning = hasLiveRun && liveProof?.liveRun?.status === 'processing';
 
   type LiveState = 'NO_SESSION' | 'READY' | 'RUNNING' | 'PROVEN' | 'PARTIAL';
+  // Override to RUNNING if inline pipeline is currently executing
   const liveState: LiveState = !sessionOk ? 'NO_SESSION'
     : proofObtained ? 'PROVEN'
+    : inlinePipeRunning ? 'RUNNING'
     : pipelineRunning ? 'RUNNING'
     : hasLiveRun && !hasLiveFindings ? 'PARTIAL'
     : 'READY';
 
   const stateCfg: Record<LiveState, { label: string; cls: string; border: string; bg: string }> = {
     NO_SESSION: { label: '✗ SESSION ABSENTE — IMPOSSIBLE D\'EXÉCUTER', cls: 'text-destructive border-destructive/30 bg-destructive/10', border: 'border-destructive/50', bg: 'bg-destructive/[0.015]' },
-    READY:      { label: '○ PRÊT — NON ENCORE PROUVÉ', cls: 'text-warning border-warning/30 bg-warning/10', border: 'border-warning/40', bg: 'bg-warning/[0.01]' },
-    RUNNING:    { label: '↻ PIPELINE EN COURS', cls: 'text-primary border-primary/30 bg-primary/10', border: 'border-primary/40', bg: 'bg-primary/[0.01]' },
+    READY:      { label: '○ RECONNECTÉ — PRÊT À LANCER', cls: 'text-warning border-warning/30 bg-warning/10', border: 'border-warning/40', bg: 'bg-warning/[0.01]' },
+    RUNNING:    { label: '↻ PIPELINE LIVE EN COURS…', cls: 'text-primary border-primary/30 bg-primary/10', border: 'border-primary/40', bg: 'bg-primary/[0.01]' },
     PROVEN:     { label: '✓ PREUVE LIVE OBTENUE', cls: 'text-success border-success/30 bg-success/10', border: 'border-success/50', bg: 'bg-success/[0.015]' },
     PARTIAL:    { label: '⚠ PARTIEL — RUN CRÉÉ, PIPELINE INCOMPLET', cls: 'text-warning border-warning/30 bg-warning/10', border: 'border-warning/40', bg: 'bg-warning/[0.01]' },
   };
@@ -1856,35 +1994,123 @@ function LiveProofPanel({ user, organization }: {
         )}
 
         {liveState === 'READY' && (
-          <div className="mx-6 my-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
-            <p className="text-sm font-semibold text-warning flex items-center gap-2">
-              <Clock className="h-4 w-4 shrink-0" />
-              PRÊT — Aucun run live encore exécuté
+          <div className="mx-6 my-3 rounded-lg border-2 border-warning/50 bg-warning/[0.03] px-4 py-4 space-y-3">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <p className="text-sm font-bold text-warning flex items-center gap-2">
+                  <Rocket className="h-4 w-4 shrink-0" />
+                  RECONNECTÉ — SESSION ACTIVE · 1 CLIC POUR LA PREUVE FINALE
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Session ✓ · Org ✓ · pipeline prêt · Un seul geste requis.
+                  {hasSeededRuns && <span className="ml-2 text-muted-foreground/60">({liveProof?.seededRuns.length} run(s) seedé(s) exclus — not you)</span>}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleInlinePipeline}
+                disabled={inlinePipeRunning || !organization?.id}
+                className="shrink-0 gap-1.5 bg-warning text-warning-foreground hover:bg-warning/90 font-bold"
+              >
+                {inlinePipeRunning
+                  ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
+                  : <><Zap className="h-4 w-4" />Obtenir la preuve live</>}
+              </Button>
+            </div>
+
+            {/* Inline pipeline steps — shown while running or after */}
+            {inlinePipeSteps.length > 0 && (
+              <div className="rounded border border-border bg-background/60 divide-y divide-border/50">
+                {inlinePipeSteps.map((step, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2">
+                    <StepStateIcon state={step.state} />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-medium">{step.label}</span>
+                      {step.result && (
+                        <p className={`text-[10px] font-mono mt-0.5 ${step.state === 'done' ? 'text-success' : step.state === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {step.result}
+                        </p>
+                      )}
+                    </div>
+                    <StepStateBadge state={step.state} />
+                  </div>
+                ))}
+              </div>
+            )}
+            {inlinePipeError && (
+              <p className="text-xs text-destructive font-mono">✗ {inlinePipeError}</p>
+            )}
+          </div>
+        )}
+
+        {/* RUNNING — inline pipeline in progress but no liveProof yet */}
+        {liveState === 'RUNNING' && inlinePipeRunning && (
+          <div className="mx-6 my-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 space-y-2">
+            <p className="text-sm font-semibold text-primary flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+              PIPELINE LIVE EN COURS — create → upload → normalize → findings → synthèse
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Session authentifiée ✓ · Org résolue ✓ · tools_catalog prêt ✓
-              <br/>
-              Action requise : Lancer le <strong>Pipeline Réel</strong> ci-dessous pour obtenir la preuve finale.
-            </p>
-            {hasSeededRuns && (
-              <p className="text-xs font-mono text-muted-foreground/60 mt-1.5 flex items-center gap-1">
-                <Info className="h-3 w-3 shrink-0" />
-                {liveProof?.seededRuns.length} run(s) seedé(s) détecté(s) — exclus de la preuve live (requested_by ≠ user courant)
-              </p>
+            {inlinePipeSteps.length > 0 && (
+              <div className="rounded border border-border bg-background/60 divide-y divide-border/50">
+                {inlinePipeSteps.map((step, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2">
+                    <StepStateIcon state={step.state} />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-medium">{step.label}</span>
+                      {step.result && (
+                        <p className={`text-[10px] font-mono mt-0.5 ${step.state === 'done' ? 'text-success' : step.state === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {step.result}
+                        </p>
+                      )}
+                    </div>
+                    <StepStateBadge state={step.state} />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
 
         {liveState === 'PARTIAL' && (
-          <div className="mx-6 my-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
+          <div className="mx-6 my-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 space-y-2">
             <p className="text-sm font-semibold text-warning flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               PARTIEL — Run live créé mais pipeline incomplet
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               run_id={liveProof?.liveRun?.id?.slice(0, 12)}… · status={liveProof?.liveRun?.status}
               · findings={liveProof?.liveRunFindings ?? 0} ← blocage principal
             </p>
+            {/* Offer re-run from partial state */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleInlinePipeline}
+              disabled={inlinePipeRunning}
+              className="gap-1.5 text-xs border-warning/40 text-warning"
+            >
+              {inlinePipeRunning
+                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />En cours…</>
+                : <><Zap className="h-3.5 w-3.5" />Relancer le pipeline</>}
+            </Button>
+            {inlinePipeSteps.length > 0 && (
+              <div className="rounded border border-border bg-background/60 divide-y divide-border/50">
+                {inlinePipeSteps.map((step, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2">
+                    <StepStateIcon state={step.state} />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-medium">{step.label}</span>
+                      {step.result && (
+                        <p className={`text-[10px] font-mono mt-0.5 ${step.state === 'done' ? 'text-success' : step.state === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {step.result}
+                        </p>
+                      )}
+                    </div>
+                    <StepStateBadge state={step.state} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

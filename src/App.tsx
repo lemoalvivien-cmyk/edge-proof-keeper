@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { OwnerSetup } from "@/components/auth/OwnerSetup";
@@ -59,9 +59,16 @@ import PlatformHealth from "./pages/PlatformHealth";
 
 const queryClient = new QueryClient();
 
-// Solo mode wrapper that handles auto-session
+// Solo mode wrapper: after successful auth, redirect to /admin-readiness for live proof
 function SoloModeWrapper({ children }: { children: React.ReactNode }) {
-  const { state, onSetupComplete, isSoloMode } = useSoloAuth();
+  const navigate = useNavigate();
+  const { state, isSoloMode } = useSoloAuth();
+
+  const handleSetupComplete = () => {
+    // After reconnection, go directly to admin-readiness so the user can immediately
+    // trigger the live proof pipeline — zero navigation friction.
+    navigate('/admin-readiness', { replace: true });
+  };
 
   if (!isSoloMode) {
     return <>{children}</>;
@@ -76,7 +83,7 @@ function SoloModeWrapper({ children }: { children: React.ReactNode }) {
   }
 
   if (state === 'needs_setup') {
-    return <OwnerSetup onComplete={onSetupComplete} />;
+    return <OwnerSetup onComplete={handleSetupComplete} />;
   }
 
   return <>{children}</>;
