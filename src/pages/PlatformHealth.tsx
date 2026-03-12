@@ -14,6 +14,8 @@ import {
   evaluateAlertRules,
   updateAlertStatus,
   getLatestPortfolioSummary,
+  generatePortfolioSummary,
+  verifyEvidenceChain,
 } from "@/lib/api-client";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -36,6 +38,9 @@ import {
   Loader2,
   Eye,
   ArrowRight,
+  Hash,
+  BarChart3,
+  Link2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
