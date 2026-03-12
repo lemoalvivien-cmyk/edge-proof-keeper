@@ -400,26 +400,211 @@ function DecisionLayerSection({ orgId, refreshKey }: { orgId?: string; refreshKe
   );
 }
 
+// ── Sovereign Backend Status Panel ────────────────────────────────────────────
+function SovereignBackendPanel() {
+  const runtimeConfig = useRuntimeConfig();
+  const coreApiUrl    = runtimeConfig.coreApiUrl;
+  const aiGatewayUrl  = runtimeConfig.aiGatewayUrl;
+  const reportsMode   = runtimeConfig.reportsMode;
+  const configSource  = runtimeConfig.configSource;
+
+  const coreConfigured   = !!coreApiUrl;
+  const aiConfigured     = !!aiGatewayUrl;
+  const lovableGateway   = !aiGatewayUrl || aiGatewayUrl.includes('lovable.dev');
+  const isSovereign      = coreConfigured && !lovableGateway;
+
+  const items = [
+    {
+      label: 'Core API externe (VITE_CORE_API_URL)',
+      icon: <Server className="h-4 w-4" />,
+      status: (coreConfigured ? 'ok' : 'warn') as Status,
+      detail: coreConfigured
+        ? `✓ Configuré — ${coreApiUrl}`
+        : '✗ Non configuré — mode interne actif (Edge Functions Supabase). Ajoutez VITE_CORE_API_URL pour la souveraineté complète.',
+    },
+    {
+      label: 'AI Gateway (VITE_AI_GATEWAY_URL)',
+      icon: <Brain className="h-4 w-4" />,
+      status: (aiConfigured ? (lovableGateway ? 'warn' : 'ok') : 'warn') as Status,
+      detail: aiConfigured
+        ? (lovableGateway
+          ? `⚠ Lovable Gateway (ai.gateway.lovable.dev) — dépendance externe · Pour 100% souverain, configurez votre propre AI Gateway`
+          : `✓ Gateway souverain configuré — ${aiGatewayUrl}`)
+        : '⚠ Non configuré — utilise Lovable Gateway par défaut (LOVABLE_API_KEY côté Edge)',
+    },
+    {
+      label: 'Mode rapports (reports_mode)',
+      icon: <FileText className="h-4 w-4" />,
+      status: (reportsMode === 'external_only' ? (coreConfigured ? 'ok' : 'fail') : 'ok') as Status,
+      detail: {
+        external_only: coreConfigured ? '✓ Backend externe obligatoire — Core API configuré' : '✗ external_only mais VITE_CORE_API_URL absent — génération bloquée',
+        internal_fallback: '✓ Fallback interne actif — essaie externe, bascule sur Edge si absent',
+        internal_only: '✓ Moteur interne — 100% Edge Functions, pas de backend externe requis',
+      }[reportsMode],
+    },
+    {
+      label: 'Source de configuration',
+      icon: <Settings className="h-4 w-4" />,
+      status: (configSource === 'app_runtime_config' ? 'ok' : configSource === 'commercial_config' ? 'warn' : 'warn') as Status,
+      detail: {
+        app_runtime_config: '✓ Table app_runtime_config (DB) — priorité maximale · modifiable sans redéploiement',
+        commercial_config:  '⚠ Table commercial_config (legacy) — migrée partiellement vers app_runtime_config',
+        env:                '⚠ Variables d\'environnement uniquement — aucune config DB trouvée',
+        defaults:           '⚠ Valeurs par défaut — aucun env ni config DB',
+      }[configSource],
+    },
+  ];
+
+  const okCount = items.filter(i => i.status === 'ok').length;
+  const score   = Math.round((okCount / items.length) * 100);
+
+  return (
+    <Card className="border-primary/30 bg-primary/[0.01]">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Rocket className="h-5 w-5 text-primary" />
+            Sovereign Backend Status
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={`text-xs font-bold ${
+              isSovereign
+                ? 'border-success/40 text-success bg-success/5'
+                : 'border-warning/40 text-warning bg-warning/5'
+            }`}>
+              {isSovereign ? '✓ 100% SOUVERAIN' : '⚠ SOUVERAINETÉ PARTIELLE'}
+            </Badge>
+            <span className={`text-xl font-black ${score >= 75 ? 'text-success' : 'text-warning'}`}>{score}%</span>
+          </div>
+        </div>
+        <CardDescription>
+          Core API externe · AI Gateway · mode rapports · source config
+          {!coreConfigured && (
+            <span className="ml-2 text-warning font-medium">· Ajoutez VITE_CORE_API_URL pour activer le backend souverain</span>
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+          {items.map(item => (
+            <div key={item.label} className="flex items-center justify-between gap-4 px-6 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <StatusIcon status={item.status} />
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-muted-foreground shrink-0">{item.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{item.label}</p>
+                    <p className="text-xs text-muted-foreground/70 font-mono leading-relaxed">{item.detail}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <StatusBadge status={item.status} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="px-6 py-3 border-t border-border bg-muted/10">
+          <p className="text-[10px] font-mono text-muted-foreground/70">
+            Pour 100% souverain : configurez VITE_CORE_API_URL + VITE_AI_GATEWAY_URL dans les variables d'env · puis app_runtime_config prend le relais sans redéploiement
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Continuous Watch Section ──────────────────────────────────────────────────
 function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
+  const [evalState, setEvalState]   = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [evalResult, setEvalResult] = useState<string | null>(null);
+
   const { data: watchStats } = useQuery({
     queryKey: ['continuous-watch-stats', orgId, refreshKey],
     queryFn: async () => {
       if (!orgId) return null;
-      const [alertsRes, sourcesRes] = await Promise.all([
+      const [alertsRes, sourcesRes, rulesRes] = await Promise.all([
         supabase.from('alerts').select('status', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'open'),
         supabase.from('data_sources').select('status', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'active'),
+        supabase.from('notification_rules').select('id, channel, is_enabled', { count: 'exact' }).eq('organization_id', orgId).eq('is_enabled', true),
       ]);
-      return { openAlerts: alertsRes.count ?? 0, activeSources: sourcesRes.count ?? 0 };
+      const webhookRules = rulesRes.data?.filter(r => ['slack', 'teams', 'webhook'].includes(r.channel)) ?? [];
+      return {
+        openAlerts: alertsRes.count ?? 0,
+        activeSources: sourcesRes.count ?? 0,
+        notifRules: rulesRes.count ?? 0,
+        webhookRules: webhookRules.length,
+      };
     },
     enabled: !!orgId,
   });
 
+  const handleEvaluateAlerts = async () => {
+    if (!orgId) return;
+    setEvalState('running'); setEvalResult(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/evaluate-alert-rules`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ organization_id: orgId }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error ?? `Erreur ${res.status}`);
+      setEvalState('done');
+      const dispatched = json.notifications_dispatched ?? 0;
+      setEvalResult(
+        `✓ ${json.rules_evaluated} règle(s) · ${json.alerts_matched} alerte(s) matchée(s) · ${dispatched} webhook(s) envoyé(s) · ${json.open_alerts_count} alertes ouvertes`
+      );
+    } catch (e: unknown) {
+      setEvalState('error');
+      setEvalResult((e as Error).message);
+    }
+  };
+
   const watchItems = [
-    { label: 'Edge Function platform-health', icon: <Server className="h-4 w-4" />, status: 'unverifiable' as Status, detail: 'Déployée (vérification indirecte) — health score, composants DB/AI/sources/risques', link: { href: '/platform-health', label: 'Voir la santé' } },
-    { label: 'Edge Function schedule-source-sync', icon: <RefreshCw className="h-4 w-4" />, status: 'unverifiable' as Status, detail: 'Déployée (vérification indirecte) — déclenche syncs sources actives (seuil 6h)' },
-    { label: 'Edge Function stale-risk-check', icon: <AlertTriangle className="h-4 w-4" />, status: 'unverifiable' as Status, detail: 'Déployée (vérification indirecte) — détecte risques stagnants → alertes' },
-    { label: 'Edge Function evaluate-alert-rules', icon: <Bell className="h-4 w-4" />, status: 'unverifiable' as Status, detail: 'Déployée (vérification indirecte) — évalue notification_rules contre alertes ouvertes' },
+    {
+      label: 'Edge Function platform-health',
+      icon: <Server className="h-4 w-4" />,
+      status: 'unverifiable' as Status,
+      detail: 'Déployée · health score, composants DB/AI/sources/risques',
+      link: { href: '/platform-health', label: 'Voir la santé' },
+    },
+    {
+      label: 'Edge Function schedule-source-sync',
+      icon: <RefreshCw className="h-4 w-4" />,
+      status: 'unverifiable' as Status,
+      detail: 'Déployée · déclenche syncs sources actives (seuil 6h)',
+    },
+    {
+      label: 'Edge Function stale-risk-check',
+      icon: <AlertTriangle className="h-4 w-4" />,
+      status: 'unverifiable' as Status,
+      detail: 'Déployée · détecte risques stagnants → alertes',
+    },
+    {
+      label: 'Edge Function evaluate-alert-rules',
+      icon: <Bell className="h-4 w-4" />,
+      status: evalState === 'done' ? 'ok' as Status : evalState === 'error' ? 'fail' as Status : 'unverifiable' as Status,
+      detail: evalResult ?? 'Déployée · évalue notification_rules + dispatch Slack/Teams/webhook · cliquez Tester',
+    },
+    {
+      label: 'Webhook notifications (Slack/Teams)',
+      icon: <Bell className="h-4 w-4" />,
+      status: (watchStats === undefined ? 'unknown' : (watchStats?.webhookRules ?? 0) > 0 ? 'ok' : 'warn') as Status,
+      detail: watchStats !== null
+        ? `${watchStats?.webhookRules ?? 0} règle(s) webhook active(s) sur ${watchStats?.notifRules ?? 0} règle(s) totales · configurez dans Paramètres`
+        : '…',
+      link: { href: '/settings', label: 'Configurer' },
+    },
     {
       label: 'Alertes ouvertes (DB)',
       icon: <Bell className="h-4 w-4" />,
@@ -457,7 +642,7 @@ function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refresh
             </span>
           </div>
         </div>
-        <CardDescription>Surveillance continue · alerting défensif · syncs planifiés · stale-risk detection</CardDescription>
+        <CardDescription>Surveillance continue · alerting défensif · syncs planifiés · stale-risk detection · webhooks Slack/Teams</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-border">
@@ -475,11 +660,20 @@ function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refresh
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <StatusBadge status={item.status} />
-                {item.link && (
+                {item.label === 'Edge Function evaluate-alert-rules' ? (
+                  <Button
+                    size="sm" variant="outline"
+                    onClick={handleEvaluateAlerts}
+                    disabled={!orgId || evalState === 'running'}
+                    className="h-7 text-xs"
+                  >
+                    {evalState === 'running' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Play className="h-3.5 w-3.5 mr-1" />Tester</>}
+                  </Button>
+                ) : item.link ? (
                   <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
                     <Link to={item.link.href}>{item.link.label}<ExternalLink className="h-3 w-3 ml-1" /></Link>
                   </Button>
-                )}
+                ) : null}
               </div>
             </div>
           ))}
