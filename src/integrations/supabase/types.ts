@@ -996,6 +996,47 @@ export type Database = {
           },
         ]
       }
+      portfolio_summaries: {
+        Row: {
+          created_at: string
+          id: string
+          model_name: string | null
+          organization_id: string
+          output_json: Json
+          period_label: string | null
+          source_snapshot: Json
+          summary_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_name?: string | null
+          organization_id: string
+          output_json?: Json
+          period_label?: string | null
+          source_snapshot?: Json
+          summary_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_name?: string | null
+          organization_id?: string
+          output_json?: Json
+          period_label?: string | null
+          source_snapshot?: Json
+          summary_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_portfolio_summaries_org"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
