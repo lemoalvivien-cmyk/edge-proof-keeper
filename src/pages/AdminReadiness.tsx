@@ -445,9 +445,9 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
   };
 
   // ── Sovereign external routing — PRODUCTION ENFORCED ──────────────────────
+  // IS_PROD is imported from api-client.ts — single source of truth.
   // In prod: Core API is MANDATORY. No fallback. Blocking error if not configured or fails.
   // In dev: fallback to internal Edge Function allowed.
-  const IS_PROD = (import.meta.env.VITE_PUBLIC_APP_ENV as string | undefined) !== 'dev' && !import.meta.env.DEV;
 
   const callPortfolioSummary = async (body: Record<string, unknown>, tok: string) => {
     const coreUrl = (import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '') || null;
