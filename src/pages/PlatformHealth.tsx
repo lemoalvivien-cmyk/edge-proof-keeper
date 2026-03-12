@@ -172,6 +172,148 @@ function StatusDot({ ok }: { ok: boolean | undefined }) {
   return <div className={`h-2.5 w-2.5 rounded-full ${ok ? "bg-success" : "bg-destructive"}`} />;
 }
 
+// ── Core Proof Block — end-to-end smoke test visible depuis PlatformHealth ─────
+function CoreProofBlock({ orgId }: { orgId?: string }) {
+  const qc = useQueryClient();
+  const [portfolioState, setPortfolioState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [portfolioMsg, setPortfolioMsg] = useState<string | null>(null);
+  const [chainState, setChainState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [chainMsg, setChainMsg] = useState<string | null>(null);
+
+  // Read latest evidence chain entry and portfolio summary from DB
+  const { data } = useQuery({
+    queryKey: ['core-proof-block', orgId],
+    queryFn: async () => {
+      if (!orgId) return null;
+      const [evRes, portRes] = await Promise.all([
+        supabase.from('evidence_log').select('id, seq, entry_hash', { count: 'exact' }).eq('organization_id', orgId).order('seq', { ascending: false }).limit(1),
+        supabase.from('portfolio_summaries').select('id, summary_type, model_name, created_at').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(1),
+      ]);
+      return {
+        evidenceCount: evRes.count ?? 0,
+        lastSeq: evRes.data?.[0]?.seq ?? null,
+        lastHash: evRes.data?.[0]?.entry_hash ?? null,
+        lastPortfolio: portRes.data?.[0] ?? null,
+      };
+    },
+    enabled: !!orgId,
+  });
+
+  const handleSmokePortfolio = async () => {
+    if (!orgId) return;
+    setPortfolioState('running'); setPortfolioMsg(null);
+    try {
+      const r = await generatePortfolioSummary(orgId, 'executive_brief');
+      setPortfolioState('done');
+      setPortfolioMsg(`✓ executive_brief · ${r.ai_used ? r.model_name : 'fallback déterministe'} · ${r.source_snapshot?.open_risks ?? 0} risques`);
+      qc.invalidateQueries({ queryKey: ['core-proof-block', orgId] });
+      toast({ title: 'Synthèse générée', description: `Cœur produit actif · ${r.ai_used ? 'IA Gemini' : 'fallback'}` });
+    } catch (e: unknown) {
+      setPortfolioState('error');
+      setPortfolioMsg((e as Error).message);
+      toast({ title: 'Erreur', description: (e as Error).message, variant: 'destructive' });
+    }
+  };
+
+  const handleVerifyChain = async () => {
+    if (!orgId) return;
+    setChainState('running'); setChainMsg(null);
+    try {
+      const r = await verifyEvidenceChain({ organization_id: orgId });
+      setChainState('done');
+      setChainMsg(r.is_valid
+        ? `✓ Intègre · ${r.last_seq ?? 0} entrée(s) · ${r.head_hash?.slice(0, 12) ?? 'GENESIS'}…`
+        : `⚠ Discordance seq #${r.first_bad_seq}`);
+      toast({ title: r.is_valid ? 'Chaîne valide' : 'Discordance détectée', description: r.is_valid ? `${r.last_seq} entrées vérifiées` : `Première erreur à seq #${r.first_bad_seq}` });
+    } catch (e: unknown) {
+      setChainState('error');
+      setChainMsg((e as Error).message);
+      toast({ title: 'Erreur vérification', description: (e as Error).message, variant: 'destructive' });
+    }
+  };
+
+  const stateIcon = (s: 'idle' | 'running' | 'done' | 'error') =>
+    s === 'done' ? <CheckCircle2 className="h-4 w-4 text-success" /> :
+    s === 'error' ? <XCircle className="h-4 w-4 text-destructive" /> :
+    s === 'running' ? <Loader2 className="h-4 w-4 text-primary animate-spin" /> :
+    <div className="h-4 w-4 rounded-full border-2 border-muted" />;
+
+  const portfolioStatus = portfolioState !== 'idle' ? portfolioState : data?.lastPortfolio ? 'done' : 'idle';
+  const chainStatus = chainState !== 'idle' ? chainState : (data?.evidenceCount ?? 0) > 0 ? 'done' : 'idle';
+
+  return (
+    <Card className="border-primary/30">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Preuve du Cœur Produit
+          </CardTitle>
+          <Badge variant="outline" className="text-xs gap-1 border-primary/40 text-primary">
+            Smoke Tests Live
+          </Badge>
+        </div>
+        <CardDescription>Vérification directe : generate-portfolio-summary + verify-evidence-chain</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Evidence chain */}
+        <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="mt-0.5">{stateIcon(chainStatus as 'idle' | 'running' | 'done' | 'error')}</div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Hash className="h-3.5 w-3.5 text-muted-foreground" />
+                <p className="text-sm font-medium">Evidence Chain (verify-evidence-chain)</p>
+              </div>
+              <p className="text-xs text-muted-foreground/80 font-mono mt-0.5">
+                {chainMsg ?? (data?.evidenceCount
+                  ? `${data.evidenceCount} entrée(s) · seq #${data.lastSeq ?? 0} · ${data.lastHash?.slice(0, 12) ?? ''}…`
+                  : 'Aucune entrée — cliquez sur Vérifier')}
+              </p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleVerifyChain} disabled={!orgId || chainState === 'running'} className="shrink-0 text-xs h-7">
+            {chainState === 'running' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Vérifier'}
+          </Button>
+        </div>
+
+        {/* Portfolio summary */}
+        <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="mt-0.5">{stateIcon(portfolioStatus as 'idle' | 'running' | 'done' | 'error')}</div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+                <p className="text-sm font-medium">Synthèse Portefeuille (generate-portfolio-summary)</p>
+              </div>
+              <p className="text-xs text-muted-foreground/80 font-mono mt-0.5">
+                {portfolioMsg ?? (data?.lastPortfolio
+                  ? `Dernière: ${new Date(data.lastPortfolio.created_at).toLocaleString('fr-FR')} · ${data.lastPortfolio.model_name ?? 'fallback'}`
+                  : 'Non généré — cliquez sur Tester')}
+              </p>
+            </div>
+          </div>
+          <Button size="sm" onClick={handleSmokePortfolio} disabled={!orgId || portfolioState === 'running'} className="shrink-0 text-xs h-7">
+            {portfolioState === 'running' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Play className="h-3.5 w-3.5 mr-1" />Tester</>}
+          </Button>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="ghost" asChild className="text-xs h-7">
+            <Link to="/report-studio"><BarChart3 className="h-3.5 w-3.5 mr-1" />Report Studio</Link>
+          </Button>
+          <Button size="sm" variant="ghost" asChild className="text-xs h-7">
+            <Link to="/evidence"><Link2 className="h-3.5 w-3.5 mr-1" />Evidence Vault</Link>
+          </Button>
+          <Button size="sm" variant="ghost" asChild className="text-xs h-7">
+            <Link to="/admin-readiness"><Shield className="h-3.5 w-3.5 mr-1" />Admin Readiness</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function PlatformHealth() {
   const { organization } = useAuth();
   const qc = useQueryClient();
