@@ -59,6 +59,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_ai_analyses_org_id"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       assets: {
@@ -414,6 +421,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "data_sources_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_data_sources_org_id"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -860,6 +874,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_remediation_actions_org_id"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_remediation_actions_risk_id"
+            columns: ["risk_id"]
+            isOneToOne: false
+            referencedRelation: "risk_register"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "remediation_actions_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -1095,6 +1123,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_risk_register_asset_id"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_risk_register_org_id"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "risk_register_asset_id_fkey"
             columns: ["asset_id"]
@@ -1369,6 +1411,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_signals_asset_id"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_signals_org_id"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_signals_source_id"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "signals_asset_id_fkey"
             columns: ["asset_id"]
             isOneToOne: false
@@ -1432,6 +1495,20 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_source_sync_runs_org_id"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_source_sync_runs_source_id"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "source_sync_runs_organization_id_fkey"
             columns: ["organization_id"]
@@ -1722,6 +1799,7 @@ export type Database = {
         Args: { _org_id: string }
         Returns: string
       }
+      get_engine_summary: { Args: { _org_id: string }; Returns: Json }
       get_my_org_id: { Args: never; Returns: string }
       get_platform_health: { Args: { _org_id: string }; Returns: Json }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
