@@ -295,7 +295,7 @@ export async function getSignals(
 ): Promise<Signal[]> {
   let query = supabase
     .from('signals')
-    .select('*, data_sources(name, source_type, category), assets(name, asset_type, identifier)')
+    .select('*, source_id!fk_signals_source_id(name, source_type, category), asset_id!fk_signals_asset_id(name, asset_type, identifier)')
     .eq('organization_id', orgId)
     .order('detected_at', { ascending: false })
     .limit(options?.limit ?? 100);
@@ -306,7 +306,8 @@ export async function getSignals(
 
   const { data, error } = await query;
   if (error) throw new Error(`getSignals error: ${error.message}`);
-  return (data ?? []) as Signal[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []) as unknown as Signal[];
 }
 
 /**
