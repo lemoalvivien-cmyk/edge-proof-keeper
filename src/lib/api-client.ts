@@ -449,10 +449,7 @@ export async function getSignalById(signalId: string): Promise<Signal | null> {
 
   if (error) throw new Error(`getSignalById error: ${error.message}`);
   if (!data) return null;
-  return {
-    ...data,
-    references: (data as Record<string, unknown>).signal_refs ?? [],
-  } as unknown as Signal;
+  return normalizeSignalRecord(data as Record<string, unknown>);
 }
 
 export async function getSignalEntities(
