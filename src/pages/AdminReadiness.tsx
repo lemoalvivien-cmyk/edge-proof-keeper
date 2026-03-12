@@ -749,6 +749,9 @@ export default function AdminReadiness() {
         {/* ── Continuous Watch ─────────────────────────────────────────────── */}
         <ContinuousWatchSection orgId={organization?.id} refreshKey={refreshKey} />
 
+        {/* ── Decision Layer ───────────────────────────────────────────────── */}
+        <DecisionLayerSection orgId={organization?.id} refreshKey={refreshKey} />
+
         {/* ── Revenue Operating Readiness ─────────────────────────────────── */}
         <Card className="border-primary/20">
           <CardHeader className="pb-3">
