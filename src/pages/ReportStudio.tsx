@@ -657,7 +657,7 @@ export default function ReportStudio() {
           <Info className="h-4 w-4 shrink-0 mt-0.5" />
           <p>
             Mode actif : <strong>{modeLabel}</strong>.{' '}
-            La synthèse portefeuille utilise toujours le moteur interne (Edge Functions Gemini).{' '}
+            La synthèse portefeuille utilise le <strong>{externalBackendAvailable ? 'Core API externe (souveraineté externe)' : 'moteur interne Edge Functions'}</strong> selon la configuration.{' '}
             <Link to="/settings/revenue" className="underline">Modifier les paramètres →</Link>
           </p>
         </div>
