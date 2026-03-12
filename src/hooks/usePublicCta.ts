@@ -2,14 +2,25 @@
  * usePublicCta
  *
  * Single source of truth for all public CTA behaviours (booking, checkout, lead fallback).
- * Built on top of useRuntimeConfig — DB-aware, priority: DB > env.
+ *
+ * Config resolution chain (explicit, testable):
+ *   1. usePublicTenantConfig → edge function → DB (app_runtime_config or commercial_config)
+ *      Works for unauthenticated visitors. tenant_resolved tells us if a real org was found.
+ *   2. Env vars (VITE_BOOKING_URL, etc.) — secondary fallback inside usePublicTenantConfig
+ *   3. Lead capture fallback (onFallback) — always available
+ *
+ * configSource values (visible, testable):
+ *   "db:app_runtime_config" — config came from DB primary table
+ *   "db:commercial_config"  — config came from DB legacy table
+ *   "env"                   — env vars used (DB had no config or was unreachable)
+ *   "none"                  — nothing configured anywhere
  *
  * Usage:
  *   const cta = usePublicCta();
  *   cta.handleBooking({ sourcePage: '/', ctaOrigin: 'hero_primary', onFallback: () => setDialogOpen(true) });
  *   cta.handleCheckout('starter', { sourcePage: '/pricing', ctaOrigin: 'pricing_starter', onFallback: ... });
  */
-import { useRuntimeConfig } from './useRuntimeConfig';
+import { usePublicTenantConfig } from './usePublicTenantConfig';
 import { trackEvent, type TrackEventName, type TrackEventOptions } from '@/lib/tracking';
 
 export interface CtaCallOptions {
@@ -21,10 +32,14 @@ export interface CtaCallOptions {
 export type PlanKey = 'starter' | 'pro' | 'enterprise';
 
 export interface PublicCtaState {
-  /** Whether runtime config is still loading */
+  /** Whether config is still loading */
   isLoading: boolean;
-  /** Which table / source provided the config */
+  /** Explicit source of config — testable */
   configSource: string;
+  /** true if a real org was found in DB (tenant resolution succeeded) */
+  tenantResolved: boolean;
+  /** Org slug if resolved */
+  tenantSlug: string | null;
   /** Resolved booking URL or null */
   bookingUrl: string | null;
   /** Resolved checkout URLs by plan */
@@ -38,58 +53,79 @@ export interface PublicCtaState {
 }
 
 export function usePublicCta(): PublicCtaState {
-  const rt = useRuntimeConfig();
+  const cfg = usePublicTenantConfig();
 
-  const bookingUrl = rt.bookingUrl ?? null;
+  const bookingUrl = cfg.bookingUrl;
   const checkoutUrls: Record<PlanKey, string | null> = {
-    starter:    rt.starterCheckoutUrl   ?? null,
-    pro:        rt.proCheckoutUrl       ?? null,
-    enterprise: rt.enterpriseCheckoutUrl ?? null,
+    starter:    cfg.starterCheckoutUrl   ?? null,
+    pro:        cfg.proCheckoutUrl       ?? null,
+    enterprise: cfg.enterpriseCheckoutUrl ?? null,
   };
+
+  /** Shared tracking metadata — captures config provenance for analytics */
+  function trackMeta(extra: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      config_source:   cfg.configSource,
+      tenant_resolved: cfg.tenantResolved,
+      ...extra,
+    };
+  }
 
   function handleBooking(opts: CtaCallOptions) {
     const eventName: TrackEventName = 'booking_click_direct';
-    const eventOpts: TrackEventOptions = { source_page: opts.sourcePage, cta_origin: opts.ctaOrigin };
+    const eventOpts: TrackEventOptions = {
+      source_page: opts.sourcePage,
+      cta_origin:  opts.ctaOrigin,
+      metadata:    trackMeta(),
+    };
     if (bookingUrl) {
       trackEvent(eventName, eventOpts);
       window.open(bookingUrl, '_blank', 'noopener,noreferrer');
     } else {
-      trackEvent('demo_dialog_open', eventOpts);
+      trackEvent('demo_dialog_open', { ...eventOpts, metadata: trackMeta({ fallback: 'lead_capture' }) });
       opts.onFallback();
     }
   }
 
   function handleCheckout(plan: PlanKey, opts: CtaCallOptions) {
     const checkoutUrl = checkoutUrls[plan];
-    const eventOpts: TrackEventOptions = { source_page: opts.sourcePage, cta_origin: opts.ctaOrigin };
+    const base: TrackEventOptions = {
+      source_page: opts.sourcePage,
+      cta_origin:  opts.ctaOrigin,
+    };
     if (checkoutUrl) {
-      trackEvent('checkout_click', { ...eventOpts, metadata: { plan } });
+      trackEvent('checkout_click', { ...base, metadata: trackMeta({ plan }) });
       window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
     } else if (bookingUrl) {
       // Cascade: no checkout → offer booking instead
-      trackEvent('booking_click_direct', { ...eventOpts, metadata: { cascade_from: 'checkout', plan } });
+      trackEvent('booking_click_direct', { ...base, metadata: trackMeta({ cascade_from: 'checkout', plan }) });
       window.open(bookingUrl, '_blank', 'noopener,noreferrer');
     } else {
       // Last resort: lead capture
-      trackEvent('demo_dialog_open', { ...eventOpts, metadata: { cascade_from: 'checkout', plan } });
+      trackEvent('demo_dialog_open', { ...base, metadata: trackMeta({ cascade_from: 'checkout', plan, fallback: 'lead_capture' }) });
       opts.onFallback();
     }
   }
 
   function handleDemoRequest(opts: CtaCallOptions) {
-    const eventOpts: TrackEventOptions = { source_page: opts.sourcePage, cta_origin: opts.ctaOrigin };
+    const base: TrackEventOptions = {
+      source_page: opts.sourcePage,
+      cta_origin:  opts.ctaOrigin,
+    };
     if (bookingUrl) {
-      trackEvent('booking_click_direct', eventOpts);
+      trackEvent('booking_click_direct', { ...base, metadata: trackMeta() });
       window.open(bookingUrl, '_blank', 'noopener,noreferrer');
     } else {
-      trackEvent('demo_dialog_open', eventOpts);
+      trackEvent('demo_dialog_open', { ...base, metadata: trackMeta({ fallback: 'lead_capture' }) });
       opts.onFallback();
     }
   }
 
   return {
-    isLoading:    rt.isLoading,
-    configSource: rt.configSource,
+    isLoading:       cfg.isLoading,
+    configSource:    cfg.configSource,
+    tenantResolved:  cfg.tenantResolved,
+    tenantSlug:      cfg.tenantSlug,
     bookingUrl,
     checkoutUrls,
     handleBooking,
