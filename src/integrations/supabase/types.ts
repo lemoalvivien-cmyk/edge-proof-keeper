@@ -68,6 +68,62 @@ export type Database = {
           },
         ]
       }
+      alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string
+          first_detected_at: string
+          id: string
+          last_detected_at: string
+          organization_id: string
+          severity: string
+          source_entity_id: string | null
+          source_entity_type: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description?: string
+          first_detected_at?: string
+          id?: string
+          last_detected_at?: string
+          organization_id: string
+          severity?: string
+          source_entity_id?: string | null
+          source_entity_type?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string
+          first_detected_at?: string
+          id?: string
+          last_detected_at?: string
+          organization_id?: string
+          severity?: string
+          source_entity_id?: string | null
+          source_entity_type?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_runtime_config: {
         Row: {
           ai_gateway_url: string | null
@@ -829,6 +885,50 @@ export type Database = {
           },
         ]
       }
+      notification_rules: {
+        Row: {
+          channel: string
+          config: Json
+          created_at: string
+          id: string
+          is_enabled: boolean
+          organization_id: string
+          rule_type: string
+          severity_threshold: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          config?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          organization_id: string
+          rule_type: string
+          severity_threshold?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          config?: Json
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          organization_id?: string
+          rule_type?: string
+          severity_threshold?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string
@@ -860,6 +960,38 @@ export type Database = {
             columns: ["permanent_authorization_id"]
             isOneToOne: false
             referencedRelation: "authorizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_health_snapshots: {
+        Row: {
+          created_at: string
+          health_score: number
+          id: string
+          organization_id: string
+          summary: Json
+        }
+        Insert: {
+          created_at?: string
+          health_score?: number
+          id?: string
+          organization_id: string
+          summary?: Json
+        }
+        Update: {
+          created_at?: string
+          health_score?: number
+          id?: string
+          organization_id?: string
+          summary?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_health_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
