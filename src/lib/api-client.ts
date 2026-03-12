@@ -711,4 +711,8 @@ export const apiClient = {
   getEntityNodes,
   getRelatedSignals,
   runEntityCorrelation,
+  // Risks & Remediation
+  getRiskById,
+  getRemediationActions,
+  buildRemediationQueue,
 };
