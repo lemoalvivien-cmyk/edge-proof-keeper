@@ -130,6 +130,126 @@ function ConfigField({
   );
 }
 
+// ── Sovereign Activation Block ────────────────────────────────────────────────
+// Shown in the Backend card. Save URL → Ping → Persist confirmation in DB.
+// Once confirmed, shows permanent "100% SOUVERAIN EXTERNE" badge.
+function SovereignActivationBlock({
+  coreApiUrl,
+  orgId,
+  confirmedAt,
+  onConfirmed,
+}: {
+  coreApiUrl: string;
+  orgId: string;
+  confirmedAt: string | null | undefined;
+  onConfirmed: (ts: string) => void;
+}) {
+  const { toast } = useToast();
+  const [pingState, setPingState] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
+  const [pingDetail, setPingDetail] = useState<string>('');
+
+  const isAlreadyConfirmed = !!confirmedAt;
+  const isUrlSet = !!coreApiUrl.trim();
+
+  const handlePingAndActivate = async () => {
+    if (!isUrlSet) return;
+    setPingState('running'); setPingDetail('');
+    const start = Date.now();
+    try {
+      const res = await fetch(`${coreApiUrl.trim()}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(8000),
+      });
+      const ms = Date.now() - start;
+      if (res.ok) {
+        const ts = new Date().toISOString();
+        // Persist confirmation in DB
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: dbErr } = await (supabase as any)
+          .from('app_runtime_config')
+          .upsert({
+            organization_id: orgId,
+            core_api_url: coreApiUrl.trim(),
+            external_sovereign_confirmed_at: ts,
+          }, { onConflict: 'organization_id' });
+        if (dbErr) throw dbErr;
+        setPingState('ok');
+        setPingDetail(`HTTP ${res.status} · ${ms}ms`);
+        onConfirmed(ts);
+        toast({
+          title: '✅ 100% SOUVERAIN EXTERNE activé',
+          description: `Core API joignable en ${ms}ms — badge permanent sauvegardé en DB.`,
+        });
+      } else {
+        setPingState('fail');
+        setPingDetail(`HTTP ${res.status} · ${ms}ms — vérifiez l'URL`);
+        toast({ title: 'Ping échoué', description: `HTTP ${res.status}`, variant: 'destructive' });
+      }
+    } catch (e: unknown) {
+      setPingState('fail');
+      setPingDetail((e as Error).message);
+      toast({ title: 'Ping échoué', description: (e as Error).message, variant: 'destructive' });
+    }
+  };
+
+  if (isAlreadyConfirmed) {
+    return (
+      <div className="flex items-center gap-3 rounded-lg border border-success/30 bg-success/5 px-4 py-3">
+        <ShieldCheck className="h-5 w-5 text-success shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-success">✓ 100% SOUVERAIN EXTERNE — Confirmé</p>
+          <p className="text-xs text-muted-foreground font-mono">
+            Ping validé le {new Date(confirmedAt).toLocaleString('fr-FR')} · Core API joignable
+          </p>
+        </div>
+        <Badge variant="outline" className="border-success/40 text-success bg-success/5 text-xs font-bold shrink-0">
+          EXTERNE ✓
+        </Badge>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`rounded-lg border px-4 py-3 space-y-3 ${
+      pingState === 'ok' ? 'border-success/30 bg-success/5' :
+      pingState === 'fail' ? 'border-destructive/20 bg-destructive/5' :
+      'border-primary/20 bg-primary/5'
+    }`}>
+      <div className="flex items-center gap-2">
+        <Rocket className="h-4 w-4 text-primary" />
+        <p className="text-sm font-semibold">Activer la souveraineté externe</p>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Sauvegardez d'abord l'URL Core API ci-dessus, puis cliquez pour pinguer et activer le badge permanent "100% SOUVERAIN EXTERNE".
+      </p>
+      {pingDetail && (
+        <p className={`text-xs font-mono ${pingState === 'ok' ? 'text-success' : 'text-destructive'}`}>
+          {pingState === 'ok' ? `✓ ${pingDetail}` : `✗ ${pingDetail}`}
+        </p>
+      )}
+      <Button
+        type="button"
+        size="sm"
+        disabled={!isUrlSet || pingState === 'running'}
+        onClick={handlePingAndActivate}
+        className={`gap-2 w-full ${pingState === 'ok' ? 'bg-success hover:bg-success/90' : ''}`}
+      >
+        {pingState === 'running'
+          ? <><Loader2 className="h-4 w-4 animate-spin" />Ping en cours…</>
+          : pingState === 'ok'
+          ? <><ShieldCheck className="h-4 w-4" />100% SOUVERAIN EXTERNE ✓</>
+          : <><Activity className="h-4 w-4" />Ping & Activer Souveraineté Externe<ArrowRight className="h-4 w-4" /></>
+        }
+      </Button>
+      {!isUrlSet && (
+        <p className="text-xs text-warning">⚠ Saisissez et sauvegardez la Core API URL d'abord</p>
+      )}
+    </div>
+  );
+}
+
+
+
 // ── Quick Activation Block ────────────────────────────────────────────────────
 // Shown only when bootstrap is in config_missing or tenant_ready state.
 // Minimal single-field form: just booking_url to unblock the CTA pipeline.
