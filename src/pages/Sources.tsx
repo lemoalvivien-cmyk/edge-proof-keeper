@@ -363,14 +363,14 @@ export default function Sources() {
 
       const { error } = await supabase
         .from('data_sources')
-        .insert({
+        .insert([{
           organization_id: organization.id,
           name: data.name,
           source_type: data.source_type,
           category: data.category,
           status: 'not_configured',
-          config,
-        });
+          config: config as Record<string, unknown>,
+        }]);
 
       if (error) throw error;
     },
