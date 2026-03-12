@@ -449,49 +449,13 @@ function FullPipelineLauncher({ orgId, onComplete, demoAlreadyLoaded }: { orgId?
   // In prod: Core API is MANDATORY. No fallback. Blocking error if not configured or fails.
   // In dev: fallback to internal Edge Function allowed.
 
+  // Delegate to the sovereign-aware generatePortfolioSummary in api-client
+  // which: reads DB runtime config + env var, enforces IS_PROD blocking, no redundant routing logic here.
   const callPortfolioSummary = async (body: Record<string, unknown>, tok: string) => {
-    const coreUrl = (import.meta.env.VITE_CORE_API_URL as string | undefined)?.replace(/\/$/, '') || null;
-
-    if (IS_PROD) {
-      // PRODUCTION: Core API is mandatory — no fallback allowed
-      if (!coreUrl) {
-        throw new Error(
-          '🔒 Souveraineté externe requise — configurez VITE_CORE_API_URL ou core_api_url dans /settings/revenue'
-        );
-      }
-      const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(15000),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(
-          `🔒 Core API externe inaccessible (HTTP ${res.status}) — souveraineté externe requise en prod. Vérifiez ${coreUrl}`
-        );
-      }
-      return { ...json, _routed_to: 'external' };
-    }
-
-    // DEV: try Core API first, fallback to internal Edge Function
-    if (coreUrl) {
-      try {
-        const res = await fetch(`${coreUrl}/v1/portfolio-summary`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-          signal: AbortSignal.timeout(15000),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          return { ...json, _routed_to: 'external' };
-        }
-      } catch {
-        // fallback to internal Edge Function in dev only
-      }
-    }
-    return callEF('generate-portfolio-summary', body, tok);
+    const orgId_ = body.organization_id as string;
+    const summaryType = body.summary_type as import('@/types/engine').PortfolioSummaryType;
+    const result = await generatePortfolioSummary(orgId_, summaryType, undefined, tok);
+    return result;
   };
 
   const handleLaunch = async () => {
