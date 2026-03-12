@@ -330,6 +330,143 @@ export interface SyncCustomerAuthorizedResult {
   error: string | null;
 }
 
+// ─── Entity Graph ─────────────────────────────────────────────────────────────
+
+export type EntityType =
+  | 'domain'
+  | 'subdomain'
+  | 'ip'
+  | 'certificate'
+  | 'email'
+  | 'brand'
+  | 'repository'
+  | 'cloud_asset'
+  | 'organization_marker';
+
+export type EdgeType =
+  | 'resolves_to'
+  | 'shares_certificate'
+  | 'belongs_to'
+  | 'mentions_brand'
+  | 'linked_to_breach'
+  | 'hosted_on'
+  | 'reuses_identity_signal';
+
+export interface EntityNode {
+  id: string;
+  organization_id: string;
+  entity_type: EntityType;
+  canonical_value: string;
+  display_value: string;
+  metadata: Record<string, unknown>;
+  confidence_score?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EntityEdge {
+  id: string;
+  organization_id: string;
+  from_node_id: string;
+  to_node_id: string;
+  edge_type: EdgeType;
+  evidence: Record<string, unknown>;
+  created_at: string;
+  // Joined
+  from_node?: Pick<EntityNode, 'entity_type' | 'canonical_value' | 'display_value'>;
+  to_node?: Pick<EntityNode, 'entity_type' | 'canonical_value' | 'display_value'>;
+}
+
+export interface SignalEntityLink {
+  id: string;
+  organization_id: string;
+  signal_id: string;
+  entity_node_id: string;
+  relation_type: string;
+  created_at: string;
+  // Joined
+  entity_node?: EntityNode;
+}
+
+export interface CorrelateEntitiesResult {
+  success: boolean;
+  organization_id: string;
+  signals_processed: number;
+  nodes_created: number;
+  edges_created: number;
+  links_created: number;
+  errors: string[];
+}
+
+export interface EntityGraphSummary {
+  total_nodes: number;
+  total_edges: number;
+  by_type: Record<EntityType, number>;
+  top_connected: Array<{
+    node: EntityNode;
+    signal_count: number;
+    edge_count: number;
+  }>;
+}
+
+// ─── Entity Normalizers ───────────────────────────────────────────────────────
+
+const DOMAIN_RE   = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
+const IP_RE       = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+const EMAIL_RE    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_RE      = /^https?:\/\//i;
+const REPO_RE     = /github\.com|gitlab\.com|bitbucket\.org/i;
+const CERT_HASH_RE = /^[0-9a-f]{40,64}$/i;
+
+export function normalizeEntityValue(type: EntityType, raw: string): string {
+  const v = raw.trim();
+  switch (type) {
+    case 'domain':
+    case 'subdomain':
+      // Strip protocol/path, lowercase
+      return v.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase();
+    case 'email':
+      return v.toLowerCase();
+    case 'ip':
+      // Normalise each octet
+      return v.split('.').map(o => String(parseInt(o, 10))).join('.');
+    case 'certificate':
+      return v.toLowerCase().replace(/[^0-9a-f]/g, '');
+    case 'repository':
+      return v.toLowerCase().replace(/\.git$/, '');
+    default:
+      return v.toLowerCase();
+  }
+}
+
+export function detectEntityType(value: string): EntityType | null {
+  const v = value.trim();
+  if (!v) return null;
+
+  // Strip URL wrapper to get the host
+  let host = v;
+  if (URL_RE.test(v)) {
+    try {
+      host = new URL(v).hostname;
+    } catch {
+      host = v.replace(/^https?:\/\//i, '').split('/')[0];
+    }
+  }
+
+  if (IP_RE.test(host))                    return 'ip';
+  if (EMAIL_RE.test(v))                    return 'email';
+  if (REPO_RE.test(v))                     return 'repository';
+  if (CERT_HASH_RE.test(v))                return 'certificate';
+  if (DOMAIN_RE.test(host)) {
+    return host.split('.').length > 2 ? 'subdomain' : 'domain';
+  }
+  return null;
+}
+
+export function buildEntityKey(entityType: EntityType, canonicalValue: string): string {
+  return `${entityType}:${canonicalValue.trim().toLowerCase()}`;
+}
+
 // ─── Helper Normalizers ───────────────────────────────────────────────────────
 
 const SEVERITY_MAP: Record<string, Severity> = {
