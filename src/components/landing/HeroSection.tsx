@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform, useSpring, useMotionValue, useAnimationFrame } from "framer-motion";
-import { Shield, ArrowRight, Sparkles, FlaskConical, Upload, CalendarDays, Lock, Zap, Eye } from "lucide-react";
+import { Shield, ArrowRight, Sparkles, FlaskConical, CalendarDays, Lock, Zap, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import { trackEvent } from "@/lib/tracking";
