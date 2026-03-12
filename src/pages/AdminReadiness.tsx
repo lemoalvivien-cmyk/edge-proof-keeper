@@ -1624,7 +1624,7 @@ function CoreProofPanel({ orgId, refreshKey }: { orgId?: string; refreshKey: num
   );
 }
 
-// ── Live Proof Panel — capture automatique de la preuve finale ────────────────
+// ── Live Proof Panel — capture automatique + lancement inline ────────────────
 // Distingue explicitement :
 //   - PRÊT POUR EXÉCUTION LIVE  (session + org résolus, aucun run live encore)
 //   - EXÉCUTION EN COURS         (run détecté, pipeline en cours)
@@ -1636,6 +1636,9 @@ function CoreProofPanel({ orgId, refreshKey }: { orgId?: string; refreshKey: num
 //   - requested_by = auth.uid() du premier OwnerSetup (non seedé, non injecté)
 //   - findings présents via normalize (count > 0 pour ce run)
 //   - au moins un portfolio_summary généré après ce run
+//
+// LANCEMENT INLINE : état READY expose un bouton unique qui exécute le pipeline
+//   complet sans navigation. Après reconnexion → admin-readiness → 1 clic = preuve.
 //
 // Ce panneau NE SE DONNE JAMAIS une apparence de victoire si les données manquent.
 // ─────────────────────────────────────────────────────────────────────────────
