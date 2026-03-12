@@ -83,3 +83,7 @@ verify_jwt = false
 # ─── Decision Layer ──────────────────────────────────────────────────────────
 [functions.generate-portfolio-summary]
 verify_jwt = true
+
+# ─── Public Config (no JWT — field-level whitelist enforced inside) ──────────
+[functions.get-public-config]
+verify_jwt = false
