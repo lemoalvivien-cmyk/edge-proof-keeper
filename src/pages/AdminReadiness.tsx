@@ -1646,7 +1646,140 @@ function LiveProofPanel({ user, organization }: {
   user: import('@supabase/supabase-js').User | null;
   organization: { id: string; name: string } | null;
 }) {
+  const qc = useQueryClient();
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Inline pipeline execution state ────────────────────────────────────────
+  // Allows one-click proof from READY state without scrolling to RealPipelinePanel
+  const [inlinePipeRunning, setInlinePipeRunning] = useState(false);
+  const [inlinePipeStatus, setInlinePipeStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [inlinePipeSteps, setInlinePipeSteps] = useState<Array<{ label: string; state: StepState; result: string | null }>>([]);
+  const [inlinePipeError, setInlinePipeError] = useState<string | null>(null);
+
+  const handleInlinePipeline = async () => {
+    if (!organization?.id || inlinePipeRunning) return;
+    setInlinePipeRunning(true);
+    setInlinePipeStatus('running');
+    setInlinePipeError(null);
+    setInlinePipeSteps([
+      { label: '① create-tool-run', state: 'running', result: null },
+      { label: '② upload fixture', state: 'idle', result: null },
+      { label: '③ normalize → findings', state: 'idle', result: null },
+      { label: '④ vérifier findings DB', state: 'idle', result: null },
+      { label: '⑤ portfolio summary', state: 'idle', result: null },
+    ]);
+
+    const updateInlineStep = (idx: number, state: StepState, result: string) => {
+      setInlinePipeSteps(prev => prev.map((s, i) => i === idx ? { ...s, state, result } : i === idx + 1 && state !== 'error' ? { ...s, state: 'running' } : s));
+    };
+
+    let runId: string | null = null;
+    let hasError = false;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Session absente — reconnectez-vous');
+      const tok = session.access_token;
+
+      // ① create-tool-run
+      const createRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/create-tool-run`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY_FRONT },
+        body: JSON.stringify({ organization_id: organization.id, tool_slug: 'nuclei', mode: 'import_json' }),
+      });
+      const createJson = await createRes.json();
+      if (!createRes.ok || !createJson.tool_run_id) {
+        updateInlineStep(0, 'error', `✗ ${createJson?.error ?? `HTTP ${createRes.status}`}`);
+        hasError = true;
+      } else {
+        runId = createJson.tool_run_id;
+        updateInlineStep(0, 'done', `✓ run_id=${runId?.slice(0, 8)}… · awaiting_upload`);
+      }
+
+      // ② upload fixture
+      if (!hasError && runId) {
+        const fixtureRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/get-demo-fixture`, {
+          headers: { apikey: SUPABASE_ANON_KEY_FRONT },
+        });
+        if (!fixtureRes.ok) {
+          updateInlineStep(1, 'error', `✗ Fixture HTTP ${fixtureRes.status}`);
+          hasError = true;
+        } else {
+          const fixtureBlob = await fixtureRes.blob();
+          const fixtureFile = new File([fixtureBlob], 'demo-fixture-nuclei.json', { type: 'application/json' });
+          const formData = new FormData();
+          formData.append('tool_run_id', runId);
+          formData.append('file', fixtureFile);
+          const uploadRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/upload-tool-run-artifact`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${tok}`, apikey: SUPABASE_ANON_KEY_FRONT },
+            body: formData,
+          });
+          const uploadJson = await uploadRes.json();
+          if (!uploadRes.ok) {
+            updateInlineStep(1, 'error', `✗ ${uploadJson?.error ?? `HTTP ${uploadRes.status}`}`);
+            hasError = true;
+          } else {
+            updateInlineStep(1, 'done', `✓ artifact uploadé · ${uploadJson.summary?.total ?? 0} findings bruts`);
+          }
+        }
+      }
+
+      // ③ normalize
+      if (!hasError && runId) {
+        const normRes = await fetch(`${SUPABASE_URL_FRONT}/functions/v1/normalize-tool-run`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY_FRONT },
+          body: JSON.stringify({ tool_run_id: runId }),
+        });
+        const normJson = await normRes.json();
+        if (!normRes.ok) {
+          updateInlineStep(2, 'error', `✗ ${normJson?.error ?? `HTTP ${normRes.status}`}`);
+          hasError = true;
+        } else {
+          updateInlineStep(2, 'done', `✓ ${normJson.findings_count} findings normalisés`);
+        }
+      }
+
+      // ④ verify DB findings
+      if (!hasError && runId) {
+        const { count: findCount, error: findErr } = await supabase
+          .from('findings')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organization.id)
+          .eq('tool_run_id', runId);
+        if (findErr || (findCount ?? 0) === 0) {
+          updateInlineStep(3, 'error', `✗ ${findErr?.message ?? '0 findings en DB'}`);
+          hasError = true;
+        } else {
+          updateInlineStep(3, 'done', `✓ ${findCount} findings en DB · requested_by=${user?.id?.slice(0, 8)}…`);
+        }
+      }
+
+      // ⑤ portfolio summary
+      if (!hasError) {
+        try {
+          const portResult = await generatePortfolioSummary(organization.id, 'executive_brief');
+          setInlinePipeSteps(prev => prev.map((s, i) => i === 4 ? { ...s, state: 'done', result: `✓ executive_brief · ${portResult.ai_used ? portResult.model_name : 'fallback'}` } : s));
+          qc.invalidateQueries({ queryKey: ['decision-layer-stats', organization.id] });
+          qc.invalidateQueries({ queryKey: ['core-proof-db', organization.id] });
+        } catch (portErr) {
+          setInlinePipeSteps(prev => prev.map((s, i) => i === 4 ? { ...s, state: 'error', result: `✗ ${portErr instanceof Error ? portErr.message : 'Erreur'}` } : s));
+          hasError = true;
+        }
+      }
+
+    } catch (err) {
+      setInlinePipeError(err instanceof Error ? err.message : 'Erreur imprévue');
+      hasError = true;
+    }
+
+    setInlinePipeStatus(hasError ? 'error' : 'done');
+    setInlinePipeRunning(false);
+
+    // Refresh live proof after pipeline completes
+    setTimeout(() => { refetchLiveProof(); }, 1500);
+  };
 
   // Preuve finale : dernier tool_run live avec ses métriques
   const { data: liveProof, refetch: refetchLiveProof, isLoading } = useQuery({
@@ -1739,16 +1872,18 @@ function LiveProofPanel({ user, organization }: {
   const pipelineRunning = hasLiveRun && liveProof?.liveRun?.status === 'processing';
 
   type LiveState = 'NO_SESSION' | 'READY' | 'RUNNING' | 'PROVEN' | 'PARTIAL';
+  // Override to RUNNING if inline pipeline is currently executing
   const liveState: LiveState = !sessionOk ? 'NO_SESSION'
     : proofObtained ? 'PROVEN'
+    : inlinePipeRunning ? 'RUNNING'
     : pipelineRunning ? 'RUNNING'
     : hasLiveRun && !hasLiveFindings ? 'PARTIAL'
     : 'READY';
 
   const stateCfg: Record<LiveState, { label: string; cls: string; border: string; bg: string }> = {
     NO_SESSION: { label: '✗ SESSION ABSENTE — IMPOSSIBLE D\'EXÉCUTER', cls: 'text-destructive border-destructive/30 bg-destructive/10', border: 'border-destructive/50', bg: 'bg-destructive/[0.015]' },
-    READY:      { label: '○ PRÊT — NON ENCORE PROUVÉ', cls: 'text-warning border-warning/30 bg-warning/10', border: 'border-warning/40', bg: 'bg-warning/[0.01]' },
-    RUNNING:    { label: '↻ PIPELINE EN COURS', cls: 'text-primary border-primary/30 bg-primary/10', border: 'border-primary/40', bg: 'bg-primary/[0.01]' },
+    READY:      { label: '○ RECONNECTÉ — PRÊT À LANCER', cls: 'text-warning border-warning/30 bg-warning/10', border: 'border-warning/40', bg: 'bg-warning/[0.01]' },
+    RUNNING:    { label: '↻ PIPELINE LIVE EN COURS…', cls: 'text-primary border-primary/30 bg-primary/10', border: 'border-primary/40', bg: 'bg-primary/[0.01]' },
     PROVEN:     { label: '✓ PREUVE LIVE OBTENUE', cls: 'text-success border-success/30 bg-success/10', border: 'border-success/50', bg: 'bg-success/[0.015]' },
     PARTIAL:    { label: '⚠ PARTIEL — RUN CRÉÉ, PIPELINE INCOMPLET', cls: 'text-warning border-warning/30 bg-warning/10', border: 'border-warning/40', bg: 'bg-warning/[0.01]' },
   };
