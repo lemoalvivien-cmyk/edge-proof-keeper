@@ -3099,6 +3099,9 @@ export default function AdminReadiness() {
         {/* ── AI Intelligence Layer ────────────────────────────────────────── */}
         <AiIntelligenceSection orgId={organization?.id} refreshKey={refreshKey} />
 
+        {/* ── Sovereign Backend Status ─────────────────────────────────────── */}
+        <SovereignBackendPanel />
+
         {/* ── Continuous Watch ─────────────────────────────────────────────── */}
         <ContinuousWatchSection orgId={organization?.id} refreshKey={refreshKey} />
 
