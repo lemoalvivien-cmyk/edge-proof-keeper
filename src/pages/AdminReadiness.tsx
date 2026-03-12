@@ -271,6 +271,85 @@ function AiIntelligenceSection({ orgId, refreshKey }: { orgId?: string; refreshK
   );
 }
 
+function DecisionLayerSection({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
+  const { data: decisionStats } = useQuery({
+    queryKey: ['decision-layer-stats', orgId, refreshKey],
+    queryFn: async () => {
+      if (!orgId) return null;
+      const [execRes, techRes, weeklyRes] = await Promise.all([
+        supabase.from('portfolio_summaries').select('id, created_at', { count: 'exact' }).eq('organization_id', orgId).eq('summary_type', 'executive_brief').order('created_at', { ascending: false }).limit(1),
+        supabase.from('portfolio_summaries').select('id, created_at', { count: 'exact' }).eq('organization_id', orgId).eq('summary_type', 'technical_brief').order('created_at', { ascending: false }).limit(1),
+        supabase.from('portfolio_summaries').select('id, created_at', { count: 'exact' }).eq('organization_id', orgId).eq('summary_type', 'weekly_watch_brief').order('created_at', { ascending: false }).limit(1),
+      ]);
+      return {
+        execBriefReady:   (execRes.count ?? 0) > 0,
+        techBriefReady:   (techRes.count ?? 0) > 0,
+        weeklyBriefReady: (weeklyRes.count ?? 0) > 0,
+        execLastAt:       execRes.data?.[0]?.created_at ?? null,
+        techLastAt:       techRes.data?.[0]?.created_at ?? null,
+      };
+    },
+    enabled: !!orgId,
+  });
+
+  const items = [
+    { label: 'Edge Function generate-portfolio-summary', icon: <Brain className="h-4 w-4" />, status: 'ok' as Status, detail: '✓ Déployée — executive_brief · technical_brief · weekly_watch_brief (Gemini + fallback)', link: { href: '/report-studio', label: 'Report Studio' } },
+    { label: 'Executive Brief (DG)', icon: <BarChart3 className="h-4 w-4" />, status: (decisionStats === undefined ? 'unknown' : decisionStats?.execBriefReady ? 'ok' : 'warn') as Status, detail: decisionStats?.execBriefReady ? `✓ Prêt — dernière synthèse ${decisionStats.execLastAt ? new Date(decisionStats.execLastAt).toLocaleDateString('fr-FR') : ''}` : '✗ Aucune synthèse générée', link: { href: '/report-studio', label: 'Générer' } },
+    { label: 'Technical Brief (DSI)', icon: <Brain className="h-4 w-4" />, status: (decisionStats === undefined ? 'unknown' : decisionStats?.techBriefReady ? 'ok' : 'warn') as Status, detail: decisionStats?.techBriefReady ? `✓ Prêt — dernière synthèse ${decisionStats.techLastAt ? new Date(decisionStats.techLastAt).toLocaleDateString('fr-FR') : ''}` : '✗ Aucune synthèse générée', link: { href: '/report-studio', label: 'Générer' } },
+    { label: 'Weekly Watch Brief', icon: <Activity className="h-4 w-4" />, status: (decisionStats === undefined ? 'unknown' : decisionStats?.weeklyBriefReady ? 'ok' : 'warn') as Status, detail: decisionStats?.weeklyBriefReady ? '✓ Prêt' : '✗ Aucun brief hebdo généré' },
+  ];
+
+  const okCount = items.filter(i => i.status === 'ok').length;
+  const score = Math.round((okCount / items.length) * 100);
+  const ready = score >= 75;
+
+  return (
+    <Card className="border-primary/20">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            Decision Layer
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={`text-xs ${ready ? 'border-success/40 text-success' : 'border-warning/40 text-warning'}`}>
+              {ready ? '✓ Prête' : '⚠ Partielle'}
+            </Badge>
+            <span className={`text-xl font-black ${score >= 75 ? 'text-success' : 'text-warning'}`}>{score}%</span>
+          </div>
+        </div>
+        <CardDescription>Couche décisionnelle · synthèses portefeuille · briefs DG / DSI / hebdo</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+          {items.map(item => (
+            <div key={item.label} className="flex items-center justify-between gap-4 px-6 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <StatusIcon status={item.status} />
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-muted-foreground shrink-0">{item.icon}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{item.label}</p>
+                    <p className="text-xs text-muted-foreground/70 font-mono truncate">{item.detail}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <StatusBadge status={item.status} />
+                {item.link && (
+                  <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+                    <Link to={item.link.href}>{item.link.label}<ExternalLink className="h-3 w-3 ml-1" /></Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ContinuousWatchSection({ orgId, refreshKey }: { orgId?: string; refreshKey: number }) {
   const { data: watchStats } = useQuery({
     queryKey: ['continuous-watch-stats', orgId, refreshKey],
@@ -748,6 +827,9 @@ export default function AdminReadiness() {
 
         {/* ── Continuous Watch ─────────────────────────────────────────────── */}
         <ContinuousWatchSection orgId={organization?.id} refreshKey={refreshKey} />
+
+        {/* ── Decision Layer ───────────────────────────────────────────────── */}
+        <DecisionLayerSection orgId={organization?.id} refreshKey={refreshKey} />
 
         {/* ── Revenue Operating Readiness ─────────────────────────────────── */}
         <Card className="border-primary/20">

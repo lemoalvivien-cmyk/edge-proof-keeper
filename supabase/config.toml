@@ -79,3 +79,7 @@ verify_jwt = false
 
 [functions.sync-customer-authorized-source]
 verify_jwt = false
+
+# ─── Decision Layer ──────────────────────────────────────────────────────────
+[functions.generate-portfolio-summary]
+verify_jwt = true
