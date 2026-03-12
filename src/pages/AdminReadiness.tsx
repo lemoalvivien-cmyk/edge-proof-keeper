@@ -655,6 +655,9 @@ export default function AdminReadiness() {
         {/* ── Risk Engine ─────────────────────────────────────────────────── */}
         <RiskEngineSection orgId={organization?.id} refreshKey={refreshKey} />
 
+        {/* ── AI Intelligence Layer ────────────────────────────────────────── */}
+        <AiIntelligenceSection orgId={organization?.id} refreshKey={refreshKey} />
+
         {/* ── Revenue Operating Readiness ─────────────────────────────────── */}
         <Card className="border-primary/20">
           <CardHeader className="pb-3">
