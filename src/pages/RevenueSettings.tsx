@@ -715,6 +715,20 @@ export default function RevenueSettings() {
                 error={errors.ai_gateway_url}
               />
               <Separator />
+              {/* ── Sovereign Activation Block ── */}
+              {organization?.id && (
+                <SovereignActivationBlock
+                  coreApiUrl={form.core_api_url}
+                  orgId={organization.id}
+                  confirmedAt={sovereignConfirmedAt}
+                  onConfirmed={(ts) => {
+                    setSovereignConfirmedAt(ts);
+                    qc.invalidateQueries({ queryKey: ['app-runtime-config'] });
+                  }}
+                />
+              )}
+              <Separator />
+
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium">
                   <Brain className="h-4 w-4 text-muted-foreground" />
