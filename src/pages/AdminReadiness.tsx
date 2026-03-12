@@ -4,10 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPlatformHealth } from '@/lib/api-client';
+import { getPlatformHealth, generatePortfolioSummary, verifyEvidenceChain } from '@/lib/api-client';
 import { useRuntimeConfig } from '@/hooks/useRuntimeConfig';
 import { BootstrapBanner } from '@/components/ui/BootstrapBanner';
 import {
@@ -15,7 +15,7 @@ import {
   FlaskConical, Users, MessageSquare, Navigation, BarChart3, Loader2,
   ExternalLink, TrendingUp, DollarSign, MousePointerClick, Star,
   CalendarDays, ShoppingCart, Zap, Settings, Server, Brain, Activity, ListTodo,
-  Bell, Info,
+  Bell, Info, Link2, FileText, Play, Hash,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
