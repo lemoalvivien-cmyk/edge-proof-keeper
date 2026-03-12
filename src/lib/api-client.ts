@@ -896,4 +896,8 @@ export const apiClient = {
   enhanceRemediationActions,
   getRiskAiAnalysis,
   getAiAnalysisCount,
+  // Portfolio Intelligence
+  generatePortfolioSummary,
+  getLatestPortfolioSummary,
+  getPortfolioSummaries,
 };
