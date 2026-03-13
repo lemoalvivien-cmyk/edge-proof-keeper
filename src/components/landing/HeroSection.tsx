@@ -168,7 +168,7 @@ export function HeroSection() {
               <motion.div variants={fadeUp}>
                 <div className="label-badge label-badge-cyan w-fit">
                   <Cpu className="w-3 h-3" />
-                  Digital Immune System · 5 Agents IA · God Mode 2026
+                  Digital Immune System · 6 Agents IA · God Mode 2026
                 </div>
               </motion.div>
 
