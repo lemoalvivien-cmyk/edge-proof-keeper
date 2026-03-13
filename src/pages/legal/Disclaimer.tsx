@@ -19,7 +19,7 @@ export default function Disclaimer() {
           </Link>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold">SENTINEL EDGE</span>
+            <span className="font-bold">SECURIT-E</span>
           </div>
         </div>
       </header>
