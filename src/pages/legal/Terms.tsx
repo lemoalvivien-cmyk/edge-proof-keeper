@@ -34,10 +34,10 @@ export default function Terms() {
               <h2 className="text-xl font-semibold mb-3">1. Objet</h2>
               <p className="text-muted-foreground">
                 Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation 
-                de la plateforme SENTINEL EDGE, éditée par [Nom de la société], ci-après dénommée "l'Éditeur".
+                de la plateforme SECURIT-E, éditée par [Nom de la société], ci-après dénommée "l'Éditeur".
               </p>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est une plateforme SaaS de gouvernance et de preuve cyber, destinée aux 
+                SECURIT-E est une plateforme SaaS de gouvernance et de preuve cyber, destinée aux
                 entreprises souhaitant piloter leur conformité RGPD et NIS2.
               </p>
             </section>
