@@ -112,7 +112,7 @@ export function FooterSection() {
 
           {/* Bottom bar */}
           <div className="pt-6 border-t border-border/40 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground/60">
-            <p>© 2026 SENTINEL IMMUNE — Digital Immune System. Tous droits réservés.</p>
+            <p>© 2026 SECURIT-E — Armure de gouvernance cyber autonome. Tous droits réservés.</p>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success/60 inline-block animate-pulse" />
