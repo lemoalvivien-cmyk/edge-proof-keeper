@@ -60,7 +60,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">3. Accès à la plateforme</h2>
               <p className="text-muted-foreground">
-                L'accès à SENTINEL EDGE nécessite la création d'un compte utilisateur et la souscription 
+                L'accès à SECURIT-E nécessite la création d'un compte utilisateur et la souscription 
                 à un abonnement. L'Utilisateur s'engage à fournir des informations exactes et à jour.
               </p>
               <p className="text-muted-foreground mt-2">
