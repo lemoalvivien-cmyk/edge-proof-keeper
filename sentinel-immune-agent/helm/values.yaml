@@ -60,14 +60,14 @@ ingress:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   hosts:
-    - host: edge-agent.sentinel-immune.fr
+    - host: edge-agent.securit-e.com
       paths:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: sentinel-agent-tls
+    - secretName: securit-e-agent-tls
       hosts:
-        - edge-agent.sentinel-immune.fr
+        - edge-agent.securit-e.com
 
 # ── Resources ─────────────────────────────────────────────────────────────────
 resources:
