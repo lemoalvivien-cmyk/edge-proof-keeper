@@ -48,6 +48,36 @@ interface NotificationRule {
   config: Record<string, unknown>;
 }
 
+// ── URL validation to prevent SSRF ─────────────────────────────────────────
+function validateWebhookUrl(rawUrl: string): { ok: boolean; error?: string } {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return { ok: false, error: "Invalid URL format" };
+  }
+  if (parsed.protocol !== "https:") {
+    return { ok: false, error: "Only HTTPS webhook URLs are allowed" };
+  }
+  const hostname = parsed.hostname.toLowerCase();
+  // Block loopback
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+    return { ok: false, error: "Loopback addresses are not allowed" };
+  }
+  // Block link-local (AWS metadata, etc.)
+  if (hostname.startsWith("169.254.")) {
+    return { ok: false, error: "Link-local addresses are not allowed" };
+  }
+  // Block RFC-1918 private ranges
+  const privateRanges = [/^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./];
+  for (const re of privateRanges) {
+    if (re.test(hostname)) {
+      return { ok: false, error: "Private IP ranges are not allowed" };
+    }
+  }
+  return { ok: true };
+}
+
 async function dispatchWebhook(
   rule: NotificationRule,
   matchedAlerts: AlertSummaryItem[],
