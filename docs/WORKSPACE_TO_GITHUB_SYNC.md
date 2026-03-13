@@ -1,4 +1,4 @@
-# WORKSPACE TO GITHUB SYNC — Cyber Serenity / Sentinel Edge
+# WORKSPACE TO GITHUB SYNC — Securit-E
 
 **Source de vérité : workspace Lovable**
 **Date de génération : 2026-03-12T12:00:00Z**
