@@ -148,4 +148,4 @@ docker run -d \
 
 ---
 
-*Sentinel Immune Edge Agent — Souveraineté Numérique France 🇫🇷 — Post-Quantum Ready*
+*Securit-E Edge Agent — Souveraineté Numérique France 🇫🇷 — Post-Quantum Ready*
