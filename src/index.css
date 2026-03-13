@@ -680,6 +680,6 @@
   h1, h2, h3 { page-break-after: avoid; }
   @page {
     margin: 2cm;
-    @bottom-center { content: "SENTINEL EDGE - Rapport Confidentiel"; }
+    @bottom-center { content: "SENTINEL IMMUNE - Rapport Confidentiel"; }
   }
 }
