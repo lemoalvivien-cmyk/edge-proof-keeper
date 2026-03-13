@@ -8,7 +8,7 @@ version: "3.9"
 # Production: use Helm chart (helm/) for Kubernetes deployment
 
 services:
-  sentinel-agent:
+  securit-e-agent:
     build:
       context: .
       dockerfile: sentinel-immune-agent/Dockerfile
