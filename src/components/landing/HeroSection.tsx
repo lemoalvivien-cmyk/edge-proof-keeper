@@ -324,7 +324,7 @@ export function HeroSection() {
               <div className="label-badge label-badge-cyan"><Cpu className="w-3 h-3" /> Starter 490€ / an</div>
               <span className="text-muted-foreground text-xs">Tout inclus · Sans surprise</span>
             </div>
-            <div className="text-xs text-muted-foreground/60 font-mono">Pro 4 900€ · Enterprise 24 900€</div>
+            <div className="text-xs text-muted-foreground/60 font-mono">Pro 6 900€ · Enterprise 29 900€</div>
           </motion.div>
         </motion.div>
       </motion.div>
