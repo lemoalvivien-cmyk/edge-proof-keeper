@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Menu, X, ChevronDown } from "lucide-react";
+import { Cpu, Menu, X, ChevronDown, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import {
@@ -11,18 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const offresLinks = [
-  { href: "/offres/imports-hub", label: "Imports Hub" },
-  { href: "/offres/devsecops-pack", label: "DevSecOps Pack" },
-  { href: "/offres/audit-pack-cabinets", label: "Audit Pack Cabinets" },
-  { href: "/offres/remediation-patch-bridge", label: "Remediation Patch Bridge" },
-  { href: "/offres/continuous-governance", label: "Continuous Governance" },
-  { href: "/offres/easm-osint-signals", label: "EASM & OSINT Signals" },
-];
-
 const navLinks = [
   { id: "how-it-works", label: "Comment ça marche", scroll: true },
-  { href: "/demo", label: "Démo", scroll: false },
+  { href: "/demo", label: "Démo live", scroll: false },
   { href: "/pricing", label: "Tarifs", scroll: false },
 ];
 
@@ -47,22 +38,22 @@ export function LandingNav() {
 
   return (
     <>
-      {/* Trust Banner */}
+      {/* Top trust strip */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="bg-primary/8 backdrop-blur-md border-b border-primary/10">
+        <div className="bg-primary/10 backdrop-blur-md border-b border-primary/15">
           <div className="container px-4">
-            <div className="flex items-center justify-center gap-6 md:gap-10 py-2 text-xs text-primary/80">
+            <div className="flex items-center justify-center gap-6 md:gap-10 py-2 text-xs text-primary/90">
               <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
-                100% légal &amp; auditable
+                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
+                5 Agents IA actifs 24/7
               </span>
               <span className="hidden sm:flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
-                Preuve d'autorisation obligatoire
+                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
+                Evidence Vault post-quantique
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
-                Rapports Direction + Technique
+                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
+                🇫🇷 100% Souverain France
               </span>
             </div>
           </div>
@@ -76,22 +67,27 @@ export function LandingNav() {
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
         className={`fixed top-8 left-0 right-0 z-40 transition-all duration-500 ${
           isScrolled
-            ? "bg-background/85 backdrop-blur-2xl border-b border-border/60 shadow-[0_4px_32px_hsl(220_20%_2%/0.4)]"
+            ? "bg-background/85 backdrop-blur-2xl border-b border-border/60 shadow-[0_4px_32px_hsl(220_20%_2%/0.5)]"
             : ""
         }`}
       >
         <div className="container px-4">
           <nav className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 group" aria-label="SENTINEL EDGE">
+            <Link to="/" className="flex items-center gap-2.5 group" aria-label="SENTINEL IMMUNE">
               <div className="relative">
-                <Shield className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-300" />
-                <div className="absolute inset-0 blur-md bg-primary/30 group-hover:bg-primary/50 transition-colors rounded-full scale-75" />
+                <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center group-hover:bg-primary/25 transition-all">
+                  <Cpu className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="absolute inset-0 blur-md bg-primary/20 group-hover:bg-primary/40 transition-colors rounded-lg scale-75" />
               </div>
-              <span className="text-base font-bold tracking-tight text-foreground hidden sm:block"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                SENTINEL EDGE
-              </span>
+              <div className="hidden sm:flex flex-col leading-none">
+                <span className="text-sm font-bold tracking-tight text-foreground"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  SENTINEL IMMUNE
+                </span>
+                <span className="text-[9px] font-mono text-primary/60 tracking-widest">DIGITAL IMMUNE SYSTEM</span>
+              </div>
             </Link>
 
             {/* Desktop Nav */}
@@ -102,27 +98,12 @@ export function LandingNav() {
               >
                 Comment ça marche
               </button>
-
               <Link
                 to="/demo"
                 className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50"
               >
-                Démo
+                Démo live
               </Link>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50">
-                  Offres <ChevronDown className="w-3.5 h-3.5" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-60 glass-card border-glass-border">
-                  {offresLinks.map((link) => (
-                    <DropdownMenuItem key={link.href} asChild>
-                      <Link to={link.href} className="cursor-pointer text-sm">{link.label}</Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
               <Link
                 to="/pricing"
                 className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50"
@@ -136,20 +117,20 @@ export function LandingNav() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground border border-transparent hover:border-border"
+                className="text-muted-foreground hover:text-foreground border border-transparent hover:border-border text-xs gap-1.5"
                 onClick={() => setDemoDialogOpen(true)}
               >
-                Demander une démo
+                <Zap className="w-3 h-3" />
+                Book 15-min demo
               </Button>
-
               <Button
                 size="sm"
-                className="neon-glow btn-magnetic font-semibold"
+                className="neon-glow btn-magnetic font-semibold text-xs gap-1.5"
                 asChild
               >
-                <Link to="/dashboard">
-                  Accéder au cockpit
-                  <Shield className="w-3.5 h-3.5 ml-1" />
+                <Link to="/demo">
+                  Voir démo agents live
+                  <span className="text-primary-foreground/60 font-mono">(47s)</span>
                 </Link>
               </Button>
             </div>
@@ -192,47 +173,18 @@ export function LandingNav() {
                 >
                   Comment ça marche
                 </button>
-                <Link
-                  to="/demo"
-                  className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Démo interactive
+                <Link to="/demo" className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                  Démo live (47s)
                 </Link>
-                <div className="py-1">
-                  <p className="px-3 text-xs font-semibold text-muted-foreground/60 uppercase tracking-widest mb-1">Offres</p>
-                  <div className="space-y-0.5">
-                    {offresLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        to={link.href}
-                        className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-                <Link
-                  to="/pricing"
-                  className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
+                <Link to="/pricing" className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                   Tarifs
                 </Link>
                 <div className="pt-2 space-y-2 border-t border-border">
-                  <Button
-                    variant="outline"
-                    className="w-full border-primary/30 text-primary hover:bg-primary/5"
-                    onClick={() => { setIsMobileMenuOpen(false); setDemoDialogOpen(true); }}
-                  >
-                    Demander une démo
+                  <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/5" onClick={() => { setIsMobileMenuOpen(false); setDemoDialogOpen(true); }}>
+                    Book 15-min demo
                   </Button>
                   <Button className="w-full neon-glow font-semibold" asChild>
-                    <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                      Accéder au cockpit
-                    </Link>
+                    <Link to="/demo" onClick={() => setIsMobileMenuOpen(false)}>Voir démo agents live</Link>
                   </Button>
                 </div>
               </div>
@@ -241,12 +193,7 @@ export function LandingNav() {
         </AnimatePresence>
       </motion.header>
 
-      <DemoRequestDialog
-        open={demoDialogOpen}
-        onOpenChange={setDemoDialogOpen}
-        ctaOrigin="nav_cta"
-        sourcePage="/"
-      />
+      <DemoRequestDialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen} ctaOrigin="nav_cta" sourcePage="/" />
     </>
   );
 }

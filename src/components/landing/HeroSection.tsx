@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Shield, ArrowRight, Sparkles, FlaskConical, CalendarDays, Lock, Zap, Eye } from "lucide-react";
+import { Cpu, ArrowRight, CalendarDays, Lock, Zap, Play, Activity, CheckCircle2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import { trackEvent } from "@/lib/tracking";
 import { usePublicCta } from "@/hooks/usePublicCta";
 
-/* ── Particle system ── */
-function ParticleField() {
+/* ── Neural network particle field ── */
+function NeuralField() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -17,147 +17,114 @@ function ParticleField() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let W = canvas.width = window.innerWidth;
-    let H = canvas.height = window.innerHeight;
-    const particles: Array<{
-      x: number; y: number; vx: number; vy: number;
-      r: number; a: number; da: number;
-    }> = [];
+    let W = (canvas.width = window.innerWidth);
+    let H = (canvas.height = window.innerHeight);
 
-    for (let i = 0; i < 80; i++) {
-      particles.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        r: Math.random() * 1.5 + 0.3,
-        a: Math.random(),
-        da: (Math.random() - 0.5) * 0.004,
+    const nodes: Array<{ x: number; y: number; vx: number; vy: number; r: number; a: number; da: number; pulse: number }> = [];
+    for (let i = 0; i < 60; i++) {
+      nodes.push({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25,
+        r: Math.random() * 2 + 0.5,
+        a: Math.random() * 0.6 + 0.1, da: (Math.random() - 0.5) * 0.003,
+        pulse: Math.random() * Math.PI * 2,
       });
     }
 
     let raf: number;
+    let t = 0;
     const draw = () => {
+      t += 0.008;
       ctx.clearRect(0, 0, W, H);
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.a += p.da;
-        if (p.a < 0.1) p.da = Math.abs(p.da);
-        if (p.a > 0.7) p.da = -Math.abs(p.da);
-        if (p.x < 0) p.x = W;
-        if (p.x > W) p.x = 0;
-        if (p.y < 0) p.y = H;
-        if (p.y > H) p.y = 0;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(185, 100%, 52%, ${p.a})`;
-        ctx.fill();
-      });
-      // connection lines
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
+
+      // Draw connections
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
+          if (dist < 130) {
+            const alpha = 0.06 * (1 - dist / 130);
             ctx.beginPath();
-            ctx.strokeStyle = `hsla(185, 100%, 52%, ${0.08 * (1 - dist / 120)})`;
-            ctx.lineWidth = 0.5;
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `hsla(185, 100%, 52%, ${alpha})`;
+            ctx.lineWidth = 0.4;
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
             ctx.stroke();
           }
         }
       }
+
+      // Draw nodes
+      nodes.forEach((p) => {
+        p.x += p.vx; p.y += p.vy;
+        p.a += p.da; p.pulse += 0.02;
+        if (p.a < 0.05) p.da = Math.abs(p.da);
+        if (p.a > 0.7) p.da = -Math.abs(p.da);
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+
+        const pulseR = p.r + Math.sin(p.pulse) * 0.5;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, pulseR, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(185, 100%, 52%, ${p.a})`;
+        ctx.fill();
+      });
+
       raf = requestAnimationFrame(draw);
     };
     draw();
 
-    const onResize = () => {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    };
+    const onResize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; };
     window.addEventListener("resize", onResize);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", onResize);
-    };
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
+  }, []);
+
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.5 }} />;
+}
+
+/* ── Live agent feed ── */
+const agentEvents = [
+  { icon: Activity, color: "text-primary", text: "Scout — port:8443 exposed detecté", time: "0s" },
+  { icon: Zap, color: "text-accent", text: "Analyst — plan de remédiation généré", time: "12s" },
+  { icon: CheckCircle2, color: "text-success", text: "DSI — Go/No-Go validé en 1 clic", time: "23s" },
+  { icon: Lock, color: "text-warning", text: "Executor — port fermé automatiquement", time: "35s" },
+  { icon: Shield, color: "text-success", text: "Evidence Vault — preuve cryptographique ✓", time: "47s" },
+];
+
+function AgentFeed() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((i) => (i + 1) % agentEvents.length);
+    }, 2000);
+    return () => clearInterval(timer);
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ opacity: 0.6 }}
-    />
-  );
-}
-
-/* ── Orbiting shield ── */
-function OrbitalShield() {
-  return (
-    <div className="relative w-72 h-72 mx-auto flex items-center justify-center">
-      {/* Outer ring */}
-      <div className="absolute inset-0 rounded-full border border-primary/10 animate-[spin_20s_linear_infinite]" />
-      {/* Mid ring */}
-      <div className="absolute inset-8 rounded-full border border-neon-cyan/15 animate-[spin_14s_linear_infinite_reverse]" />
-      {/* Inner glow */}
-      <div className="absolute inset-16 rounded-full bg-primary/5 blur-xl" />
-
-      {/* Orbiting dots */}
-      {[0, 72, 144, 216, 288].map((deg, i) => (
+    <div className="space-y-1.5">
+      {agentEvents.map((ev, i) => (
         <motion.div
           key={i}
-          className="absolute w-2 h-2 rounded-full bg-primary"
-          style={{ top: "50%", left: "50%", transformOrigin: "0 0" }}
-          animate={{ rotate: [deg, deg + 360] }}
-          transition={{ duration: 12 + i * 2, repeat: Infinity, ease: "linear" }}
+          animate={{
+            opacity: i === activeIndex ? 1 : i < activeIndex ? 0.45 : 0.2,
+            x: i === activeIndex ? 0 : -2,
+          }}
+          transition={{ duration: 0.4 }}
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono ${i === activeIndex ? "bg-primary/8 border border-primary/20" : ""}`}
         >
-          <div
-            className="w-2 h-2 rounded-full bg-primary neon-glow-sm"
-            style={{
-              transform: `translateX(100px) translateY(-4px)`,
-            }}
-          />
+          <ev.icon className={`w-3 h-3 flex-shrink-0 ${i === activeIndex ? ev.color : "text-muted-foreground/40"}`} />
+          <span className={i === activeIndex ? "text-foreground/90" : "text-muted-foreground/40"}>{ev.text}</span>
+          <span className={`ml-auto ${i === activeIndex ? "text-primary/60" : "text-muted-foreground/30"}`}>{ev.time}</span>
         </motion.div>
       ))}
-
-      {/* Core shield */}
-      <div className="relative z-10 w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center neon-glow pulse-glow">
-        <Shield className="w-12 h-12 text-primary" />
-      </div>
     </div>
   );
 }
 
-/* ── Stat ticker ── */
-function LiveStatBadge({ value, label, color }: { value: string; label: string; color: string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, type: "spring" }}
-      className="glass-card px-4 py-2.5 flex items-center gap-3"
-    >
-      <div className={`w-2 h-2 rounded-full ${color} animate-pulse`} />
-      <div>
-        <div className={`text-sm font-bold font-mono ${color === "bg-success" ? "text-success" : color === "bg-primary" ? "text-primary" : "text-accent"}`}>{value}</div>
-        <div className="text-xs text-muted-foreground">{label}</div>
-      </div>
-    </motion.div>
-  );
-}
-
-const container = {
-  initial: {},
-  animate: { transition: { staggerChildren: 0.08 } },
-};
-
-const fadeUp = {
-  initial: { opacity: 0, y: 32 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
-} as const;
+const container = { initial: {}, animate: { transition: { staggerChildren: 0.08 } } };
+const fadeUp = { initial: { opacity: 0, y: 32 }, animate: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } } } as const;
 
 export function HeroSection() {
   const navigate = useNavigate();
@@ -169,223 +136,202 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Deep space background */}
+      {/* Backgrounds */}
       <div className="absolute inset-0 bg-background" />
       <div className="absolute inset-0 gradient-radial" />
-      <div className="absolute inset-0 gradient-radial-purple" />
-      <div className="absolute inset-0 grid-pattern opacity-100" />
+      <div className="absolute inset-0 gradient-radial-purple opacity-50" />
+      <div className="absolute inset-0 grid-pattern" />
 
-      {/* Particle field */}
-      <ParticleField />
+      <NeuralField />
 
-      {/* Ambient orbs */}
+      {/* Organic ambient orbs */}
       <motion.div
-        animate={{ scale: [1, 1.2, 1], opacity: [0.08, 0.15, 0.08] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/4 left-1/6 w-96 h-96 rounded-full"
-        style={{ background: "radial-gradient(circle, hsl(185 100% 52% / 0.2) 0%, transparent 70%)" }}
+        animate={{ scale: [1, 1.3, 1], opacity: [0.06, 0.14, 0.06] }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/4 left-1/6 w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, hsl(185 100% 52% / 0.18) 0%, transparent 65%)" }}
       />
       <motion.div
-        animate={{ scale: [1, 1.15, 1], opacity: [0.06, 0.12, 0.06] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        className="absolute bottom-1/3 right-1/6 w-80 h-80 rounded-full"
-        style={{ background: "radial-gradient(circle, hsl(258 90% 66% / 0.2) 0%, transparent 70%)" }}
+        animate={{ scale: [1, 1.2, 1], opacity: [0.05, 0.1, 0.05] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+        className="absolute bottom-1/4 right-1/6 w-[400px] h-[400px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, hsl(258 90% 66% / 0.15) 0%, transparent 65%)" }}
       />
 
-      <motion.div
-        style={{ opacity: heroOpacity, y: heroY }}
-        className="container relative z-10 px-4 py-16"
-      >
-        <motion.div
-          variants={container}
-          initial="initial"
-          animate="animate"
-          className="max-w-5xl mx-auto"
-        >
+      <motion.div style={{ opacity: heroOpacity, y: heroY }} className="container relative z-10 px-4 py-16">
+        <motion.div variants={container} initial="initial" animate="animate" className="max-w-5xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
+
             {/* Left: Content */}
-            <div className="space-y-8">
-              {/* Status badge */}
+            <div className="space-y-7">
+              {/* Badge */}
               <motion.div variants={fadeUp}>
                 <div className="label-badge label-badge-cyan w-fit">
-                  <Sparkles className="w-3 h-3" />
-                  Gouvernance Cyber · RGPD &amp; NIS2 · God Mode 2026
+                  <Cpu className="w-3 h-3" />
+                  Digital Immune System · 5 Agents IA · God Mode 2026
                 </div>
               </motion.div>
 
               {/* Headline */}
               <motion.div variants={fadeUp} className="space-y-3">
-                <h1 className="text-5xl md:text-6xl xl:text-7xl font-bold leading-[0.95] tracking-tight">
-                  <span className="text-foreground block">Prouvez votre</span>
-                  <span className="text-gradient neon-text block">cybersécurité</span>
-                  <span className="text-foreground block">à votre Direction</span>
+                <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold leading-[1.0] tracking-tight">
+                  <span className="text-foreground block">SENTINEL IMMUNE</span>
+                  <span className="text-gradient neon-text block">Votre système</span>
+                  <span className="text-foreground block">immunitaire cyber</span>
+                  <span className="text-gradient block">autonome</span>
                 </h1>
               </motion.div>
 
               {/* Sub */}
-              <motion.p variants={fadeUp} className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                Importez vos rapports. Obtenez en quelques clics un rapport Direction, 
-                un plan de remédiation et vos preuves de conformité.{" "}
-                <span className="text-foreground font-semibold">Zéro jargon. 100% auditables.</span>
+              <motion.p variants={fadeUp} className="text-base text-muted-foreground leading-relaxed max-w-lg">
+                <span className="text-foreground font-semibold">Détecte · Prédit · Répare seul · Prouve pour toujours.</span>{" "}
+                20 ans d'avance. DSI valide en 1 clic ou mode fully autonomous.{" "}
+                <span className="text-primary font-semibold">Zéro équipe. 100% souverain France.</span>
               </motion.p>
 
               {/* CTAs */}
               <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
                 <Button
                   size="lg"
-                  className="h-13 px-7 text-base font-bold neon-glow btn-magnetic hover:scale-105 transition-all gap-2 group"
+                  className="h-12 px-6 text-sm font-bold neon-glow btn-magnetic hover:scale-[1.03] transition-all gap-2 group"
                   onClick={() => {
                     trackEvent('cta_voir_demo', { source_page: '/', cta_origin: 'hero_primary' });
                     navigate('/demo');
                   }}
                 >
-                  <FlaskConical className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  Voir la démo
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <Play className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" />
+                  Voir la démo agents en live
+                  <span className="font-mono text-primary-foreground/60">(47s)</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </Button>
 
                 <Button
                   variant="outline"
                   size="lg"
-                  className="h-13 px-6 text-base border-primary/30 hover:border-primary/60 hover:bg-primary/5 gap-2 group transition-all"
+                  className="h-12 px-5 text-sm border-border hover:border-primary/40 hover:bg-primary/5 gap-2 group transition-all"
                   disabled={cta.isLoading}
                   onClick={() => {
-                    trackEvent('cta_demander_demo', { source_page: '/', cta_origin: 'hero_ghost' });
-                    cta.handleDemoRequest({
-                      sourcePage: '/',
-                      ctaOrigin: 'hero_ghost',
-                      onFallback: () => setDemoDialogOpen(true),
-                    });
+                    trackEvent('cta_book_demo', { source_page: '/', cta_origin: 'hero_ghost' });
+                    cta.handleDemoRequest({ sourcePage: '/', ctaOrigin: 'hero_ghost', onFallback: () => setDemoDialogOpen(true) });
                   }}
                 >
-                  <CalendarDays className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  Demander une démo
+                  <CalendarDays className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  Book 15-min demo
                 </Button>
               </motion.div>
 
-              {/* Trust indicators */}
-              <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
-                <LiveStatBadge value="100%" label="Conforme RGPD" color="bg-success" />
-                <LiveStatBadge value="NIS2" label="Prêt 2026" color="bg-primary" />
-                <LiveStatBadge value="🇫🇷 FR" label="Hébergé en France" color="bg-accent" />
+              {/* Trust badges */}
+              <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
+                {[
+                  { label: "Self-healing autonome", color: "text-success", bg: "bg-success/10", dot: "bg-success" },
+                  { label: "Evidence post-quantique", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
+                  { label: "100% Souverain 🇫🇷", color: "text-accent", bg: "bg-accent/10", dot: "bg-accent" },
+                ].map((b, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.6 + i * 0.1, type: "spring" }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-card text-xs font-medium ${b.color}`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full ${b.dot} animate-pulse`} />
+                    {b.label}
+                  </motion.div>
+                ))}
               </motion.div>
             </div>
 
-            {/* Right: Visual */}
-            <motion.div
-              variants={fadeUp}
-              className="hidden lg:flex items-center justify-center relative"
-            >
-              {/* Dashboard mockup card */}
-              <div className="relative w-full max-w-sm">
-                {/* Glow backdrop */}
-                <div className="absolute inset-0 blur-3xl rounded-3xl" style={{ background: "radial-gradient(circle, hsl(185 100% 52% / 0.15) 0%, transparent 70%)" }} />
+            {/* Right: Live agent dashboard */}
+            <motion.div variants={fadeUp} className="hidden lg:block relative">
+              <div className="absolute inset-0 blur-3xl rounded-3xl pointer-events-none"
+                style={{ background: "radial-gradient(circle, hsl(185 100% 52% / 0.12) 0%, transparent 70%)" }} />
 
-                <div className="relative glass-card-premium p-6 space-y-4 rounded-2xl">
-                  {/* Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                      <span className="text-xs font-mono text-muted-foreground">SENTINEL EDGE · LIVE</span>
-                    </div>
+              <div className="relative glass-card-premium p-5 space-y-4 rounded-2xl">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                    <span className="text-xs font-mono text-muted-foreground">IMMUNE SYSTEM · LIVE</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
                     <span className="label-badge label-badge-cyan text-[10px]">
-                      <Lock className="w-2.5 h-2.5" /> SOUVERAIN
+                      <Lock className="w-2.5 h-2.5" /> SOUVERAIN FR
                     </span>
-                  </div>
-
-                  {/* Score */}
-                  <div className="text-center py-4">
-                    <div className="text-6xl font-bold font-mono text-gradient neon-text">87</div>
-                    <div className="text-sm text-muted-foreground mt-1">Score de maturité cyber</div>
-                    <div className="mt-3 w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: "87%" }}
-                        transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
-                        className="h-full rounded-full"
-                        style={{ background: "linear-gradient(90deg, hsl(var(--neon-cyan)), hsl(var(--neon-blue)))" }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Mini stats */}
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: "Risques", value: "12", color: "text-destructive" },
-                      { label: "Corrigés", value: "8", color: "text-success" },
-                      { label: "Preuves", value: "34", color: "text-primary" },
-                    ].map((s, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.8 + i * 0.1 }}
-                        className="rounded-xl bg-secondary/50 p-3 text-center"
-                      >
-                        <div className={`text-xl font-bold font-mono ${s.color}`}>{s.value}</div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">{s.label}</div>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Bottom bar */}
-                  <div className="flex items-center gap-2 pt-2 border-t border-border/50">
-                    <Zap className="w-3 h-3 text-primary" />
-                    <span className="text-xs text-muted-foreground">Rapport Direction généré il y a 3min</span>
                   </div>
                 </div>
 
-                {/* Floating pills */}
-                <motion.div
-                  animate={{ y: [-4, 4, -4] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -top-5 -right-6 glass-card px-3 py-1.5 flex items-center gap-1.5 rounded-xl"
-                >
-                  <Eye className="w-3 h-3 text-accent" />
-                  <span className="text-xs text-foreground font-medium">Rapport DG prêt</span>
-                </motion.div>
+                {/* Agent swarm progress */}
+                <div className="p-3 rounded-xl bg-secondary/30 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-mono text-muted-foreground">SWARM AGENTS — OPÉRATION EN COURS</span>
+                    <span className="text-primary font-mono font-bold">47s</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 4.7, ease: "linear", repeat: Infinity, repeatDelay: 2 }}
+                      className="h-full rounded-full"
+                      style={{ background: "linear-gradient(90deg, hsl(var(--neon-cyan)), hsl(var(--neon-blue)), hsl(var(--neon-cyan)))" }}
+                    />
+                  </div>
+                </div>
 
-                <motion.div
-                  animate={{ y: [4, -4, 4] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  className="absolute -bottom-4 -left-6 glass-card px-3 py-1.5 flex items-center gap-1.5 rounded-xl"
-                >
-                  <Shield className="w-3 h-3 text-success" />
-                  <span className="text-xs text-foreground font-medium">Evidence Vault ✓</span>
-                </motion.div>
+                {/* Live feed */}
+                <AgentFeed />
+
+                {/* Bottom stats */}
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
+                  {[
+                    { v: "5", l: "Agents actifs", c: "text-primary" },
+                    { v: "0", l: "Intervention humaine", c: "text-success" },
+                    { v: "∞", l: "Preuves vault", c: "text-accent" },
+                  ].map((s, i) => (
+                    <div key={i} className="text-center p-2 rounded-lg bg-secondary/30">
+                      <div className={`text-lg font-bold font-mono ${s.c}`}>{s.v}</div>
+                      <div className="text-[9px] text-muted-foreground leading-tight mt-0.5">{s.l}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {/* Floating chips */}
+              <motion.div
+                animate={{ y: [-5, 5, -5] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-4 -right-4 glass-card px-3 py-1.5 flex items-center gap-1.5 rounded-xl"
+              >
+                <CheckCircle2 className="w-3 h-3 text-success" />
+                <span className="text-xs font-medium">Fully Autonomous ✓</span>
+              </motion.div>
+              <motion.div
+                animate={{ y: [5, -5, 5] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute -bottom-4 -left-4 glass-card px-3 py-1.5 flex items-center gap-1.5 rounded-xl"
+              >
+                <Lock className="w-3 h-3 text-primary" />
+                <span className="text-xs font-medium">Preuve Vault ✓</span>
+              </motion.div>
             </motion.div>
           </div>
 
-          {/* Pricing anchor */}
+          {/* Pricing strip */}
           <motion.div
             variants={fadeUp}
-            className="mt-16 pt-8 border-t border-border/40 flex flex-wrap items-center gap-6 text-sm"
+            className="mt-14 pt-7 border-t border-border/30 flex flex-wrap items-center gap-6 text-sm"
           >
-            <div className="flex items-center gap-2">
-              <div className="label-badge label-badge-cyan">
-                <Shield className="w-3 h-3" />
-                490€ TTC / an
-              </div>
-              <span className="text-muted-foreground">Tout inclus · Sans surprise</span>
+            <div className="flex items-center gap-2.5">
+              <div className="label-badge label-badge-cyan"><Cpu className="w-3 h-3" /> Starter 490€ / an</div>
+              <span className="text-muted-foreground text-xs">Tout inclus · Sans surprise</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="w-1 h-1 rounded-full bg-border" />
-              <span>4 900€ Pro · 24 900€ Enterprise</span>
-            </div>
+            <div className="text-xs text-muted-foreground/60 font-mono">Pro 4 900€ · Enterprise 24 900€</div>
           </motion.div>
         </motion.div>
       </motion.div>
 
-      {/* Bottom fade */}
       <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background to-transparent" />
 
-      <DemoRequestDialog
-        open={demoDialogOpen}
-        onOpenChange={setDemoDialogOpen}
-        ctaOrigin="hero_cta"
-        sourcePage="/"
-      />
+      <DemoRequestDialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen} ctaOrigin="hero_cta" sourcePage="/" />
     </section>
   );
 }
