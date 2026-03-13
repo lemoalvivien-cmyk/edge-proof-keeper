@@ -157,5 +157,5 @@ env: []
 networkPolicy:
   enabled: true
   allowFromNamespaces:
-    - sentinel-system
+    - securit-e-system
     - monitoring
