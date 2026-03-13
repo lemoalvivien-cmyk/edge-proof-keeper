@@ -1,4 +1,4 @@
-# Sentinel Immune Edge Agent
+# Securit-E Edge Agent
 
 > Sidecar Go ultra-léger &lt;50Mo — WireGuard + mTLS + post-quantum crypto (CRYSTALS-Dilithium3)
 > 
@@ -8,8 +8,8 @@
 
 ```bash
 export SENTINEL_TENANT_ID=your-org-id
-go build -o sentinel-edge-agent ./cmd/agent
-./sentinel-edge-agent --config config.yaml
+go build -o securit-e-agent ./cmd/agent
+./securit-e-agent --config config.yaml
 ```
 
 ## Structure
