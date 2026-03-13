@@ -57,7 +57,7 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
     timestamp: new Date().toISOString(),
   });
 
-  const message = `[SENTINEL IMMUNE] Action ${input.action_type} sur ${input.target} — ÉCHEC: ${input.failure_reason}.`;
+  const message = `[SECURIT-E] Action ${input.action_type} sur ${input.target} — ÉCHEC: ${input.failure_reason}.`;
 
   // 2. Execute rollback if required
   let rollbackExecuted = false;
