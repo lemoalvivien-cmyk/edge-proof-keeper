@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 const corePlan = {
-  name: "SENTINEL EDGE Core",
+  name: "SECURIT-E Core",
   price: "490€",
   period: "TTC / an",
   description: "Gouvernance cyber complète import-first",

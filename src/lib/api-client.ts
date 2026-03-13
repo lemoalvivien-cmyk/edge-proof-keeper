@@ -1,5 +1,5 @@
 /**
- * SENTINEL EDGE — API Client
+ * SECURIT-E — API Client
  *
  * Report generation strategy (controlled by reportsMode from useRuntimeConfig):
  *   external_only      → requires VITE_CORE_API_URL / runtime core_api_url

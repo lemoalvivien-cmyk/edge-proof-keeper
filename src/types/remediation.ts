@@ -1,4 +1,4 @@
-// Remediation types for SENTINEL EDGE
+// Remediation types for SECURIT-E
 
 export type TaskStatus = 'open' | 'in_progress' | 'blocked' | 'done' | 'cancelled';
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'info';
