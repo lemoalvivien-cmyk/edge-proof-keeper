@@ -19,7 +19,7 @@ export default function AuthorizedUse() {
           </Link>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold">SENTINEL EDGE</span>
+            <span className="font-bold">SECURIT-E</span>
           </div>
         </div>
       </header>
@@ -29,7 +29,7 @@ export default function AuthorizedUse() {
           <CardHeader>
             <CardTitle className="text-2xl">Charte d'Usage Autorisé</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Règles d'utilisation éthique et légale de SENTINEL EDGE
+              Règles d'utilisation éthique et légale de SECURIT-E
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -37,7 +37,7 @@ export default function AuthorizedUse() {
               <AlertTriangle className="h-4 w-4 text-red-500" />
               <AlertTitle className="text-red-600">Avertissement important</AlertTitle>
               <AlertDescription className="text-red-600/80">
-                Toute utilisation de SENTINEL EDGE sans autorisation préalable des propriétaires 
+                Toute utilisation de SECURIT-E sans autorisation préalable des propriétaires 
                 des actifs analysés est strictement interdite et peut constituer un délit pénal.
               </AlertDescription>
             </Alert>
@@ -45,7 +45,7 @@ export default function AuthorizedUse() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Principe fondamental</h2>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est conçu pour aider les organisations à évaluer et améliorer 
+                SECURIT-E est conçu pour aider les organisations à évaluer et améliorer 
                 leur posture de sécurité <strong>sur leurs propres actifs</strong> ou sur des actifs 
                 pour lesquels elles disposent d'une <strong>autorisation écrite explicite</strong>.
               </p>
