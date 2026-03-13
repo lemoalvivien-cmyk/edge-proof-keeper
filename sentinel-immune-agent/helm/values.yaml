@@ -1,0 +1,161 @@
+## Default values for sentinel-immune-edge-agent.
+## This is a YAML-formatted file.
+
+# ── Replica count ──────────────────────────────────────────────────────────────
+replicaCount: 1
+
+# ── Image ─────────────────────────────────────────────────────────────────────
+image:
+  repository: sentinel-immune/edge-agent
+  pullPolicy: IfNotPresent
+  tag: "2026.1.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# ── Service Account ────────────────────────────────────────────────────────────
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: "sentinel-agent"
+
+# ── Pod annotations / labels ──────────────────────────────────────────────────
+podAnnotations:
+  sentinel.immune.io/version: "2026.1.0"
+  sentinel.immune.io/pq-algorithm: "dilithium3"
+
+podLabels:
+  app.kubernetes.io/component: edge-agent
+  sentinel.immune.io/role: executor
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+# ── Service ───────────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 8443
+  targetPort: 8443
+  protocol: TCP
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8443"
+
+# ── Ingress ───────────────────────────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: edge-agent.sentinel-immune.fr
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: sentinel-agent-tls
+      hosts:
+        - edge-agent.sentinel-immune.fr
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+resources:
+  limits:
+    cpu: "200m"
+    memory: "64Mi"
+  requests:
+    cpu: "50m"
+    memory: "32Mi"
+
+# ── Autoscaling ───────────────────────────────────────────────────────────────
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+# ── Node selector / tolerations / affinity ───────────────────────────────────
+nodeSelector:
+  # For sovereign France deployment: target nodes in fr-paris region
+  # topology.kubernetes.io/region: "fr-paris"
+  {}
+
+tolerations: []
+
+affinity: {}
+
+# ── Sentinel Agent config ─────────────────────────────────────────────────────
+sentinel:
+  tenantId: ""          # Set via --set sentinel.tenantId=<id>
+  region: "fr-paris"
+  apiPort: "8443"
+  vaultUrl: "https://vault.sentinel-immune.fr"
+  swarmUrl: "https://swarm.sentinel-immune.fr"
+  wgEndpoint: "immune.sentinel-edge.fr:51820"
+
+  # Post-quantum keys (set via K8s secret)
+  dilithiumPubKey: ""
+
+  selfHeal:
+    maxAutoPerHour: 5
+    requireDSIApproval: false
+    rollbackTimeoutHours: 4
+
+# ── TLS certificates (from K8s secret) ───────────────────────────────────────
+tls:
+  existingSecret: "sentinel-agent-mtls-certs"
+  certKey: "tls.crt"
+  keyKey: "tls.key"
+  caKey: "ca.crt"
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+extraVolumes:
+  - name: certs
+    secret:
+      secretName: sentinel-agent-mtls-certs
+
+extraVolumeMounts:
+  - name: certs
+    mountPath: /certs
+    readOnly: true
+
+# ── Liveness / Readiness ──────────────────────────────────────────────────────
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8443
+    scheme: HTTPS
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8443
+    scheme: HTTPS
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+# ── Environment variables ─────────────────────────────────────────────────────
+env: []
+# - name: CUSTOM_VAR
+#   value: "custom_value"
+
+# ── Network Policy ────────────────────────────────────────────────────────────
+networkPolicy:
+  enabled: true
+  allowFromNamespaces:
+    - sentinel-system
+    - monitoring
