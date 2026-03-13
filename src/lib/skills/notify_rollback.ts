@@ -67,7 +67,7 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
       payload: { action_id: input.action_id, action_type: input.action_type, target: input.target },
       agent_id: input.agent_id,
     });
-    // Production: POST https://edge-agent.sentinel-immune.fr/api/v1/skill
+    // Production: POST https://edge-agent.securit-e.com/api/v1/skill
     // { skill: "rollback", payload: { action_id, action_type, target } }
     rollbackExecuted = true;
     apiCallsSummary.push(`edge_agent:POST /api/v1/skill {rollback, action_id=${input.action_id}}`);
