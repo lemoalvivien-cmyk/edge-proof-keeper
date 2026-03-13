@@ -290,7 +290,7 @@ Deno.serve(async (req) => {
     if (uploadError) {
       console.error('Upload failed:', uploadError);
       return new Response(
-        JSON.stringify({ error: 'Failed to upload file', details: uploadError.message }),
+        JSON.stringify({ error: 'Failed to upload file' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -372,9 +372,8 @@ Deno.serve(async (req) => {
     );
   } catch (error: unknown) {
     console.error('Unexpected error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

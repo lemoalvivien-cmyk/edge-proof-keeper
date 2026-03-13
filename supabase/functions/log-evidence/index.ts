@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
     if (insertError) {
       console.error("Evidence log insert error:", insertError);
       return new Response(
-        JSON.stringify({ error: "Failed to log evidence", details: insertError.message }),
+        JSON.stringify({ error: "Failed to log evidence" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -227,9 +227,8 @@ Deno.serve(async (req) => {
     );
   } catch (error: unknown) {
     console.error("Log evidence error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

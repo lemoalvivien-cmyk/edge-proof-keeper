@@ -48,6 +48,36 @@ interface NotificationRule {
   config: Record<string, unknown>;
 }
 
+// ── URL validation to prevent SSRF ─────────────────────────────────────────
+function validateWebhookUrl(rawUrl: string): { ok: boolean; error?: string } {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return { ok: false, error: "Invalid URL format" };
+  }
+  if (parsed.protocol !== "https:") {
+    return { ok: false, error: "Only HTTPS webhook URLs are allowed" };
+  }
+  const hostname = parsed.hostname.toLowerCase();
+  // Block loopback
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+    return { ok: false, error: "Loopback addresses are not allowed" };
+  }
+  // Block link-local (AWS metadata, etc.)
+  if (hostname.startsWith("169.254.")) {
+    return { ok: false, error: "Link-local addresses are not allowed" };
+  }
+  // Block RFC-1918 private ranges
+  const privateRanges = [/^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./];
+  for (const re of privateRanges) {
+    if (re.test(hostname)) {
+      return { ok: false, error: "Private IP ranges are not allowed" };
+    }
+  }
+  return { ok: true };
+}
+
 async function dispatchWebhook(
   rule: NotificationRule,
   matchedAlerts: AlertSummaryItem[],
@@ -65,8 +95,14 @@ async function dispatchWebhook(
       const webhookUrl = config?.webhook_url as string | undefined;
       if (!webhookUrl) return { dispatched: false, error: "slack: missing webhook_url in config" };
 
+      const urlCheck = validateWebhookUrl(webhookUrl);
+      if (!urlCheck.ok) {
+        console.warn(`dispatchWebhook [slack] blocked: ${urlCheck.error}`);
+        return { dispatched: false, error: `slack: ${urlCheck.error}` };
+      }
+
       const color = criticalCount > 0 ? "danger" : highCount > 0 ? "warning" : "good";
-      const text  = `🚨 *Cyber Serenity — ${matchedAlerts.length} alerte(s) active(s)*\n` +
+      const text  = `🚨 *Sentinel Immune — ${matchedAlerts.length} alerte(s) active(s)*\n` +
         `Critique: ${criticalCount} · Élevé: ${highCount} · Org: ${orgId.slice(0, 8)}…\n` +
         matchedAlerts.slice(0, 5).map(a => `• [${a.severity.toUpperCase()}] ${a.title}`).join("\n");
 
@@ -93,6 +129,12 @@ async function dispatchWebhook(
       const webhookUrl = config?.webhook_url as string | undefined;
       if (!webhookUrl) return { dispatched: false, error: "teams: missing webhook_url in config" };
 
+      const urlCheck = validateWebhookUrl(webhookUrl);
+      if (!urlCheck.ok) {
+        console.warn(`dispatchWebhook [teams] blocked: ${urlCheck.error}`);
+        return { dispatched: false, error: `teams: ${urlCheck.error}` };
+      }
+
       const themeColor = criticalCount > 0 ? "FF0000" : highCount > 0 ? "FFA500" : "28a745";
       const facts = matchedAlerts.slice(0, 5).map(a => ({
         name: a.title,
@@ -106,7 +148,7 @@ async function dispatchWebhook(
           "@type": "MessageCard",
           "@context": "http://schema.org/extensions",
           themeColor,
-          summary: `Cyber Serenity — ${matchedAlerts.length} alerte(s)`,
+          summary: `Sentinel Immune — ${matchedAlerts.length} alerte(s)`,
           sections: [{
             activityTitle: `🚨 ${matchedAlerts.length} alerte(s) active(s) · ${criticalCount} critique(s)`,
             activitySubtitle: `Organisation: ${orgId.slice(0, 8)}…`,
@@ -121,6 +163,12 @@ async function dispatchWebhook(
     if (channel === "webhook") {
       const url = config?.url as string | undefined;
       if (!url) return { dispatched: false, error: "webhook: missing url in config" };
+
+      const urlCheck = validateWebhookUrl(url);
+      if (!urlCheck.ok) {
+        console.warn(`dispatchWebhook [webhook] blocked: ${urlCheck.error}`);
+        return { dispatched: false, error: `webhook: ${urlCheck.error}` };
+      }
 
       const extraHeaders = (config?.headers as Record<string, string> | undefined) ?? {};
       await fetch(url, {
@@ -139,9 +187,6 @@ async function dispatchWebhook(
       });
       return { dispatched: true };
     }
-
-    // in_app or unknown — no external call
-    return { dispatched: false };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown dispatch error";
     console.warn(`dispatchWebhook [${channel}] error:`, msg);
@@ -339,9 +384,8 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("evaluate-alert-rules fatal error:", message);
-    return new Response(JSON.stringify({ error: message }), {
+    console.error("evaluate-alert-rules fatal error:", err instanceof Error ? err.message : err);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
