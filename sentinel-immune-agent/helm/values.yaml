@@ -19,16 +19,16 @@ serviceAccount:
   create: true
   automount: true
   annotations: {}
-  name: "sentinel-agent"
+  name: "securit-e-agent"
 
 # ── Pod annotations / labels ──────────────────────────────────────────────────
 podAnnotations:
-  sentinel.immune.io/version: "2026.1.0"
-  sentinel.immune.io/pq-algorithm: "dilithium3"
+  securit-e.io/version: "2026.1.0"
+  securit-e.io/pq-algorithm: "dilithium3"
 
 podLabels:
   app.kubernetes.io/component: edge-agent
-  sentinel.immune.io/role: executor
+  securit-e.io/role: executor
 
 podSecurityContext:
   runAsNonRoot: true
