@@ -12,8 +12,8 @@ services:
     build:
       context: .
       dockerfile: sentinel-immune-agent/Dockerfile
-    image: sentinel-immune/edge-agent:2026.1.0
-    container_name: sentinel-immune-agent
+    image: securit-e/edge-agent:2026.1.0
+    container_name: securit-e-agent
     restart: unless-stopped
 
     ports:
