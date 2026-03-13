@@ -303,7 +303,7 @@ export function GodModePreviewSection() {
               God Mode Preview
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-              Le cockpit <span className="text-gradient">Sentinel Immune</span>
+              Le cockpit <span className="text-gradient">Securit-E</span>
               <br />en action réelle
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
