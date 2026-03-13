@@ -139,8 +139,8 @@ async function logToVault(entry: Record<string, unknown>): Promise<string> {
 }
 
 async function callEdgeAgent(payload: { skill: string; payload: Record<string, unknown>; agent_id: string }): Promise<{ ok: boolean; error?: string }> {
-  // mTLS call to Sentinel Edge Agent sidecar via WireGuard tunnel
-  // POST https://edge-agent.sentinel-immune.fr/api/v1/skill
+  // mTLS call to Securit-E Edge Agent sidecar via WireGuard tunnel
+  // POST https://edge-agent.securit-e.com/api/v1/skill
   // Headers: Authorization: Bearer <Dilithium3-signed-JWT>, X-Agent-ID: <agent_id>
   return { ok: true };
 }
