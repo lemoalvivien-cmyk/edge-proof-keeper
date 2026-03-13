@@ -83,7 +83,7 @@ export async function closeDomain(input: CloseDomainInput): Promise<CloseDomainR
       // Internal DNS sinkhole via Infoblox or Pi-hole API
       // Production:
       // POST http://infoblox.internal/wapi/v2.10/record:a
-      // Body: { name: input.domain, ipv4addr: "10.0.0.254" (honeypot), comment: "sinkholed by Sentinel Immune" }
+      // Body: { name: input.domain, ipv4addr: "10.0.0.254" (honeypot), comment: "sinkholed by Securit-E" }
       await callEdgeAgent({ skill: "close_domain", payload: { domain: input.domain, action: "sinkhole", honeypot_ip: input.sinkhole_ip ?? "10.0.0.254" }, agent_id: input.agent_id });
       dnsBlocked = true;
       apiCallSummary = `infoblox:POST /wapi/v2.10/record:a {${input.domain} → ${input.sinkhole_ip ?? "10.0.0.254"} (honeypot)}`;
