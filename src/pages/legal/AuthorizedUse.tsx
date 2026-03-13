@@ -115,7 +115,7 @@ export default function AuthorizedUse() {
             <section>
               <h2 className="text-xl font-semibold mb-3">5. Traçabilité et preuve</h2>
               <p className="text-muted-foreground">
-                Toutes les actions effectuées sur SENTINEL EDGE sont enregistrées de manière 
+                Toutes les actions effectuées sur SECURIT-E sont enregistrées de manière 
                 immuable dans l'Evidence Vault :
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-2">
