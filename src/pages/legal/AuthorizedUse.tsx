@@ -174,7 +174,7 @@ export default function AuthorizedUse() {
 
             <div className="mt-4 p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">
-                <strong>Signalement d'abus :</strong> abuse@sentineledge.fr
+                <strong>Signalement d'abus :</strong> abuse@securit-e.com
               </p>
             </div>
           </CardContent>
