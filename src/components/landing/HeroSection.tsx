@@ -168,7 +168,7 @@ export function HeroSection() {
               <motion.div variants={fadeUp}>
                 <div className="label-badge label-badge-cyan w-fit">
                   <Cpu className="w-3 h-3" />
-                  Digital Immune System · 5 Agents IA · God Mode 2026
+                  Digital Immune System · 6 Agents IA · God Mode 2026
                 </div>
               </motion.div>
 
@@ -283,7 +283,7 @@ export function HeroSection() {
                 {/* Bottom stats */}
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
                   {[
-                    { v: "5", l: "Agents actifs", c: "text-primary" },
+                    { v: "6", l: "Agents actifs", c: "text-primary" },
                     { v: "0", l: "Intervention humaine", c: "text-success" },
                     { v: "∞", l: "Preuves vault", c: "text-accent" },
                   ].map((s, i) => (
@@ -324,7 +324,7 @@ export function HeroSection() {
               <div className="label-badge label-badge-cyan"><Cpu className="w-3 h-3" /> Starter 490€ / an</div>
               <span className="text-muted-foreground text-xs">Tout inclus · Sans surprise</span>
             </div>
-            <div className="text-xs text-muted-foreground/60 font-mono">Pro 4 900€ · Enterprise 24 900€</div>
+            <div className="text-xs text-muted-foreground/60 font-mono">Pro 6 900€ · Enterprise 29 900€</div>
           </motion.div>
         </motion.div>
       </motion.div>

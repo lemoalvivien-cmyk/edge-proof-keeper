@@ -27,11 +27,11 @@ const faqs = [
   },
   {
     question: "Combien d'équipe cyber faut-il pour opérer la plateforme ?",
-    answer: "Zéro. Les 5 agents opèrent en autonomie complète. Le RSSI Virtuel IA vous envoie un brief mensuel en langage Direction. Pour les décisions critiques, le DSI reçoit une notification push avec un seul bouton : Go ou No-Go.",
+    answer: "Zéro. Les 6 agents opèrent en autonomie complète. Le RSSI Virtuel IA vous envoie un brief mensuel en langage Direction. Pour les décisions critiques, le DSI reçoit une notification push avec un seul bouton : Go ou No-Go.",
   },
   {
     question: "Comment fonctionne le pricing ? Y a-t-il des frais cachés ?",
-    answer: "Non. Starter 490€/an tout inclus : 5 agents, Evidence Vault, rapports Direction+Technique, conformité NIS2/RGPD, hébergement souverain France. Pro 4 900€/an ajoute EASM/OSINT, API dédiée, multi-sites. Enterprise 24 900€/an pour la souveraineté totale on-premise.",
+    answer: "Non. Starter 490€/an tout inclus : 6 agents, Evidence Vault, rapports Direction+Technique, conformité NIS2/RGPD, hébergement souverain France. Pro 6 900€/an ajoute EASM/OSINT continu, self-healing autonome < 4h, API dédiée. Enterprise 29 900€/an pour la souveraineté totale on-premise.",
   },
   {
     question: "Mes données restent-elles en France ?",
