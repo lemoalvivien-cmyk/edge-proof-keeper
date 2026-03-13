@@ -95,14 +95,14 @@ tolerations: []
 
 affinity: {}
 
-# ── Sentinel Agent config ─────────────────────────────────────────────────────
+# ── Securit-E Agent config ────────────────────────────────────────────────────
 sentinel:
   tenantId: ""          # Set via --set sentinel.tenantId=<id>
   region: "fr-paris"
   apiPort: "8443"
-  vaultUrl: "https://vault.sentinel-immune.fr"
-  swarmUrl: "https://swarm.sentinel-immune.fr"
-  wgEndpoint: "immune.sentinel-edge.fr:51820"
+  vaultUrl: "https://vault.securit-e.com"
+  swarmUrl: "https://swarm.securit-e.com"
+  wgEndpoint: "edge-agent.securit-e.com:51820"
 
   # Post-quantum keys (set via K8s secret)
   dilithiumPubKey: ""
