@@ -1,6 +1,6 @@
 version: "3.9"
 
-# Sentinel Immune Edge Agent — Docker Compose
+# Securit-E Edge Agent — Docker Compose
 # Usage:
 #   docker-compose up -d
 #   docker-compose logs -f sentinel-agent
