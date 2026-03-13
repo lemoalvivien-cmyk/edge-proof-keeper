@@ -167,7 +167,7 @@ export default function AuthorizedUse() {
 
             <div className="mt-8 p-4 rounded-lg bg-primary/10 border border-primary/20">
               <p className="text-sm font-medium">
-                En utilisant SENTINEL EDGE, vous acceptez la présente Charte d'Usage Autorisé 
+                En utilisant SECURIT-E, vous acceptez la présente Charte d'Usage Autorisé 
                 et vous engagez à respecter scrupuleusement ses dispositions.
               </p>
             </div>
