@@ -67,7 +67,7 @@ export function FAQSection() {
               Questions <span className="text-gradient">fréquentes</span>
             </h2>
             <p className="text-lg text-muted-foreground">
-              Tout ce que vous devez savoir sur Sentinel Immune.
+              Tout ce que vous devez savoir sur Securit-E.
             </p>
           </motion.div>
 
