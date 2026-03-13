@@ -113,7 +113,7 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
           // Production (P1 only):
           // POST https://events.pagerduty.com/v2/enqueue
           // Body: { routing_key: input.pagerduty_routing_key, event_action: "trigger",
-          //   payload: { summary: fullMessage, severity: "critical", source: "sentinel-immune" } }
+          //   payload: { summary: fullMessage, severity: "critical", source: "securit-e" } }
           if (severity === "critical") {
             apiCallsSummary.push(`pagerduty:POST /v2/enqueue {trigger, severity=critical, summary="${fullMessage.slice(0, 80)}"}`);
             notificationsSent.push("pagerduty");

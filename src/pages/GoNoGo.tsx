@@ -388,7 +388,7 @@ export default function GoNoGo() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Release Candidate: GO/NO-GO</h1>
           <p className="text-muted-foreground">
-            Pre-release checklist for Sentinel Edge V1
+            Pre-release checklist for Securit-E V1
           </p>
         </div>
 
