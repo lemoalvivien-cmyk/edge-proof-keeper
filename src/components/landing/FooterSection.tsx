@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import { Shield, Mail, Linkedin, Twitter, ArrowUpRight } from "lucide-react";
+import { Cpu, Mail, Linkedin, Twitter, ArrowUpRight } from "lucide-react";
 
 const productLinks = [
   { to: "/pricing", label: "Tarifs" },
-  { to: "/demo", label: "Démo interactive" },
+  { to: "/demo", label: "Démo agents live (47s)" },
   { to: "/auth", label: "Connexion" },
-  { to: "/dashboard", label: "Cockpit" },
+  { to: "/dashboard", label: "Cockpit DSI" },
 ];
 
 const offresLinks = [
@@ -25,7 +25,6 @@ const legalLinks = [
 export function FooterSection() {
   return (
     <footer className="relative border-t border-border/60 pt-16 pb-8 overflow-hidden">
-      {/* Grid bg */}
       <div className="absolute inset-0 grid-pattern opacity-20" />
       <div className="absolute top-0 left-0 right-0 h-px"
         style={{ background: "linear-gradient(90deg, transparent 0%, hsl(185 100% 52% / 0.3) 30%, hsl(258 90% 66% / 0.3) 70%, transparent 100%)" }} />
@@ -37,15 +36,20 @@ export function FooterSection() {
             <div className="md:col-span-1 space-y-4">
               <div className="flex items-center gap-2.5">
                 <div className="relative">
-                  <Shield className="w-7 h-7 text-primary" />
-                  <div className="absolute inset-0 blur-md bg-primary/20 rounded-full scale-75" />
+                  <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+                    <Cpu className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <div className="absolute inset-0 blur-md bg-primary/20 rounded-lg scale-75" />
                 </div>
-                <span className="text-base font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  SENTINEL EDGE
-                </span>
+                <div className="flex flex-col leading-none">
+                  <span className="text-sm font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    SENTINEL IMMUNE
+                  </span>
+                  <span className="text-[8px] font-mono text-primary/50 tracking-widest">DIGITAL IMMUNE SYSTEM</span>
+                </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Gouvernance cyber souveraine. Pilotez RGPD &amp; NIS2 sans jargon.{" "}
+                5 agents IA autonomes. Evidence Vault post-quantique. Souveraineté 100% France.{" "}
                 <span className="text-primary font-semibold">490€ TTC/an</span>.
               </p>
               <div className="flex gap-3">
@@ -55,7 +59,7 @@ export function FooterSection() {
                 <a href="#" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="Twitter">
                   <Twitter className="w-4 h-4" />
                 </a>
-                <a href="mailto:contact@sentineledge.fr" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="Email">
+                <a href="mailto:contact@sentinel-immune.fr" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="Email">
                   <Mail className="w-4 h-4" />
                 </a>
               </div>
@@ -108,13 +112,13 @@ export function FooterSection() {
 
           {/* Bottom bar */}
           <div className="pt-6 border-t border-border/40 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground/60">
-            <p>© 2026 SENTINEL EDGE. Tous droits réservés.</p>
+            <p>© 2026 SENTINEL IMMUNE — Digital Immune System. Tous droits réservés.</p>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-success/60 inline-block" />
+                <span className="w-1.5 h-1.5 rounded-full bg-success/60 inline-block animate-pulse" />
                 Hébergé en France 🇫🇷
               </span>
-              <span>100% conforme RGPD</span>
+              <span>100% Souverain</span>
               <span className="label-badge label-badge-cyan text-[9px] py-0.5">GOD MODE 2026</span>
             </div>
           </div>

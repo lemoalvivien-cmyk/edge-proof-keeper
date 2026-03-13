@@ -1,6 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Cpu } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -10,36 +10,36 @@ import {
 
 const faqs = [
   {
-    question: "Que contient le rapport choc gratuit ?",
-    answer: "Un diagnostic initial de votre exposition cyber basé sur les informations publiques de votre domaine. Vous recevez un score de risque, les principales vulnérabilités détectées et des recommandations prioritaires. Sans engagement.",
+    question: "Comment les agents IA opèrent-ils sans intervention humaine ?",
+    answer: "Le Swarm opère en mode 'Fully Autonomous' : Scout détecte, Analyst priorise, Executor remédie, Vault prouve — le tout en 47 secondes. Le DSI peut choisir le mode 'DSI Validation' pour approuver chaque action en 1 clic avant exécution.",
   },
   {
-    question: "Pourquoi dois-je fournir une preuve d'autorisation avant le scan ?",
-    answer: "C'est une obligation légale et éthique. Nous n'effectuons aucune action sur vos systèmes sans votre consentement explicite. Cette autorisation vous protège et nous protège. Elle est conservée dans notre coffre-fort de preuves.",
+    question: "Qu'est-ce que l'Evidence Vault post-quantique ?",
+    answer: "Notre coffre-fort utilise CRYSTALS-Dilithium, l'algorithme post-quantique standardisé par le NIST. Chaque preuve est signée, enchaînée et horodatée. Aucun ordinateur quantique ne peut falsifier les preuves générées par Sentinel Immune.",
   },
   {
-    question: "Qu'est-ce que la double vue Direction / Technique ?",
-    answer: "Un même tableau de bord, deux lectures. La vue Direction présente les indicateurs clés en langage business (risques, conformité, tendances). La vue Technique offre le détail des CVE, les étapes de remédiation et les preuves pour votre équipe IT.",
+    question: "Est-ce compatible NIS2 et RGPD 2026 ?",
+    answer: "Oui. La plateforme couvre 100% des exigences documentaires NIS2 et RGPD. Les Proof Packs exportables sont acceptés par les autorités compétentes (ANSSI, CNIL). Votre responsabilité personnelle est couverte.",
   },
   {
-    question: "Comment fonctionne l'Evidence Vault (coffre-fort de preuves) ?",
-    answer: "Chaque action (scan, import, modification) est enregistrée dans un journal immuable avec horodatage et empreinte cryptographique SHA-256. En cas d'audit, vous pouvez exporter un rapport certifié de toutes les preuves.",
+    question: "Que se passe-t-il si ma Core API externe est indisponible ?",
+    answer: "En mode production, Sentinel Immune requiert la souveraineté externe. Si votre Core API est indisponible, les agents passent en mode dégradé avec alerte immédiate. Les preuves déjà générées restent dans le Vault immuable.",
   },
   {
-    question: "SENTINEL EDGE est-il adapté à NIS2 ?",
-    answer: "Oui. La plateforme intègre le référentiel NIS2 et vous guide dans la mise en conformité. Vous pouvez suivre l'état de chaque exigence et générer les preuves demandées par les autorités compétentes.",
+    question: "Combien d'équipe cyber faut-il pour opérer la plateforme ?",
+    answer: "Zéro. Les 5 agents opèrent en autonomie complète. Le RSSI Virtuel IA vous envoie un brief mensuel en langage Direction. Pour les décisions critiques, le DSI reçoit une notification push avec un seul bouton : Go ou No-Go.",
   },
   {
-    question: "Que se passe-t-il si je n'ai pas d'équipe IT ?",
-    answer: "SENTINEL EDGE est conçu pour les dirigeants non-techniques. La vue Direction vous suffit pour piloter votre conformité. Si vous avez besoin d'aide pour la remédiation, nous proposons un réseau de partenaires certifiés.",
+    question: "Comment fonctionne le pricing ? Y a-t-il des frais cachés ?",
+    answer: "Non. Starter 490€/an tout inclus : 5 agents, Evidence Vault, rapports Direction+Technique, conformité NIS2/RGPD, hébergement souverain France. Pro 4 900€/an ajoute EASM/OSINT, API dédiée, multi-sites. Enterprise 24 900€/an pour la souveraineté totale on-premise.",
   },
   {
-    question: "Mes données sont-elles sécurisées ?",
-    answer: "Absolument. Hébergement en France, chiffrement de bout en bout, conformité RGPD native. Nous ne revendons aucune donnée. Vous restez propriétaire de toutes vos informations.",
+    question: "Mes données restent-elles en France ?",
+    answer: "100% souverain France. Hébergement certifié SecNumCloud, chiffrement bout-en-bout, aucune donnée traitée hors UE. Votre infrastructure reste sous juridiction française — exigence DSI, RSSI et CISO respectée.",
   },
   {
-    question: "Comment fonctionne le paiement ?",
-    answer: "Paiement sécurisé via Stripe. Vous pouvez également demander une démo personnalisée et nous vous contacterons sous 24h pour finaliser votre accès.",
+    question: "Puis-je voir une vraie démo du swarm en action ?",
+    answer: "Oui. Cliquez sur 'Voir la démo agents en live (47s)' pour voir les 5 agents opérer en temps réel sur un environnement de démonstration. Ou bookez un slot 15 minutes pour une démo personnalisée avec votre propre infrastructure.",
   },
 ];
 
@@ -67,7 +67,7 @@ export function FAQSection() {
               Questions <span className="text-gradient">fréquentes</span>
             </h2>
             <p className="text-lg text-muted-foreground">
-              Tout ce que vous devez savoir avant de commencer.
+              Tout ce que vous devez savoir sur Sentinel Immune.
             </p>
           </motion.div>
 
@@ -94,6 +94,28 @@ export function FAQSection() {
                 </AccordionItem>
               ))}
             </Accordion>
+          </motion.div>
+
+          {/* Final CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="mt-12 text-center p-6 rounded-2xl glass-card-premium border border-primary/20"
+          >
+            <Cpu className="w-8 h-8 text-primary mx-auto mb-3" />
+            <h3 className="text-xl font-bold mb-2">Prêt à activer votre système immunitaire cyber ?</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Commencez avec le plan Starter — <span className="text-foreground font-semibold">490€/an</span>, tout inclus, sans engagement.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <a href="#pricing" className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold neon-glow hover:scale-[1.02] transition-transform">
+                Commencer gratuit Starter →
+              </a>
+              <a href="#pricing" className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
+                Voir tous les plans
+              </a>
+            </div>
           </motion.div>
         </div>
       </div>
