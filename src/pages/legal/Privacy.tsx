@@ -33,7 +33,7 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Responsable du traitement</h2>
               <p className="text-muted-foreground">
-                [Nom de la société], éditeur de SENTINEL EDGE, est responsable du traitement des 
+                [Nom de la société], éditeur de SECURIT-E, est responsable du traitement des 
                 données personnelles collectées via la plateforme.
               </p>
               <p className="text-muted-foreground mt-2">
