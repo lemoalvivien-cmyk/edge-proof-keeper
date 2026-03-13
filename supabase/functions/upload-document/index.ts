@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
     if (insertError) {
       console.error('Insert error:', insertError);
       return new Response(
-        JSON.stringify({ error: 'Failed to create document record', details: insertError.message }),
+        JSON.stringify({ error: 'Failed to create document record' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
