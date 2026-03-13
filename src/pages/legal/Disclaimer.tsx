@@ -86,7 +86,7 @@ export default function Disclaimer() {
             <section>
               <h2 className="text-xl font-semibold mb-3">3. Limitation de garantie</h2>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est fourni "en l'état" (<em>as is</em>). L'Éditeur ne garantit pas :
+                SECURIT-E est fourni "en l'état" (<em>as is</em>). L'Éditeur ne garantit pas :
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-2">
                 <li>L'absence totale de vulnérabilités dans vos systèmes</li>
