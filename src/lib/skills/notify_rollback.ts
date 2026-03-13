@@ -97,8 +97,8 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
         case "email":
           // Production: POST https://api.resend.com/emails
           // Headers: Authorization: Bearer <RESEND_API_KEY>
-          // Body: { from: "sentinel@sentinel-immune.fr", to: [input.dsi_email], subject: "[SENTINEL IMMUNE] Incident", html: ... }
-          apiCallsSummary.push(`resend:POST /emails {to=${input.dsi_email ?? "dsi@client.fr"}, subject="[SENTINEL IMMUNE] ${severity.toUpperCase()} Incident"}`);
+          // Body: { from: "contact@securit-e.com", to: [input.dsi_email], subject: "[SECURIT-E] Incident", html: ... }
+          apiCallsSummary.push(`resend:POST /emails {to=${input.dsi_email ?? "dsi@client.fr"}, subject="[SECURIT-E] ${severity.toUpperCase()} Incident"}`);
           notificationsSent.push("email");
           break;
 
