@@ -141,7 +141,7 @@ export default function Terms() {
 
             <div className="mt-8 p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">
-                <strong>Contact :</strong> contact@sentineledge.fr
+                <strong>Contact :</strong> contact@securit-e.com
               </p>
             </div>
           </CardContent>
