@@ -38,7 +38,7 @@ services:
       - ./config.yaml:/config.yaml:ro  # Agent config
 
     networks:
-      - sentinel-net
+      - securit-e-net
 
     # Resource limits (< 50MB RAM, minimal CPU)
     deploy:
