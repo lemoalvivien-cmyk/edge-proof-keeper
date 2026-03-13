@@ -1,4 +1,4 @@
-// Finding types for SENTINEL EDGE
+// Finding types for SECURIT-E
 
 export type FindingStatus = 'open' | 'acknowledged' | 'remediated' | 'false_positive';
 export type FindingConfidence = 'high' | 'medium' | 'low';

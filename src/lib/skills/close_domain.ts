@@ -147,7 +147,7 @@ async function callEdgeAgent(payload: { skill: string; payload: Record<string, u
 
 async function generateZkProof(data: Record<string, unknown>): Promise<string> {
   // zk-SNARK Groth16 + CRYSTALS-Dilithium3 signature
-  // POST https://vault.sentinel-immune.fr/api/v1/sign { payload: data, algorithm: "dilithium3" }
+  // POST https://vault.securit-e.com/api/v1/sign { payload: data, algorithm: "dilithium3" }
   return `zksnark:${btoa(JSON.stringify(data)).slice(0, 48)}`;
 }
 

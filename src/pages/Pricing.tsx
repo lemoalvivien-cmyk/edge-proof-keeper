@@ -179,7 +179,7 @@ const Pricing = () => {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4 neon-glow">
                       <Shield className="w-8 h-8 text-primary" />
                     </div>
-                    <h3 className="text-2xl font-bold text-foreground">SENTINEL EDGE Core</h3>
+                    <h3 className="text-2xl font-bold text-foreground">SECURIT-E Core</h3>
                     <p className="text-muted-foreground">Gouvernance cyber complète</p>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">

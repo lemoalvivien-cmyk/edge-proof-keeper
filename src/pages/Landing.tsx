@@ -16,7 +16,7 @@ const Landing = () => {
     <div className="min-h-screen bg-background">
       <LandingNav />
       <main>
-        {/* 1. Hero — SENTINEL IMMUNE Digital Immune System */}
+        {/* 1. Hero — SECURIT-E Armure de Gouvernance Cyber */}
         <HeroSection />
         {/* 2. Problème 2026 — NIS2 amendes 10M€ + responsabilité DSI */}
         <PainSection />
