@@ -37,7 +37,7 @@ sentinel-immune-agent/
 
 ```mermaid
 graph LR
-    A[Swarm Bus<br/>Kyber-1024 encrypted] -->|Skill invocation| B[Sentinel Edge Agent<br/>Go sidecar]
+    A[Swarm Bus<br/>Kyber-1024 encrypted] -->|Skill invocation| B[Securit-E Edge Agent<br/>Go sidecar]
     B -->|mTLS WireGuard| C[fix_port]
     B -->|mTLS WireGuard| D[rotate_creds]
     B -->|mTLS WireGuard| E[patch_vuln]
