@@ -211,9 +211,8 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("correlate-risks fatal error:", message);
-    return new Response(JSON.stringify({ error: message }), {
+    console.error("correlate-risks fatal error:", err instanceof Error ? err.message : err);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

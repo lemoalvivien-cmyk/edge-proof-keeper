@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
     if (verifyError) {
       console.error("Verification error:", verifyError);
       return new Response(
-        JSON.stringify({ error: "Chain verification failed", details: verifyError.message }),
+        JSON.stringify({ error: "Chain verification failed" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
