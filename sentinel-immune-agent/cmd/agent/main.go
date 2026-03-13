@@ -1,8 +1,8 @@
-// SENTINEL IMMUNE — Edge Agent Sidecar
+// SECURIT-E — Edge Agent Sidecar
 // Full production-grade Go implementation
 // WireGuard tunnel + mTLS + CRYSTALS-Dilithium3 + 6 skills + rollback + HTTP API
 // Binary target: < 50MB, zero CGO dependencies at runtime
-// Build: go build -ldflags="-s -w" -o sentinel-agent ./cmd/agent/
+// Build: go build -ldflags="-s -w" -o securit-e-agent ./cmd/agent/
 package main
 
 import (
