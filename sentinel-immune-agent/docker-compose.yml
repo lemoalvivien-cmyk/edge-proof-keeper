@@ -57,12 +57,12 @@ services:
       start_period: 10s
 
     labels:
-      - "sentinel.immune.component=edge-agent"
-      - "sentinel.immune.version=2026.1.0"
-      - "sentinel.immune.pq=dilithium3"
+      - "securit-e.component=edge-agent"
+      - "securit-e.version=2026.1.0"
+      - "securit-e.pq=dilithium3"
 
 networks:
-  sentinel-net:
+  securit-e-net:
     driver: bridge
     ipam:
       config:
