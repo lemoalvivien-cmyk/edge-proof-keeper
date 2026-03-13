@@ -1,13 +1,13 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Cpu, Brain, Wrench, Lock, Eye, Sparkles } from "lucide-react";
+import { Cpu, Brain, Wrench, Lock, Eye, Sparkles, Network, ShieldCheck } from "lucide-react";
 
 const agents = [
   {
     id: "01",
     name: "Scout Agent",
-    role: "Détection & Reconnaissance",
-    description: "Surveille 24/7 votre surface d'attaque. Détecte ports ouverts, fuites, vulnérabilités avant les attaquants.",
+    role: "Détection & Reconnaissance OSINT/EASM",
+    description: "Surveille 24/7 votre surface d'attaque externe. Détecte ports exposés, fuites de données, CVE actifs avant les attaquants.",
     Icon: Eye,
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
@@ -17,8 +17,8 @@ const agents = [
   {
     id: "02",
     name: "Analyst Agent",
-    role: "Prédiction & Priorisation IA",
-    description: "Analyse les signaux, corrèle les risques, génère un plan de remédiation priorisé en langage business.",
+    role: "Predictive Causality Engine",
+    description: "Corrèle les signaux, prédit les attaques à 90 jours, génère un plan de remédiation priorisé en langage business.",
     Icon: Brain,
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
@@ -28,8 +28,8 @@ const agents = [
   {
     id: "03",
     name: "Executor Agent",
-    role: "Auto-remédiation souveraine",
-    description: "Ferme les vulnérabilités automatiquement ou soumet la patch au DSI pour validation en 1 clic.",
+    role: "Self-Healing autonome < 4h",
+    description: "Ferme les vulnérabilités automatiquement (fix_port, rotate_creds, patch_vuln) ou soumet au DSI pour Go/No-Go en 1 clic.",
     Icon: Wrench,
     color: "text-success",
     glow: "hsl(158 80% 46%)",
@@ -38,31 +38,42 @@ const agents = [
   },
   {
     id: "04",
-    name: "Vault Agent",
-    role: "Evidence post-quantique",
-    description: "Horodate, signe et enchaîne chaque preuve cryptographiquement. Opposable aux régulateurs, assureurs, juges.",
-    Icon: Lock,
+    name: "Verifier Agent",
+    role: "Validation & Quality Control",
+    description: "Vérifie chaque remédiation, rollback automatique si échec, garantit l'intégrité de l'infrastructure après chaque intervention.",
+    Icon: ShieldCheck,
     color: "text-warning",
     glow: "hsl(42 96% 54%)",
-    badge: "Post-Quantum",
+    badge: "QA Auto",
     badgeColor: "label-badge-red",
   },
   {
     id: "05",
-    name: "RSSI Virtuel IA",
-    role: "Brief direction mensuel",
-    description: "Génère votre brief exécutif mensuel : score de maturité, risques critiques, ROI cyber. Pour votre CODIR.",
-    Icon: Cpu,
+    name: "Vault Agent",
+    role: "Evidence post-quantique zk-SNARK",
+    description: "Horodate, signe et enchaîne chaque preuve avec CRYSTALS-Dilithium + zk-SNARK. Opposable aux régulateurs, assureurs, juges.",
+    Icon: Lock,
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
-    badge: "CISO AI",
+    badge: "Post-Quantum",
     badgeColor: "label-badge-cyan",
+  },
+  {
+    id: "06",
+    name: "RSSI Virtuel IA",
+    role: "Brief CODIR mensuel",
+    description: "Génère votre brief exécutif mensuel : score de maturité, risques critiques, ROI cyber, recommandations stratégiques pour votre CODIR.",
+    Icon: Cpu,
+    color: "text-accent",
+    glow: "hsl(258 90% 66%)",
+    badge: "CISO AI",
+    badgeColor: "label-badge-purple",
   },
 ];
 
 export function PromiseSection() {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.1 });
+  const isInView = useInView(ref, { once: true, amount: 0.08 });
 
   const agentA = agents[0];
   const agentB = agents[1];
@@ -89,13 +100,14 @@ export function PromiseSection() {
               La Solution
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-              5 Agents IA en{" "}
-              <span className="text-gradient">Swarm autonome</span>
+              6 Agents IA en{" "}
+              <span className="text-gradient">Swarm Intelligence</span>
               <br />
-              <span className="text-foreground">qui remplacent 3 experts</span>
+              <span className="text-foreground">qui remplacent une équipe RSSI</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Chaque agent opère 24/7 sans intervention humaine. Vous avez un dashboard, un brief, et des preuves. C'est tout.
+              Chaque agent opère 24/7 en autonomie totale. Predictive Causality Engine — prédit les attaques 90 jours à l'avance.
+              Evidence Vault zk-SNARK — preuves inviolables à vie.
             </p>
           </motion.div>
 
@@ -109,9 +121,8 @@ export function PromiseSection() {
               className="md:col-span-2 group relative p-7 rounded-2xl glass-card border border-border hover:border-primary/30 transition-all duration-500 overflow-hidden"
               style={{ background: "linear-gradient(135deg, hsl(185 100% 52% / 0.04) 0%, hsl(var(--glass) / 0.6) 100%)" }}
             >
-              <div className="absolute top-0 right-0 w-48 h-48 rounded-full pointer-events-none opacity-10 group-hover:opacity-20 transition-opacity"
+              <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none opacity-8 group-hover:opacity-15 transition-opacity"
                 style={{ background: "radial-gradient(circle, hsl(185 100% 52%) 0%, transparent 70%)", transform: "translate(30%, -30%)" }} />
-
               <div className="relative flex items-start gap-5">
                 <div className="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
                   style={{ background: "hsl(185 100% 52% / 0.12)", border: "1px solid hsl(185 100% 52% / 0.20)" }}>
@@ -150,7 +161,7 @@ export function PromiseSection() {
               <p className="text-xs text-muted-foreground leading-relaxed">{agentB.description}</p>
             </motion.div>
 
-            {/* Agent 03, 04, 05 — bottom row */}
+            {/* Agents 03-06 — bottom row */}
             {agents.slice(2).map((agent, i) => {
               const AgentIcon = agent.Icon;
               return (
@@ -158,15 +169,15 @@ export function PromiseSection() {
                   key={i}
                   initial={{ opacity: 0, y: 30 }}
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.6, delay: 0.2 + i * 0.1, ease: "easeOut" }}
-                  className="group relative p-6 rounded-2xl glass-card border border-border hover:border-primary/20 transition-all duration-500 overflow-hidden"
+                  transition={{ duration: 0.6, delay: 0.2 + i * 0.08, ease: "easeOut" }}
+                  className="group relative p-5 rounded-2xl glass-card border border-border hover:border-primary/20 transition-all duration-500 overflow-hidden"
                   style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.03) 0%, hsl(var(--glass) / 0.6) 100%)" }}
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
                     style={{ background: "hsl(var(--primary) / 0.10)", border: "1px solid hsl(var(--primary) / 0.15)" }}>
                     <AgentIcon className={`w-5 h-5 ${agent.color}`} />
                   </div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1.5 mb-1">
                     <span className="font-mono text-xs text-muted-foreground/50">{agent.id}</span>
                     <span className={`label-badge ${agent.badgeColor} text-[9px] py-0.5`}>{agent.badge}</span>
                   </div>
@@ -187,22 +198,27 @@ export function PromiseSection() {
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Cpu className="w-5 h-5 text-primary" />
+                <Network className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">Swarm Autonomous Mode</p>
-                <p className="text-xs text-muted-foreground">Les 5 agents collaborent sans intervention humaine</p>
+                <p className="text-sm font-semibold text-foreground">Swarm Intelligence + Predictive Causality Engine</p>
+                <p className="text-xs text-muted-foreground">Les 6 agents collaborent anonymement via le Swarm — attaques prédites 90 jours à l'avance</p>
               </div>
             </div>
             <div className="flex items-center gap-6 text-center">
               <div>
                 <div className="text-2xl font-bold font-mono text-gradient">47s</div>
-                <div className="text-xs text-muted-foreground">Cycle complet détection → preuve</div>
+                <div className="text-xs text-muted-foreground">Cycle détection → preuve</div>
+              </div>
+              <div className="w-px h-10 bg-border" />
+              <div>
+                <div className="text-2xl font-bold font-mono text-accent">90j</div>
+                <div className="text-xs text-muted-foreground">Prédiction attaques futures</div>
               </div>
               <div className="w-px h-10 bg-border" />
               <div>
                 <div className="text-2xl font-bold font-mono text-success">0</div>
-                <div className="text-xs text-muted-foreground">Intervention humaine requise</div>
+                <div className="text-xs text-muted-foreground">Équipe humaine requise</div>
               </div>
             </div>
           </motion.div>
