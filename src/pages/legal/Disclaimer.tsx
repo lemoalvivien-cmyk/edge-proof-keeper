@@ -45,7 +45,7 @@ export default function Disclaimer() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Nature du service</h2>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est une plateforme de <strong>gouvernance et de preuve cyber</strong> qui :
+                SECURIT-E est une plateforme de <strong>gouvernance et de preuve cyber</strong> qui :
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-2">
                 <li>Importe et normalise des résultats d'outils de sécurité tiers</li>
