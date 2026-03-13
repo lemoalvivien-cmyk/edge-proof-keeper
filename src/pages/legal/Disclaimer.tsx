@@ -35,7 +35,7 @@ export default function Disclaimer() {
           <CardContent className="space-y-6">
             <Alert className="border-blue-500/50 bg-blue-500/10">
               <Info className="h-4 w-4 text-blue-500" />
-              <AlertTitle className="text-blue-600">SENTINEL EDGE est un outil d'aide à la décision</AlertTitle>
+              <AlertTitle className="text-blue-600">SECURIT-E est un outil d'aide à la décision</AlertTitle>
               <AlertDescription className="text-blue-600/80">
                 La plateforme agrège et présente des informations pour faciliter la gouvernance cyber, 
                 mais ne remplace pas un audit de sécurité complet ni l'expertise d'un professionnel.
