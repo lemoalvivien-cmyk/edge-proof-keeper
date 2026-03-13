@@ -15,7 +15,7 @@ const faqs = [
   },
   {
     question: "Qu'est-ce que l'Evidence Vault post-quantique ?",
-    answer: "Notre coffre-fort utilise CRYSTALS-Dilithium, l'algorithme post-quantique standardisé par le NIST. Chaque preuve est signée, enchaînée et horodatée. Aucun ordinateur quantique ne peut falsifier les preuves générées par Sentinel Immune.",
+    answer: "Notre coffre-fort utilise CRYSTALS-Dilithium, l'algorithme post-quantique standardisé par le NIST. Chaque preuve est signée, enchaînée et horodatée. Aucun ordinateur quantique ne peut falsifier les preuves générées par Securit-E.",
   },
   {
     question: "Est-ce compatible NIS2 et RGPD 2026 ?",
@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     question: "Que se passe-t-il si ma Core API externe est indisponible ?",
-    answer: "En mode production, Sentinel Immune requiert la souveraineté externe. Si votre Core API est indisponible, les agents passent en mode dégradé avec alerte immédiate. Les preuves déjà générées restent dans le Vault immuable.",
+    answer: "En mode production, Securit-E requiert la souveraineté externe. Si votre Core API est indisponible, les agents passent en mode dégradé avec alerte immédiate. Les preuves déjà générées restent dans le Vault immuable.",
   },
   {
     question: "Combien d'équipe cyber faut-il pour opérer la plateforme ?",
