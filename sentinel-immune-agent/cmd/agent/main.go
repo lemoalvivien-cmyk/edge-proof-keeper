@@ -515,10 +515,10 @@ func main() {
 		CertFile: getEnv("SENTINEL_TLS_CERT", ""),
 		KeyFile:  getEnv("SENTINEL_TLS_KEY", ""),
 		CAFile:   getEnv("SENTINEL_CA_CERT", ""),
-		VaultURL: getEnv("SENTINEL_VAULT_URL", "https://vault.sentinel-immune.fr"),
-		SwarmURL: getEnv("SENTINEL_SWARM_URL", "https://swarm.sentinel-immune.fr"),
+		VaultURL: getEnv("SENTINEL_VAULT_URL", "https://vault.securit-e.com"),
+		SwarmURL: getEnv("SENTINEL_SWARM_URL", "https://swarm.securit-e.com"),
 	}
-	cfg.AgentKeys.WireGuardEndpoint = getEnv("SENTINEL_WG_ENDPOINT", "immune.sentinel-edge.fr:51820")
+	cfg.AgentKeys.WireGuardEndpoint = getEnv("SENTINEL_WG_ENDPOINT", "edge-agent.securit-e.com:51820")
 	cfg.AgentKeys.DilithiumPublicKey = getEnv("SENTINEL_DILITHIUM_PUB", "")
 	cfg.SelfHeal.MaxAutoPerHour = SelfHealMaxOps
 	cfg.SelfHeal.RollbackTimeoutH = 4
