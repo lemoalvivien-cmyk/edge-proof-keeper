@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: close_domain
+ * SECURIT-E — Skill: close_domain
  * Executor Agent — neutralize malicious / typosquatted domains
  *
  * Production integrations:

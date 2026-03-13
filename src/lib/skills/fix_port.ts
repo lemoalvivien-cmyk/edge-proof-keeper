@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: fix_port
+ * SECURIT-E — Skill: fix_port
  * Executor Agent — auto-close exposed network port
  * Called by Executor Agent via /api/edge-agent (mTLS + WireGuard)
  *

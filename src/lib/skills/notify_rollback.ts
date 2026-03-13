@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: notify_rollback
+ * SECURIT-E — Skill: notify_rollback
  * Verifier Agent — notify stakeholders + trigger rollback on failed remediation
  *
  * Production integrations:

@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: patch_vuln
+ * SECURIT-E — Skill: patch_vuln
  * Executor Agent — auto-patch vulnerability (CVE-based)
  *
  * Production integrations:

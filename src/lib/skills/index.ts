@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skills Index
+ * SECURIT-E — Skills Index
  * Executor Agent skill registry — 6 OpenClaw skills called via Edge Agent (mTLS + WireGuard)
  * Each skill: validate → log intent → callEdgeAgent → generateZkProof → return SkillResult
  */

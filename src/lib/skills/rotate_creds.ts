@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: rotate_creds
+ * SECURIT-E — Skill: rotate_creds
  * Executor Agent — auto-rotate compromised credentials
  *
  * Production integrations:
