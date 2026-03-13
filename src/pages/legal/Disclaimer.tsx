@@ -149,7 +149,7 @@ export default function Disclaimer() {
 
             <div className="mt-8 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
               <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                <strong>En résumé :</strong> SENTINEL EDGE est un outil puissant pour piloter 
+                <strong>En résumé :</strong> SECURIT-E est un outil puissant pour piloter 
                 votre gouvernance cyber et constituer des preuves de diligence, mais il ne 
                 remplace pas l'expertise humaine ni les audits approfondis.
               </p>
