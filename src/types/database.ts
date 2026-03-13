@@ -1,4 +1,4 @@
-// SENTINEL EDGE - Type definitions for database entities
+// SECURIT-E - Type definitions for database entities
 
 export type AppRole = 'admin' | 'auditor' | 'user';
 export type AuthorizationStatus = 'pending' | 'approved' | 'expired' | 'revoked';

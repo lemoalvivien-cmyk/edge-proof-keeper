@@ -1,4 +1,4 @@
-// Report types for SENTINEL EDGE
+// Report types for SECURIT-E
 
 export type ReportStatus = 'generating' | 'ready' | 'failed';
 
