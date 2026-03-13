@@ -315,10 +315,59 @@ export function HeroSection() {
             </motion.div>
           </div>
 
+          {/* Video demo embed — 47s sequence */}
+          <motion.div
+            variants={fadeUp}
+            className="mt-8 rounded-2xl overflow-hidden border border-primary/20 glass-card-premium"
+          >
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-border/40 bg-secondary/20">
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              <span className="text-[11px] font-mono text-muted-foreground">DÉMO LIVE — Cycle complet 47s : Scout → Analyst → Go/No-Go → Executor → Vault</span>
+              <span className="ml-auto label-badge label-badge-cyan text-[9px]">LIVE SIM</span>
+            </div>
+            {/* Simulated video player with 47s timeline */}
+            <div className="relative bg-background/80 p-5 space-y-3">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex gap-1.5">
+                  {["Scout", "Analyst", "Go/No-Go", "Executor", "Vault"].map((step, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0.3 }}
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.4, ease: "easeInOut" }}
+                      className="text-[9px] font-mono px-2 py-0.5 rounded border border-primary/20 bg-primary/5 text-primary/70"
+                    >
+                      {step}
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="ml-auto text-[10px] font-mono text-primary font-bold">
+                  <motion.span
+                    animate={{ opacity: [1, 0.4, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  >⏱ 00:47</motion.span>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 4.7, ease: "linear", repeat: Infinity, repeatDelay: 1.5 }}
+                  className="h-full rounded-full"
+                  style={{ background: "linear-gradient(90deg, hsl(var(--neon-cyan)), hsl(var(--neon-blue)), hsl(var(--success)))" }}
+                />
+              </div>
+              <div className="text-[10px] text-muted-foreground/60 font-mono text-center">
+                Vidéo démo HD disponible sur demande — <span className="text-primary cursor-pointer hover:underline">Book 15-min demo →</span>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Pricing strip */}
           <motion.div
             variants={fadeUp}
-            className="mt-14 pt-7 border-t border-border/30 flex flex-wrap items-center gap-6 text-sm"
+            className="mt-8 pt-6 border-t border-border/30 flex flex-wrap items-center gap-6 text-sm"
           >
             <div className="flex items-center gap-2.5">
               <div className="label-badge label-badge-cyan"><Cpu className="w-3 h-3" /> Starter 490€ / an</div>
