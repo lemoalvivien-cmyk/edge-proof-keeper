@@ -111,18 +111,18 @@ self_healing:
 # Build binaire statique Linux
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
   -ldflags="-w -s" \
-  -o sentinel-edge-agent \
+  -o securit-e-agent \
   ./cmd/agent
 
 # Vérifier taille < 50Mo
-ls -lh sentinel-edge-agent
+ls -lh securit-e-agent
 
 # Docker (production)
-docker build -t sentinel-immune/edge-agent:latest .
+docker build -t securit-e/edge-agent:latest .
 docker run -d \
   -e SENTINEL_TENANT_ID=your-org-id \
   -v /etc/sentinel/config.yaml:/app/config.yaml:ro \
-  sentinel-immune/edge-agent:latest
+  securit-e/edge-agent:latest
 ```
 
 ## Sécurité
