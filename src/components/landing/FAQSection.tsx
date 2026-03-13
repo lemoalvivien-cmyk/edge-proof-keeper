@@ -31,7 +31,6 @@ const faqs = [
   },
   {
     question: "Comment fonctionne le pricing ? Y a-t-il des frais cachés ?",
-    {
     answer: "Non. Starter 490€/an tout inclus : 6 agents, Evidence Vault, rapports Direction+Technique, conformité NIS2/RGPD, hébergement souverain France. Pro 6 900€/an ajoute EASM/OSINT continu, self-healing autonome < 4h, API dédiée. Enterprise 29 900€/an pour la souveraineté totale on-premise.",
   },
   {
