@@ -23,9 +23,9 @@ services:
       - SENTINEL_TENANT_ID=${SENTINEL_TENANT_ID:-demo-tenant}
       - SENTINEL_REGION=${SENTINEL_REGION:-fr-paris}
       - SENTINEL_API_PORT=8443
-      - SENTINEL_VAULT_URL=${SENTINEL_VAULT_URL:-https://vault.sentinel-immune.fr}
-      - SENTINEL_SWARM_URL=${SENTINEL_SWARM_URL:-https://swarm.sentinel-immune.fr}
-      - SENTINEL_WG_ENDPOINT=${SENTINEL_WG_ENDPOINT:-immune.sentinel-edge.fr:51820}
+      - SENTINEL_VAULT_URL=${SENTINEL_VAULT_URL:-https://vault.securit-e.com}
+      - SENTINEL_SWARM_URL=${SENTINEL_SWARM_URL:-https://swarm.securit-e.com}
+      - SENTINEL_WG_ENDPOINT=${SENTINEL_WG_ENDPOINT:-edge-agent.securit-e.com:51820}
       # TLS certs — mount from host or K8s secret
       - SENTINEL_TLS_CERT=/certs/agent.crt
       - SENTINEL_TLS_KEY=/certs/agent.key
