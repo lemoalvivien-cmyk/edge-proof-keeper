@@ -60,7 +60,7 @@ export default function Disclaimer() {
             <section>
               <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                2. Ce que SENTINEL EDGE NE fait PAS
+                2. Ce que SECURIT-E NE fait PAS
               </h2>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                 <li>
