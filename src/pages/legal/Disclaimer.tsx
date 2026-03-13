@@ -157,7 +157,7 @@ export default function Disclaimer() {
 
             <div className="mt-4 p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">
-                <strong>Questions :</strong> contact@sentineledge.fr
+                <strong>Questions :</strong> contact@securit-e.com
               </p>
             </div>
           </CardContent>
