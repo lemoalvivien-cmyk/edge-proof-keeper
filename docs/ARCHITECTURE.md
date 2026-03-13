@@ -1,10 +1,10 @@
-# Architecture — SENTINEL IMMUNE Digital Immune System
+# Architecture — SECURIT-E Armure de Gouvernance Cyber Autonome
 
 > Documentation technique complète v2026.1
 
 ## Vue d'ensemble
 
-Sentinel Immune est un **Digital Immune System** composé de 6 agents IA autonomes opérant en Swarm Intelligence, avec un Evidence Vault post-quantique (zk-SNARK + CRYSTALS-Dilithium).
+Securit-E est une **armure de gouvernance cyber autonome** composée de 6 agents IA autonomes opérant en Swarm Intelligence, avec un Evidence Vault post-quantique (zk-SNARK + CRYSTALS-Dilithium).
 
 ## Diagramme Architecture Complet
 
@@ -14,13 +14,13 @@ graph TD
     B --> C[Evidence Vault Post-Quantum zk-SNARK]
     C --> D[Analyst + Predictive Causality Engine]
     D --> E[Plan DSI Go/No-Go 1-clic]
-    E --> F[Executor + Sentinel Edge Agent sidecar]
+    E --> F[Executor + Securit-E Edge Agent sidecar]
     F --> G[Verifier + Self-Healing 4h]
     G --> C
     H[Swarm Intelligence anonymise] --> D
     H --> F
     I[RSSI Virtuel IA] --> E
-    J[OpenClaw Fork Securise] --> F
+    J[OpenClaw Fork Securisé] --> F
     J --> G
     J --> B
 ```
@@ -59,7 +59,7 @@ sequenceDiagram
 - JWT authentication + RLS strict par tenant
 - Evidence chain : SHA-3 + CRYSTALS-Dilithium
 
-### Sentinel Edge Agent (sidecar)
+### Securit-E Edge Agent (sidecar)
 - Go 1.22 — binaire < 50Mo
 - WireGuard tunnel (communication chiffrée)
 - mTLS pour skill invocation

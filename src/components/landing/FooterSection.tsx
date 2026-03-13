@@ -41,15 +41,15 @@ export function FooterSection() {
                   </div>
                   <div className="absolute inset-0 blur-md bg-primary/20 rounded-lg scale-75" />
                 </div>
-                <div className="flex flex-col leading-none">
+              <div className="flex flex-col leading-none">
                   <span className="text-sm font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    SENTINEL IMMUNE
+                    SECURIT-E
                   </span>
-                  <span className="text-[8px] font-mono text-primary/50 tracking-widest">DIGITAL IMMUNE SYSTEM</span>
+                  <span className="text-[8px] font-mono text-primary/50 tracking-widest">ARMURE CYBER AUTONOME</span>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                5 agents IA autonomes. Evidence Vault post-quantique. Souveraineté 100% France.{" "}
+                6 agents IA autonomes. Evidence Vault post-quantique. Souveraineté 100% France.{" "}
                 <span className="text-primary font-semibold">490€ TTC/an</span>.
               </p>
               <div className="flex gap-3">
@@ -59,7 +59,7 @@ export function FooterSection() {
                 <a href="#" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="Twitter">
                   <Twitter className="w-4 h-4" />
                 </a>
-                <a href="mailto:contact@sentinel-immune.fr" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="Email">
+                <a href="mailto:contact@securit-e.com" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="Email">
                   <Mail className="w-4 h-4" />
                 </a>
               </div>
@@ -112,7 +112,7 @@ export function FooterSection() {
 
           {/* Bottom bar */}
           <div className="pt-6 border-t border-border/40 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground/60">
-            <p>© 2026 SENTINEL IMMUNE — Digital Immune System. Tous droits réservés.</p>
+            <p>© 2026 SECURIT-E — Armure de gouvernance cyber autonome. Tous droits réservés.</p>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success/60 inline-block animate-pulse" />

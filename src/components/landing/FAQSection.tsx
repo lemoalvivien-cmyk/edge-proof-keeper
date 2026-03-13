@@ -15,7 +15,7 @@ const faqs = [
   },
   {
     question: "Qu'est-ce que l'Evidence Vault post-quantique ?",
-    answer: "Notre coffre-fort utilise CRYSTALS-Dilithium, l'algorithme post-quantique standardisé par le NIST. Chaque preuve est signée, enchaînée et horodatée. Aucun ordinateur quantique ne peut falsifier les preuves générées par Sentinel Immune.",
+    answer: "Notre coffre-fort utilise CRYSTALS-Dilithium, l'algorithme post-quantique standardisé par le NIST. Chaque preuve est signée, enchaînée et horodatée. Aucun ordinateur quantique ne peut falsifier les preuves générées par Securit-E.",
   },
   {
     question: "Est-ce compatible NIS2 et RGPD 2026 ?",
@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     question: "Que se passe-t-il si ma Core API externe est indisponible ?",
-    answer: "En mode production, Sentinel Immune requiert la souveraineté externe. Si votre Core API est indisponible, les agents passent en mode dégradé avec alerte immédiate. Les preuves déjà générées restent dans le Vault immuable.",
+    answer: "En mode production, Securit-E requiert la souveraineté externe. Si votre Core API est indisponible, les agents passent en mode dégradé avec alerte immédiate. Les preuves déjà générées restent dans le Vault immuable.",
   },
   {
     question: "Combien d'équipe cyber faut-il pour opérer la plateforme ?",
@@ -67,7 +67,7 @@ export function FAQSection() {
               Questions <span className="text-gradient">fréquentes</span>
             </h2>
             <p className="text-lg text-muted-foreground">
-              Tout ce que vous devez savoir sur Sentinel Immune.
+              Tout ce que vous devez savoir sur Securit-E.
             </p>
           </motion.div>
 
@@ -104,7 +104,7 @@ export function FAQSection() {
             className="mt-12 text-center p-6 rounded-2xl glass-card-premium border border-primary/20"
           >
             <Cpu className="w-8 h-8 text-primary mx-auto mb-3" />
-            <h3 className="text-xl font-bold mb-2">Prêt à activer votre système immunitaire cyber ?</h3>
+            <h3 className="text-xl font-bold mb-2">Prêt à activer votre armure de gouvernance cyber ?</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Commencez avec le plan Starter — <span className="text-foreground font-semibold">490€/an</span>, tout inclus, sans engagement.
             </p>

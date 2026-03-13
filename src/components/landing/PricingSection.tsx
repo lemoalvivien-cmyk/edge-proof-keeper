@@ -237,7 +237,7 @@ export function PricingSection() {
               6 agents IA autonomes 24/7 + self-healing 4h + Evidence Vault post-quantique = valeur Palantir Enterprise à prix PME.
               Une seule cyberattaque coûte en moyenne{" "}
               <span className="text-destructive font-semibold">180 000€</span> à une PME.
-              SENTINEL IMMUNE Pro à 6 900€/an, c'est votre machine de guerre souveraine.
+              Securit-E Pro à 6 900€/an, c'est votre armure souveraine activée en permanence.
             </p>
           </motion.div>
         </div>

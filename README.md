@@ -1,17 +1,17 @@
-# SENTINEL IMMUNE — Digital Immune System
+# SECURIT-E — Armure de Gouvernance Cyber Autonome
 
-> **"Votre système immunitaire cyber autonome. Détecte · Prédit · Répare seul · Prouve post-quantique. 20 ans d'avance. Zéro équipe cyber."**
+> **"SECURIT-E — Votre armure de gouvernance cyber autonome. Détecte · Prédit · Répare seul · Prouve pour toujours. 20 ans d'avance. DSI valide en 1 clic ou mode fully autonomous. Zéro équipe. 100% souverain France."**
 
-[![Version](https://img.shields.io/badge/version-2026.1.0-00ff9d?style=for-the-badge&logo=shield)](https://sentinel-immune.fr)
-[![France Souveraine](https://img.shields.io/badge/France-Souveraine_🇫🇷-003189?style=for-the-badge)](https://sentinel-immune.fr)
-[![Post-Quantum](https://img.shields.io/badge/Post--Quantum-CRYSTALS--Dilithium3-8b5cf6?style=for-the-badge)](https://sentinel-immune.fr)
-[![NIS2 Ready](https://img.shields.io/badge/NIS2-Compliant_2026-ef4444?style=for-the-badge)](https://sentinel-immune.fr)
+[![Version](https://img.shields.io/badge/version-2026.1.0-00ff9d?style=for-the-badge&logo=shield)](https://securit-e.com)
+[![France Souveraine](https://img.shields.io/badge/France-Souveraine_🇫🇷-003189?style=for-the-badge)](https://securit-e.com)
+[![Post-Quantum](https://img.shields.io/badge/Post--Quantum-CRYSTALS--Dilithium3-8b5cf6?style=for-the-badge)](https://securit-e.com)
+[![NIS2 Ready](https://img.shields.io/badge/NIS2-Compliant_2026-ef4444?style=for-the-badge)](https://securit-e.com)
 
 ---
 
-## 🧬 Qu'est-ce que Sentinel Immune ?
+## 🛡 Qu'est-ce que Securit-E ?
 
-**Sentinel Immune** est le premier **Digital Immune System** souverain français. Là où Tenable, Snyk et CrowdStrike détectent et alertent, Sentinel Immune **détecte, prédit, répare seul et prouve cryptographiquement** — en **47 secondes** de bout en bout.
+**Securit-E** est la première **armure de gouvernance cyber autonome** souveraine française. Là où Tenable, Snyk et CrowdStrike détectent et alertent, Securit-E **détecte, prédit, répare seul et prouve cryptographiquement** — en **47 secondes** de bout en bout.
 
 ### Le cycle de 47 secondes
 
@@ -38,7 +38,7 @@ graph TD
         S4[SIEM / CSPM]
     end
 
-    subgraph "Sentinel Immune — SaaS FR 🇫🇷"
+    subgraph "Securit-E — SaaS FR 🇫🇷"
         direction TB
         SCOUT["🔍 Agent Scout<br/>EASM · OSINT · CTIL"]
         ANALYST["🧠 Agent Analyst<br/>Predictive Causality<br/>90j horizon"]
@@ -50,7 +50,7 @@ graph TD
     end
 
     subgraph "Edge Agent Sidecar — Go <50MB"
-        EA["sentinel-immune-agent<br/>WireGuard + mTLS<br/>6 endpoints REST"]
+        EA["securit-e-agent<br/>WireGuard + mTLS<br/>6 endpoints REST"]
         SK1["fix_port"]
         SK2["rotate_creds"]
         SK3["close_domain"]
@@ -122,7 +122,7 @@ graph LR
         DASH["God Mode Dashboard<br/>5 onglets live"]
     end
 
-    subgraph "Backend — Supabase (Cloud FR)"
+    subgraph "Backend — Lovable Cloud (FR)"
         DB[("PostgreSQL<br/>RLS + Evidence Chain")]
         EF["Edge Functions<br/>Deno runtime"]
         RT["Realtime<br/>Agent status"]
@@ -135,7 +135,7 @@ graph LR
     end
 
     subgraph "Edge Agent — Go 1.22"
-        AG["sentinel-immune-agent<br/>< 50MB binary"]
+        AG["securit-e-agent<br/>< 50MB binary"]
         WG["WireGuard<br/>Tunnel"]
         PQ["CRYSTALS-Dilithium3<br/>Post-quantum"]
     end
@@ -167,41 +167,41 @@ graph LR
 ### Option 1 — SaaS (recommandé)
 
 ```bash
-# 1. Créer un compte sur sentinel-immune.fr
+# 1. Créer un compte sur securit-e.com
 # 2. Télécharger l'Edge Agent sidecar
 
-curl -L https://releases.sentinel-immune.fr/agent/latest/sentinel-agent-linux-amd64.tar.gz | tar xz
-chmod +x sentinel-agent
+curl -L https://releases.securit-e.com/agent/latest/securit-e-agent-linux-amd64.tar.gz | tar xz
+chmod +x securit-e-agent
 
 # 3. Configurer et lancer
-export SENTINEL_TENANT_ID="votre-tenant-id"
-export SENTINEL_REGION="fr-paris"
-./sentinel-agent
+export SECURITE_TENANT_ID="votre-tenant-id"
+export SECURITE_REGION="fr-paris"
+./securit-e-agent
 ```
 
 ### Option 2 — Docker
 
 ```bash
 docker run -d \
-  --name sentinel-agent \
-  -e SENTINEL_TENANT_ID=votre-tenant-id \
-  -e SENTINEL_REGION=fr-paris \
+  --name securit-e-agent \
+  -e SECURITE_TENANT_ID=votre-tenant-id \
+  -e SECURITE_REGION=fr-paris \
   -v ./certs:/certs:ro \
   -p 8443:8443 \
-  sentinel-immune/edge-agent:2026.1.0
+  securit-e/edge-agent:2026.1.0
 ```
 
 ### Option 3 — Kubernetes (Helm)
 
 ```bash
-helm repo add sentinel-immune https://charts.sentinel-immune.fr
+helm repo add securit-e https://charts.securit-e.com
 helm repo update
 
-helm install sentinel-agent sentinel-immune/edge-agent \
-  --namespace sentinel-system --create-namespace \
-  --set sentinel.tenantId="votre-tenant-id" \
-  --set sentinel.region="fr-paris" \
-  --set tls.existingSecret="sentinel-mtls-certs"
+helm install securit-e-agent securit-e/edge-agent \
+  --namespace securit-e-system --create-namespace \
+  --set securite.tenantId="votre-tenant-id" \
+  --set securite.region="fr-paris" \
+  --set tls.existingSecret="securit-e-mtls-certs"
 ```
 
 ---
@@ -222,7 +222,7 @@ helm install sentinel-agent sentinel-immune/edge-agent \
 ## 📅 Roadmap
 
 ### Semaine 1 — Premier client
-- [ ] Publier sur sentinel-immune.fr (domaine custom)
+- [ ] Publier sur securit-e.com (domaine custom)
 - [ ] Beta tester avec 3 DSI ETI
 - [ ] Premier contrat Pro 6 900€
 
@@ -251,8 +251,10 @@ helm install sentinel-agent sentinel-immune/edge-agent \
 
 ## 📄 Licence
 
-Propriétaire — © 2026 Sentinel Immune SAS. Tous droits réservés.
+Propriétaire — © 2026 Securit-E SAS. Tous droits réservés.
+
+> **Repo suggestion :** Renommer ce dépôt en `securit-e/platform` pour cohérence avec le domaine `securit-e.com`.
 
 ---
 
-*Sentinel Immune — 20 ans d'avance sur Tenable, Snyk et CrowdStrike. 🦞🚀*
+*Securit-E — 20 ans d'avance sur Tenable, Snyk et CrowdStrike. 🛡️🚀*

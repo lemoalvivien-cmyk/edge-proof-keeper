@@ -175,9 +175,9 @@ export function HeroSection() {
               {/* Headline */}
               <motion.div variants={fadeUp} className="space-y-3">
                 <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold leading-[1.0] tracking-tight">
-                  <span className="text-foreground block">SENTINEL IMMUNE</span>
-                  <span className="text-gradient neon-text block">Votre système</span>
-                  <span className="text-foreground block">immunitaire cyber</span>
+                  <span className="text-foreground block">SECURIT-E</span>
+                  <span className="text-gradient neon-text block">Votre armure</span>
+                  <span className="text-foreground block">de gouvernance cyber</span>
                   <span className="text-gradient block">autonome</span>
                 </h1>
               </motion.div>

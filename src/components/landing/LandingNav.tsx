@@ -74,7 +74,7 @@ export function LandingNav() {
         <div className="container px-4">
           <nav className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 group" aria-label="SENTINEL IMMUNE">
+            <Link to="/" className="flex items-center gap-2.5 group" aria-label="SECURIT-E">
               <div className="relative">
                 <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center group-hover:bg-primary/25 transition-all">
                   <Cpu className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
@@ -84,9 +84,9 @@ export function LandingNav() {
               <div className="hidden sm:flex flex-col leading-none">
                 <span className="text-sm font-bold tracking-tight text-foreground"
                   style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  SENTINEL IMMUNE
+                  SECURIT-E
                 </span>
-                <span className="text-[9px] font-mono text-primary/60 tracking-widest">DIGITAL IMMUNE SYSTEM</span>
+                <span className="text-[9px] font-mono text-primary/60 tracking-widest">ARMURE CYBER AUTONOME</span>
               </div>
             </Link>
 

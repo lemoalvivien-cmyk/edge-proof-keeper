@@ -1,4 +1,4 @@
-# SEQUENCE_47s — Sentinel Immune Remediation Cycle
+# SEQUENCE_47s — Securit-E Remediation Cycle
 
 > La séquence complète de détection → remédiation → preuve en 47 secondes exactes.
 
@@ -69,7 +69,7 @@ RSSI IA → confidence 94% + CVSS 9.1 → AUTO APPROVE
 **Mode DSI oversight :**
 ```
 DSI reçoit notification:
-  📱 Slack: "[SENTINEL IMMUNE] Action requise: fermer port 8443"
+  📱 Slack: "[SECURIT-E] Action requise: fermer port 8443"
   📧 Email: brief RSSI IA avec plan de remédiation
   🖥 Dashboard: Go/No-Go button visible
   
@@ -105,7 +105,7 @@ Body:
 
 **Edge Agent execution (T+35s) :**
 ```
-sentinel-agent: fix_port — blocking 8443/tcp on api.client.fr
+securit-e-agent: fix_port — blocking 8443/tcp on api.client.fr
 → AWS: ec2:RevokeSecurityGroupIngress(GroupId=sg-0a1b2c3d, port=8443)
 → Pre-state saved for rollback (TTL: 4h)
 → Port 8443 confirmed CLOSED
