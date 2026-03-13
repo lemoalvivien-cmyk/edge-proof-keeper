@@ -211,7 +211,7 @@ export function HeroSection() {
                   className="h-12 px-5 text-sm border-border hover:border-primary/40 hover:bg-primary/5 gap-2 group transition-all"
                   disabled={cta.isLoading}
                   onClick={() => {
-                    trackEvent('cta_book_demo', { source_page: '/', cta_origin: 'hero_ghost' });
+                    trackEvent('cta_demander_demo', { source_page: '/', cta_origin: 'hero_ghost' });
                     cta.handleDemoRequest({ sourcePage: '/', ctaOrigin: 'hero_ghost', onFallback: () => setDemoDialogOpen(true) });
                   }}
                 >
