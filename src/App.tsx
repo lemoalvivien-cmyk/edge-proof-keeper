@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import { NavbarHomeButton } from "@/components/NavbarHomeButton";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -106,6 +107,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <SoloModeWrapper>
+            <NavbarHomeButton />
             <Routes>
               {/* Public landing pages */}
               <Route path="/" element={<Landing />} />
