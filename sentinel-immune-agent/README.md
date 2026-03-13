@@ -85,7 +85,7 @@ region: "fr-paris"
 
 agent:
   public_key: "YOUR_WIREGUARD_PUBLIC_KEY"
-  endpoint: "immune.sentinel-edge.fr:51820"
+  endpoint: "edge-agent.securit-e.com:51820"
   skills_enabled:
     - fix_port
     - rotate_creds
