@@ -99,7 +99,7 @@ export default function ToolDetail() {
           <AlertTitle>Usage autorisé uniquement</AlertTitle>
           <AlertDescription>
             L'utilisation de cet outil doit être effectuée sur vos propres systèmes.
-            SENTINEL EDGE permet uniquement l'import de résultats, pas l'exécution directe de scans.
+            SECURIT-E permet uniquement l'import de résultats, pas l'exécution directe de scans.
           </AlertDescription>
         </Alert>
 

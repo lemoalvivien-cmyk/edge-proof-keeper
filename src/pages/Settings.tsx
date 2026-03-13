@@ -129,7 +129,7 @@ export default function Settings() {
             <div className="text-center">
               <p className="text-2xl font-bold">490€ TTC/an</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Accès complet à SENTINEL EDGE pour votre organisation
+                Accès complet à SECURIT-E pour votre organisation
               </p>
               <p className="text-xs text-muted-foreground mt-4">
                 Le paiement sera intégré dans une prochaine version.

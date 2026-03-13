@@ -57,7 +57,7 @@ export default function Scans() {
               V1 = Mode Import-first
             </CardTitle>
             <CardDescription className="text-base">
-              Dans cette version V1 de Sentinel Edge, seul l'import de résultats de scans externes est supporté.
+              Dans cette version V1 de Securit-E, seul l'import de résultats de scans externes est supporté.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
