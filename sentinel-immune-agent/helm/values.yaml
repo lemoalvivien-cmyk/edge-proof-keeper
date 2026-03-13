@@ -1,4 +1,4 @@
-## Default values for sentinel-immune-edge-agent.
+## Default values for securit-e-edge-agent.
 ## This is a YAML-formatted file.
 
 # ── Replica count ──────────────────────────────────────────────────────────────
@@ -6,7 +6,7 @@ replicaCount: 1
 
 # ── Image ─────────────────────────────────────────────────────────────────────
 image:
-  repository: sentinel-immune/edge-agent
+  repository: securit-e/edge-agent
   pullPolicy: IfNotPresent
   tag: "2026.1.0"
 
