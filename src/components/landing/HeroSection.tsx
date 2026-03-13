@@ -283,7 +283,7 @@ export function HeroSection() {
                 {/* Bottom stats */}
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
                   {[
-                    { v: "5", l: "Agents actifs", c: "text-primary" },
+                    { v: "6", l: "Agents actifs", c: "text-primary" },
                     { v: "0", l: "Intervention humaine", c: "text-success" },
                     { v: "∞", l: "Preuves vault", c: "text-accent" },
                   ].map((s, i) => (
