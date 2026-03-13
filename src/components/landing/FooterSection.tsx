@@ -41,15 +41,15 @@ export function FooterSection() {
                   </div>
                   <div className="absolute inset-0 blur-md bg-primary/20 rounded-lg scale-75" />
                 </div>
-                <div className="flex flex-col leading-none">
+              <div className="flex flex-col leading-none">
                   <span className="text-sm font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    SENTINEL IMMUNE
+                    SECURIT-E
                   </span>
-                  <span className="text-[8px] font-mono text-primary/50 tracking-widest">DIGITAL IMMUNE SYSTEM</span>
+                  <span className="text-[8px] font-mono text-primary/50 tracking-widest">ARMURE CYBER AUTONOME</span>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                5 agents IA autonomes. Evidence Vault post-quantique. Souveraineté 100% France.{" "}
+                6 agents IA autonomes. Evidence Vault post-quantique. Souveraineté 100% France.{" "}
                 <span className="text-primary font-semibold">490€ TTC/an</span>.
               </p>
               <div className="flex gap-3">
