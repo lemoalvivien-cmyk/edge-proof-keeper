@@ -88,7 +88,7 @@ export async function fixPort(input: FixPortInput): Promise<SkillResult> {
       cloudApiCall = `nftables:add_rule(host=${input.host}, drop ${proto} dport ${input.port})`;
   }
 
-  // 3. Execute via Sentinel Edge Agent sidecar (mTLS + WireGuard)
+  // 3. Execute via Securit-E Edge Agent sidecar (mTLS + WireGuard)
   const response = await callEdgeAgent({
     skill: "fix_port",
     payload: {
