@@ -84,7 +84,7 @@ export function HowItWorksSection() {
               <span className="text-gradient">en 47 secondes</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Regardez les 5 agents opérer en swarm autonome. Zéro intervention humaine. Zéro jargon.
+              answer: "Regardez les 6 agents opérer en swarm autonome. Zéro intervention humaine. Zéro jargon.",
             </p>
           </motion.div>
 

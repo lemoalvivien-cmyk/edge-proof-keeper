@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     question: "Combien d'équipe cyber faut-il pour opérer la plateforme ?",
-    answer: "Zéro. Les 5 agents opèrent en autonomie complète. Le RSSI Virtuel IA vous envoie un brief mensuel en langage Direction. Pour les décisions critiques, le DSI reçoit une notification push avec un seul bouton : Go ou No-Go.",
+    answer: "Zéro. Les 6 agents opèrent en autonomie complète. Le RSSI Virtuel IA vous envoie un brief mensuel en langage Direction. Pour les décisions critiques, le DSI reçoit une notification push avec un seul bouton : Go ou No-Go.",
   },
   {
     question: "Comment fonctionne le pricing ? Y a-t-il des frais cachés ?",

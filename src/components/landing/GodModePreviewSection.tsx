@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   LayoutDashboard, Brain, Wrench, Network, Lock, Activity,
-  AlertTriangle, CheckCircle2, Clock, TrendingUp, Eye, Cpu, ArrowRight
+  AlertTriangle, CheckCircle2, Clock, TrendingUp, Eye, Cpu, ArrowRight, GitBranch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 function DashboardLiveTab() {
   return (
     <div className="grid md:grid-cols-3 gap-4">
-      {/* Score */}
+      {/* Score maturité */}
       <div className="md:col-span-1 p-5 rounded-xl glass-card border border-border space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-mono text-muted-foreground">SCORE MATURITÉ</span>
@@ -59,14 +59,14 @@ function DashboardLiveTab() {
                 </div>
               </div>
               <div className="w-full bg-muted rounded-full h-0.5">
-                <div className={`h-0.5 rounded-full transition-all duration-1000`} style={{ width: r.w, background: `hsl(var(--destructive) / ${parseInt(r.prob) / 100})` }} />
+                <div className="h-0.5 rounded-full transition-all duration-1000" style={{ width: r.w, background: `hsl(var(--destructive) / ${parseInt(r.prob) / 100})` }} />
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Agent status */}
+      {/* 6 Agent status bar */}
       <div className="md:col-span-3 grid grid-cols-3 md:grid-cols-6 gap-2">
         {["Scout", "Analyst", "Executor", "Verifier", "Vault", "RSSI IA"].map((a, i) => (
           <div key={i} className="p-2.5 rounded-xl bg-secondary/30 border border-border text-center">
@@ -83,63 +83,80 @@ function DashboardLiveTab() {
 /* ── Agents IA Tab ── */
 function AgentsIATab() {
   const agents6 = [
-    { name: "Scout", status: "Scanning 847 endpoints", progress: 73, color: "text-primary", icon: Eye },
+    { name: "Scout", status: "Scanning 847 endpoints EASM", progress: 73, color: "text-primary", icon: Eye },
     { name: "Analyst", status: "Corrélation 12 signaux actifs", progress: 89, color: "text-accent", icon: Brain },
-    { name: "Executor", status: "3 remédiation en queue", progress: 45, color: "text-success", icon: Wrench },
-    { name: "Verifier", status: "Validation patch #47", progress: 91, color: "text-warning", icon: CheckCircle2 },
-    { name: "Vault", status: "Signing proof #2841", progress: 100, color: "text-primary", icon: Lock },
-    { name: "RSSI IA", status: "Brief CODIR — 3j", progress: 60, color: "text-accent", icon: Cpu },
+    { name: "Executor", status: "3 remédiation en queue (< 4h)", progress: 45, color: "text-success", icon: Wrench },
+    { name: "Verifier", status: "Validation patch #47 — QA OK", progress: 91, color: "text-warning", icon: CheckCircle2 },
+    { name: "Vault", status: "Signing zk-SNARK proof #2841", progress: 100, color: "text-primary", icon: Lock },
+    { name: "RSSI IA", status: "Brief CODIR — dans 3j", progress: 60, color: "text-accent", icon: Cpu },
   ];
 
   return (
-    <div className="grid md:grid-cols-2 gap-3">
-      {agents6.map((a, i) => {
-        const AgentIcon = a.icon;
-        return (
-          <div key={i} className="p-4 rounded-xl glass-card border border-border hover:border-primary/20 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <AgentIcon className={`w-4 h-4 ${a.color}`} />
+    <div className="space-y-3">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-mono text-muted-foreground">SWARM INTELLIGENCE — 6/6 AGENTS ACTIFS</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+          <span className="text-[10px] text-success font-mono">FULLY AUTONOMOUS</span>
+        </div>
+      </div>
+      <div className="grid md:grid-cols-2 gap-3">
+        {agents6.map((a, i) => {
+          const AgentIcon = a.icon;
+          return (
+            <div key={i} className="p-4 rounded-xl glass-card border border-border hover:border-primary/20 transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <AgentIcon className={`w-4 h-4 ${a.color}`} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-foreground">Agent {a.name}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono">{a.status}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-sm font-bold text-foreground">Agent {a.name}</div>
-                  <div className="text-[10px] text-muted-foreground font-mono">{a.status}</div>
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>Charge système</span>
+                  <span className={a.color}>{a.progress}%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-1">
+                  <div className="h-1 rounded-full transition-all duration-1000" style={{ width: `${a.progress}%`, background: "linear-gradient(90deg, hsl(var(--neon-cyan)), hsl(var(--neon-blue)))" }} />
                 </div>
               </div>
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
             </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>Charge</span>
-                <span className={a.color}>{a.progress}%</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-1">
-                <div className="h-1 rounded-full transition-all duration-1000" style={{ width: `${a.progress}%`, background: "linear-gradient(90deg, hsl(var(--neon-cyan)), hsl(var(--neon-blue)))" }} />
-              </div>
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 /* ── Auto-Remediation Tab ── */
 function AutoRemediationTab() {
-  const plans = [
-    { id: "#RE-0841", action: "Fermer port 8443 exposé (Scout détection)", agent: "Executor", severity: "CRITIQUE", status: "pending", eta: "< 4h" },
-    { id: "#RE-0840", action: "Rotation credentials AWS IAM Role dev-ci", agent: "Executor", severity: "HAUTE", status: "completed", eta: "Fait" },
-    { id: "#RE-0839", action: "Patch nginx CVE-2025-0123 (CVSS 9.1)", agent: "Executor", severity: "CRITIQUE", status: "approved", eta: "En cours" },
-    { id: "#RE-0838", action: "Désactiver domaine typosquat détecté", agent: "Executor", severity: "HAUTE", status: "completed", eta: "Fait" },
-  ];
+  const [plans, setPlans] = useState([
+    { id: "#RE-0841", action: "Fermer port 8443 exposé (Scout détection)", agent: "Executor", severity: "CRITIQUE", status: "pending", eta: "< 4h", skill: "fix_port" },
+    { id: "#RE-0840", action: "Rotation credentials AWS IAM Role dev-ci", agent: "Executor", severity: "HAUTE", status: "completed", eta: "Fait", skill: "rotate_creds" },
+    { id: "#RE-0839", action: "Patch nginx CVE-2025-0123 (CVSS 9.1)", agent: "Executor", severity: "CRITIQUE", status: "approved", eta: "En cours", skill: "patch_vuln" },
+    { id: "#RE-0838", action: "Désactiver domaine typosquat détecté", agent: "Executor", severity: "HAUTE", status: "completed", eta: "Fait", skill: "close_domain" },
+  ]);
+
+  const handleGo = (id: string) => {
+    setPlans(prev => prev.map(p => p.id === id ? { ...p, status: "approved", eta: "En cours" } : p));
+  };
 
   return (
     <div className="space-y-2.5">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-mono text-muted-foreground">QUEUE DE REMÉDIATION — SELF-HEALING &lt; 4H</span>
+        <span className="label-badge label-badge-cyan text-[10px]">EXECUTOR AGENT</span>
+      </div>
       {plans.map((p, i) => (
         <div key={i} className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${
           p.status === "pending" ? "border-warning/30 bg-warning/5" :
-          p.status === "completed" ? "border-success/20 bg-success/3" :
+          p.status === "completed" ? "border-success/20 bg-success/5" :
           "border-primary/20 bg-primary/5"
         }`}>
           <div className="flex-shrink-0">
@@ -152,11 +169,14 @@ function AutoRemediationTab() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-semibold text-foreground truncate">{p.action}</div>
-            <div className="text-[10px] text-muted-foreground font-mono">{p.id} · {p.agent} · ETA: {p.eta}</div>
+            <div className="text-[10px] text-muted-foreground font-mono">{p.id} · {p.agent} · {p.skill} · ETA: {p.eta}</div>
           </div>
           <div className={`label-badge text-[9px] py-0.5 flex-shrink-0 ${p.severity === "CRITIQUE" ? "label-badge-red" : "label-badge-red"}`}>{p.severity}</div>
           {p.status === "pending" && (
-            <button className="flex-shrink-0 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold hover:bg-primary/80 transition-colors">
+            <button
+              onClick={() => handleGo(p.id)}
+              className="flex-shrink-0 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold hover:bg-primary/80 transition-colors"
+            >
               GO →
             </button>
           )}
@@ -166,19 +186,80 @@ function AutoRemediationTab() {
   );
 }
 
+/* ── Predictive Causality Tab ── */
+function PredictiveCausalityTab() {
+  const attackChains = [
+    {
+      id: "AC-001", title: "Lateral Movement via Exposed Service",
+      steps: ["Port 8443 exposed (Scout)", "→ RCE CVE-2025-1337", "→ Privilege Escalation", "→ Domain Admin"],
+      probability: 87, impact: "Compromission totale", color: "text-destructive", deadline: "72h"
+    },
+    {
+      id: "AC-002", title: "Supply Chain Compromise",
+      steps: ["npm dependency backdoor", "→ CI/CD injection", "→ Prod deployment", "→ Data exfil"],
+      probability: 63, impact: "Fuite de données PII", color: "text-warning", deadline: "7j"
+    },
+    {
+      id: "AC-003", title: "Credential Stuffing + Account Takeover",
+      steps: ["Leaked credentials (OSINT)", "→ RH portal login", "→ HR data access", "→ Extortion"],
+      probability: 41, impact: "Données RH exposées", color: "text-accent", deadline: "14j"
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-mono text-muted-foreground">CHAÎNES D'ATTAQUE PRÉDITES — ANALYST AGENT</span>
+        <span className="label-badge label-badge-purple text-[10px]">90J HORIZON</span>
+      </div>
+      {attackChains.map((chain, i) => (
+        <div key={i} className="p-4 rounded-xl glass-card border border-border hover:border-primary/20 transition-colors space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-muted-foreground/60">{chain.id}</span>
+              <span className={`text-sm font-bold ${chain.color}`}>{chain.title}</span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className={`text-xs font-bold font-mono ${chain.color}`}>{chain.probability}%</span>
+              <span className="label-badge label-badge-red text-[9px] py-0.5">{chain.deadline}</span>
+            </div>
+          </div>
+          {/* Attack chain flow */}
+          <div className="flex items-center gap-1 flex-wrap">
+            {chain.steps.map((step, si) => (
+              <span key={si} className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                si === 0 ? "bg-primary/10 text-primary border border-primary/20" :
+                si === chain.steps.length - 1 ? "bg-destructive/10 text-destructive border border-destructive/20" :
+                "bg-secondary/50 text-muted-foreground"
+              }`}>{step}</span>
+            ))}
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Impact : <span className={`font-semibold ${chain.color}`}>{chain.impact}</span></span>
+            <div className="w-32 bg-muted rounded-full h-1">
+              <div className="h-1 rounded-full" style={{ width: `${chain.probability}%`, background: "linear-gradient(90deg, hsl(var(--destructive) / 0.6), hsl(var(--destructive)))" }} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ── Evidence Vault Tab ── */
 function EvidenceVaultTab() {
   const proofs = [
-    { id: "PK-2841", action: "Port 8443 closure proof", hash: "0x7a4f...b2c1", algo: "CRYSTALS-Dilithium", ts: "2026-03-13 14:22:47", status: "verified" },
+    { id: "PK-2841", action: "Port 8443 closure proof", hash: "0x7a4f...b2c1", algo: "CRYSTALS-Dilithium3", ts: "2026-03-13 14:22:47", status: "verified" },
     { id: "PK-2840", action: "CVE-2025-0041 patch verification", hash: "0x3d9e...a7f2", algo: "zk-SNARK Groth16", ts: "2026-03-13 09:11:03", status: "verified" },
-    { id: "PK-2839", action: "Credential rotation audit trail", hash: "0xb1c4...2e8d", algo: "CRYSTALS-Dilithium", ts: "2026-03-12 18:44:21", status: "verified" },
+    { id: "PK-2839", action: "Credential rotation audit trail", hash: "0xb1c4...2e8d", algo: "CRYSTALS-Dilithium3", ts: "2026-03-12 18:44:21", status: "verified" },
     { id: "PK-2838", action: "NIS2 compliance snapshot Q1 2026", hash: "0x6f2a...c0d4", algo: "Lattice + SHA-3", ts: "2026-03-10 08:00:00", status: "verified" },
+    { id: "PK-2837", action: "Domain typosquat neutralization", hash: "0xd4c1...8e3a", algo: "zk-SNARK Groth16", ts: "2026-03-09 15:33:12", status: "verified" },
   ];
 
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-muted-foreground font-mono">2 841 preuves archivées</span>
+        <span className="text-xs text-muted-foreground font-mono">2 841 preuves archivées — chaîne immuable SHA-256</span>
         <span className="label-badge label-badge-cyan text-[10px]">POST-QUANTUM SECURED</span>
       </div>
       {proofs.map((p, i) => (
@@ -226,7 +307,7 @@ export function GodModePreviewSection() {
               <br />en action réelle
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Dashboard Live · Agents IA · Auto-Remédiation · Evidence Vault — en temps réel.
+              Dashboard Live · 6 Agents IA · Auto-Remédiation · Predictive Causality · Evidence Vault post-quantique.
             </p>
           </motion.div>
 
@@ -235,9 +316,9 @@ export function GodModePreviewSection() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
           >
-            {/* Mockup frame */}
+            {/* Mockup OS frame */}
             <div className="relative rounded-2xl overflow-hidden glass-card-premium border border-primary/20">
-              {/* Window bar */}
+              {/* Window chrome */}
               <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50 bg-secondary/30">
                 <div className="flex gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
@@ -249,17 +330,17 @@ export function GodModePreviewSection() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                  <span className="text-[10px] font-mono text-muted-foreground">6 AGENTS</span>
+                  <span className="text-[10px] font-mono text-muted-foreground">6 AGENTS · AUTONOMOUS</span>
                 </div>
               </div>
 
-              {/* Dashboard content */}
+              {/* Dashboard tabs — 5 onglets complets */}
               <div className="p-5">
                 <Tabs defaultValue="dashboard" className="w-full">
-                  <TabsList className="grid grid-cols-4 mb-5 bg-secondary/50">
+                  <TabsList className="grid grid-cols-5 mb-5 bg-secondary/50">
                     <TabsTrigger value="dashboard" className="text-xs gap-1.5">
                       <LayoutDashboard className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Dashboard Live</span>
+                      <span className="hidden sm:inline">Dashboard</span>
                     </TabsTrigger>
                     <TabsTrigger value="agents" className="text-xs gap-1.5">
                       <Brain className="w-3.5 h-3.5" />
@@ -267,24 +348,29 @@ export function GodModePreviewSection() {
                     </TabsTrigger>
                     <TabsTrigger value="remediation" className="text-xs gap-1.5">
                       <Wrench className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Auto-Remédiation</span>
+                      <span className="hidden sm:inline">Remédiation</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="causality" className="text-xs gap-1.5">
+                      <GitBranch className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Causality</span>
                     </TabsTrigger>
                     <TabsTrigger value="vault" className="text-xs gap-1.5">
                       <Lock className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Evidence Vault</span>
+                      <span className="hidden sm:inline">Vault</span>
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="dashboard"><DashboardLiveTab /></TabsContent>
                   <TabsContent value="agents"><AgentsIATab /></TabsContent>
                   <TabsContent value="remediation"><AutoRemediationTab /></TabsContent>
+                  <TabsContent value="causality"><PredictiveCausalityTab /></TabsContent>
                   <TabsContent value="vault"><EvidenceVaultTab /></TabsContent>
                 </Tabs>
               </div>
             </div>
           </motion.div>
 
-          {/* CTA below */}
+          {/* CTA row */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
