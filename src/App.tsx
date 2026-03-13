@@ -107,6 +107,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <SoloModeWrapper>
+            <NavbarHomeButton />
             <Routes>
               {/* Public landing pages */}
               <Route path="/" element={<Landing />} />
