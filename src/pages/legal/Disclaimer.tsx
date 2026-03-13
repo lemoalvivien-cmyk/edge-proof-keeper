@@ -140,7 +140,7 @@ export default function Disclaimer() {
                 Pour une évaluation complète de votre sécurité, nous recommandons de :
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-2">
-                <li>Compléter SENTINEL EDGE par des audits professionnels réguliers</li>
+                <li>Compléter SECURIT-E par des audits professionnels réguliers</li>
                 <li>Faire valider les résultats par un expert en cybersécurité</li>
                 <li>Mettre à jour régulièrement vos analyses</li>
                 <li>Consulter un avocat pour les questions juridiques</li>
