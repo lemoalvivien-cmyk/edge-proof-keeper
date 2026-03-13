@@ -32,7 +32,7 @@ const safeApproach = [
   "100% passif — aucune interaction avec les cibles",
   "Import uniquement de VOS propres résultats",
   "Autorisation préalable obligatoire",
-  "Aucun scan actif depuis Sentinel Edge",
+  "Aucun scan actif depuis Securit-E",
 ];
 
 const limitations = [

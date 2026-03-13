@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 const corePlan = {
-  name: "SENTINEL EDGE Core",
+  name: "SECURIT-E Core",
   price: "490€",
   period: "TTC / an",
   description: "Gouvernance cyber complète import-first",
@@ -171,7 +171,7 @@ export default function PlansAddons() {
               Contactez-nous pour discuter de vos besoins spécifiques.
             </p>
             <Button variant="outline" asChild>
-              <a href="mailto:contact@sentinel-edge.fr">
+              <a href="mailto:contact@securit-e.com">
                 Nous contacter
                 <ArrowRight className="w-4 h-4 ml-2" />
               </a>

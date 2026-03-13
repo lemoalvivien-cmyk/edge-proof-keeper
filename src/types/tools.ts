@@ -1,4 +1,4 @@
-// Tool Registry types for SENTINEL EDGE
+// Tool Registry types for SECURIT-E
 
 export type ToolCategory = 'osint' | 'network' | 'web' | 'vuln' | 'secrets' | 'sast' | 'sca' | 'iac';
 

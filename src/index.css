@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /* ============================================================
-   SENTINEL IMMUNE — GOD MODE 2026 DESIGN SYSTEM
-   Ultra-futuristic dark sovereign platform — Digital Immune System
+   SECURIT-E — GOD MODE 2026 DESIGN SYSTEM
+   Ultra-futuristic dark sovereign platform — Armure Cyber Autonome
    Palantir × Vercel × Linear × Apple Vision Pro
    ============================================================ */
 
@@ -680,6 +680,6 @@
   h1, h2, h3 { page-break-after: avoid; }
   @page {
     margin: 2cm;
-    @bottom-center { content: "SENTINEL IMMUNE - Rapport Confidentiel"; }
+    @bottom-center { content: "SECURIT-E - Rapport Confidentiel"; }
   }
 }

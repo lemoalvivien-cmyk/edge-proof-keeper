@@ -102,8 +102,8 @@ export function AppSidebar() {
             </div>
           </div>
           <div>
-            <h1 className="text-sm font-bold text-sidebar-foreground tracking-tight">SENTINEL IMMUNE</h1>
-            <p className="text-[9px] font-mono text-primary/50 tracking-widest uppercase">Digital Immune System</p>
+          <h1 className="text-sm font-bold text-sidebar-foreground tracking-tight">SECURIT-E</h1>
+            <p className="text-[9px] font-mono text-primary/50 tracking-widest uppercase">Armure Cyber Autonome</p>
             <p className="text-xs text-muted-foreground truncate max-w-[150px] mt-0.5">
               {organization?.name ?? 'Chargement...'}
             </p>

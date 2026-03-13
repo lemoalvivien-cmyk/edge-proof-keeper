@@ -1,4 +1,4 @@
-# SOURCE OF TRUTH — Cyber Serenity / Sentinel Edge
+# SOURCE OF TRUTH — Securit-E
 
 **Source de vérité actuelle : workspace Lovable**
 **Date de génération : 2026-03-12T12:00:00Z**

@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: swarm_collaborate
+ * SECURIT-E — Skill: swarm_collaborate
  * Swarm Intelligence — anonymized cross-tenant threat sharing
  * NO PII shared — only anonymized threat patterns + IOC hashes
  *

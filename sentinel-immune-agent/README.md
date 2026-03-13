@@ -1,4 +1,4 @@
-# Sentinel Immune Edge Agent
+# Securit-E Edge Agent
 
 > Sidecar Go ultra-léger &lt;50Mo — WireGuard + mTLS + post-quantum crypto (CRYSTALS-Dilithium3)
 > 
@@ -8,8 +8,8 @@
 
 ```bash
 export SENTINEL_TENANT_ID=your-org-id
-go build -o sentinel-edge-agent ./cmd/agent
-./sentinel-edge-agent --config config.yaml
+go build -o securit-e-agent ./cmd/agent
+./securit-e-agent --config config.yaml
 ```
 
 ## Structure
@@ -37,7 +37,7 @@ sentinel-immune-agent/
 
 ```mermaid
 graph LR
-    A[Swarm Bus<br/>Kyber-1024 encrypted] -->|Skill invocation| B[Sentinel Edge Agent<br/>Go sidecar]
+    A[Swarm Bus<br/>Kyber-1024 encrypted] -->|Skill invocation| B[Securit-E Edge Agent<br/>Go sidecar]
     B -->|mTLS WireGuard| C[fix_port]
     B -->|mTLS WireGuard| D[rotate_creds]
     B -->|mTLS WireGuard| E[patch_vuln]
@@ -85,7 +85,7 @@ region: "fr-paris"
 
 agent:
   public_key: "YOUR_WIREGUARD_PUBLIC_KEY"
-  endpoint: "immune.sentinel-edge.fr:51820"
+  endpoint: "edge-agent.securit-e.com:51820"
   skills_enabled:
     - fix_port
     - rotate_creds
@@ -111,18 +111,18 @@ self_healing:
 # Build binaire statique Linux
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
   -ldflags="-w -s" \
-  -o sentinel-edge-agent \
+  -o securit-e-agent \
   ./cmd/agent
 
 # Vérifier taille < 50Mo
-ls -lh sentinel-edge-agent
+ls -lh securit-e-agent
 
 # Docker (production)
-docker build -t sentinel-immune/edge-agent:latest .
+docker build -t securit-e/edge-agent:latest .
 docker run -d \
   -e SENTINEL_TENANT_ID=your-org-id \
   -v /etc/sentinel/config.yaml:/app/config.yaml:ro \
-  sentinel-immune/edge-agent:latest
+  securit-e/edge-agent:latest
 ```
 
 ## Sécurité
@@ -148,4 +148,4 @@ docker run -d \
 
 ---
 
-*Sentinel Immune Edge Agent — Souveraineté Numérique France 🇫🇷 — Post-Quantum Ready*
+*Securit-E Edge Agent — Souveraineté Numérique France 🇫🇷 — Post-Quantum Ready*

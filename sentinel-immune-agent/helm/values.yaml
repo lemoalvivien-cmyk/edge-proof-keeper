@@ -1,4 +1,4 @@
-## Default values for sentinel-immune-edge-agent.
+## Default values for securit-e-edge-agent.
 ## This is a YAML-formatted file.
 
 # ── Replica count ──────────────────────────────────────────────────────────────
@@ -6,7 +6,7 @@ replicaCount: 1
 
 # ── Image ─────────────────────────────────────────────────────────────────────
 image:
-  repository: sentinel-immune/edge-agent
+  repository: securit-e/edge-agent
   pullPolicy: IfNotPresent
   tag: "2026.1.0"
 
@@ -19,16 +19,16 @@ serviceAccount:
   create: true
   automount: true
   annotations: {}
-  name: "sentinel-agent"
+  name: "securit-e-agent"
 
 # ── Pod annotations / labels ──────────────────────────────────────────────────
 podAnnotations:
-  sentinel.immune.io/version: "2026.1.0"
-  sentinel.immune.io/pq-algorithm: "dilithium3"
+  securit-e.io/version: "2026.1.0"
+  securit-e.io/pq-algorithm: "dilithium3"
 
 podLabels:
   app.kubernetes.io/component: edge-agent
-  sentinel.immune.io/role: executor
+  securit-e.io/role: executor
 
 podSecurityContext:
   runAsNonRoot: true
@@ -60,14 +60,14 @@ ingress:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   hosts:
-    - host: edge-agent.sentinel-immune.fr
+    - host: edge-agent.securit-e.com
       paths:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: sentinel-agent-tls
+    - secretName: securit-e-agent-tls
       hosts:
-        - edge-agent.sentinel-immune.fr
+        - edge-agent.securit-e.com
 
 # ── Resources ─────────────────────────────────────────────────────────────────
 resources:
@@ -95,14 +95,14 @@ tolerations: []
 
 affinity: {}
 
-# ── Sentinel Agent config ─────────────────────────────────────────────────────
+# ── Securit-E Agent config ────────────────────────────────────────────────────
 sentinel:
   tenantId: ""          # Set via --set sentinel.tenantId=<id>
   region: "fr-paris"
   apiPort: "8443"
-  vaultUrl: "https://vault.sentinel-immune.fr"
-  swarmUrl: "https://swarm.sentinel-immune.fr"
-  wgEndpoint: "immune.sentinel-edge.fr:51820"
+  vaultUrl: "https://vault.securit-e.com"
+  swarmUrl: "https://swarm.securit-e.com"
+  wgEndpoint: "edge-agent.securit-e.com:51820"
 
   # Post-quantum keys (set via K8s secret)
   dilithiumPubKey: ""
@@ -114,7 +114,7 @@ sentinel:
 
 # ── TLS certificates (from K8s secret) ───────────────────────────────────────
 tls:
-  existingSecret: "sentinel-agent-mtls-certs"
+  existingSecret: "securit-e-agent-mtls-certs"
   certKey: "tls.crt"
   keyKey: "tls.key"
   caKey: "ca.crt"
@@ -123,7 +123,7 @@ tls:
 extraVolumes:
   - name: certs
     secret:
-      secretName: sentinel-agent-mtls-certs
+      secretName: securit-e-agent-mtls-certs
 
 extraVolumeMounts:
   - name: certs
@@ -157,5 +157,5 @@ env: []
 networkPolicy:
   enabled: true
   allowFromNamespaces:
-    - sentinel-system
+    - securit-e-system
     - monitoring

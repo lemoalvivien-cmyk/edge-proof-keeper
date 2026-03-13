@@ -1,4 +1,4 @@
-# RAW STATE GAPS — Cyber Serenity / SENTINEL EDGE
+# RAW STATE GAPS — Securit-E
 **Generated:** 2026-03-12 | **Method:** Direct code inspection
 **Format:** Each gap has a title, severity, proof, and concrete impact.
 

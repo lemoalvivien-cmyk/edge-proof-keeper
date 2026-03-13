@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: close_domain
+ * SECURIT-E — Skill: close_domain
  * Executor Agent — neutralize malicious / typosquatted domains
  *
  * Production integrations:
@@ -83,7 +83,7 @@ export async function closeDomain(input: CloseDomainInput): Promise<CloseDomainR
       // Internal DNS sinkhole via Infoblox or Pi-hole API
       // Production:
       // POST http://infoblox.internal/wapi/v2.10/record:a
-      // Body: { name: input.domain, ipv4addr: "10.0.0.254" (honeypot), comment: "sinkholed by Sentinel Immune" }
+      // Body: { name: input.domain, ipv4addr: "10.0.0.254" (honeypot), comment: "sinkholed by Securit-E" }
       await callEdgeAgent({ skill: "close_domain", payload: { domain: input.domain, action: "sinkhole", honeypot_ip: input.sinkhole_ip ?? "10.0.0.254" }, agent_id: input.agent_id });
       dnsBlocked = true;
       apiCallSummary = `infoblox:POST /wapi/v2.10/record:a {${input.domain} → ${input.sinkhole_ip ?? "10.0.0.254"} (honeypot)}`;
@@ -139,15 +139,15 @@ async function logToVault(entry: Record<string, unknown>): Promise<string> {
 }
 
 async function callEdgeAgent(payload: { skill: string; payload: Record<string, unknown>; agent_id: string }): Promise<{ ok: boolean; error?: string }> {
-  // mTLS call to Sentinel Edge Agent sidecar via WireGuard tunnel
-  // POST https://edge-agent.sentinel-immune.fr/api/v1/skill
+  // mTLS call to Securit-E Edge Agent sidecar via WireGuard tunnel
+  // POST https://edge-agent.securit-e.com/api/v1/skill
   // Headers: Authorization: Bearer <Dilithium3-signed-JWT>, X-Agent-ID: <agent_id>
   return { ok: true };
 }
 
 async function generateZkProof(data: Record<string, unknown>): Promise<string> {
   // zk-SNARK Groth16 + CRYSTALS-Dilithium3 signature
-  // POST https://vault.sentinel-immune.fr/api/v1/sign { payload: data, algorithm: "dilithium3" }
+  // POST https://vault.securit-e.com/api/v1/sign { payload: data, algorithm: "dilithium3" }
   return `zksnark:${btoa(JSON.stringify(data)).slice(0, 48)}`;
 }
 

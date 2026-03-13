@@ -18,7 +18,7 @@ export default function Privacy() {
           </Link>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold">SENTINEL EDGE</span>
+            <span className="font-bold">SECURIT-E</span>
           </div>
         </div>
       </header>
@@ -33,7 +33,7 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Responsable du traitement</h2>
               <p className="text-muted-foreground">
-                [Nom de la société], éditeur de SENTINEL EDGE, est responsable du traitement des 
+                [Nom de la société], éditeur de SECURIT-E, est responsable du traitement des 
                 données personnelles collectées via la plateforme.
               </p>
               <p className="text-muted-foreground mt-2">

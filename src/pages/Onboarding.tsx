@@ -153,7 +153,7 @@ export default function Onboarding() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <Shield className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">SENTINEL EDGE</span>
+            <span className="text-2xl font-bold">SECURIT-E</span>
           </div>
           <Badge variant="outline" className="mb-4">
             <Sparkles className="h-3 w-3 mr-1" />

@@ -118,7 +118,7 @@ export function OwnerSetup({ onComplete }: OwnerSetupProps) {
           <div className="flex justify-center">
             <Shield className="w-12 h-12 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">SENTINEL EDGE</h1>
+          <h1 className="text-2xl font-bold text-foreground">SECURIT-E</h1>
           <p className="text-muted-foreground">Configuration de votre accès</p>
         </div>
 

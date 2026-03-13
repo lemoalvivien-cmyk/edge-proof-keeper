@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: fix_port
+ * SECURIT-E — Skill: fix_port
  * Executor Agent — auto-close exposed network port
  * Called by Executor Agent via /api/edge-agent (mTLS + WireGuard)
  *
@@ -88,7 +88,7 @@ export async function fixPort(input: FixPortInput): Promise<SkillResult> {
       cloudApiCall = `nftables:add_rule(host=${input.host}, drop ${proto} dport ${input.port})`;
   }
 
-  // 3. Execute via Sentinel Edge Agent sidecar (mTLS + WireGuard)
+  // 3. Execute via Securit-E Edge Agent sidecar (mTLS + WireGuard)
   const response = await callEdgeAgent({
     skill: "fix_port",
     payload: {
@@ -140,8 +140,8 @@ async function callEdgeAgent(payload: {
   payload: Record<string, unknown>;
   agent_id: string;
 }): Promise<{ ok: boolean; error?: string }> {
-  // mTLS call to Sentinel Edge Agent sidecar over WireGuard tunnel
-  // POST https://edge-agent.sentinel-immune.fr/api/v1/skill
+  // mTLS call to Securit-E Edge Agent sidecar over WireGuard tunnel
+  // POST https://edge-agent.securit-e.com/api/v1/skill
   // Headers: Authorization: Bearer <CRYSTALS-Dilithium-signed-JWT>
   //          X-Agent-ID: <agent_id>
   //          X-Timestamp: <unix_ms>

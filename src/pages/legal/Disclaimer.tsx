@@ -19,7 +19,7 @@ export default function Disclaimer() {
           </Link>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold">SENTINEL EDGE</span>
+            <span className="font-bold">SECURIT-E</span>
           </div>
         </div>
       </header>
@@ -29,13 +29,13 @@ export default function Disclaimer() {
           <CardHeader>
             <CardTitle className="text-2xl">Limitation de Responsabilité</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Ce que SENTINEL EDGE fait et ne fait pas
+              Ce que SECURIT-E fait et ne fait pas
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
             <Alert className="border-blue-500/50 bg-blue-500/10">
               <Info className="h-4 w-4 text-blue-500" />
-              <AlertTitle className="text-blue-600">SENTINEL EDGE est un outil d'aide à la décision</AlertTitle>
+              <AlertTitle className="text-blue-600">SECURIT-E est un outil d'aide à la décision</AlertTitle>
               <AlertDescription className="text-blue-600/80">
                 La plateforme agrège et présente des informations pour faciliter la gouvernance cyber, 
                 mais ne remplace pas un audit de sécurité complet ni l'expertise d'un professionnel.
@@ -45,7 +45,7 @@ export default function Disclaimer() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Nature du service</h2>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est une plateforme de <strong>gouvernance et de preuve cyber</strong> qui :
+                SECURIT-E est une plateforme de <strong>gouvernance et de preuve cyber</strong> qui :
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-2">
                 <li>Importe et normalise des résultats d'outils de sécurité tiers</li>
@@ -60,7 +60,7 @@ export default function Disclaimer() {
             <section>
               <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                2. Ce que SENTINEL EDGE NE fait PAS
+                2. Ce que SECURIT-E NE fait PAS
               </h2>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                 <li>
@@ -86,7 +86,7 @@ export default function Disclaimer() {
             <section>
               <h2 className="text-xl font-semibold mb-3">3. Limitation de garantie</h2>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est fourni "en l'état" (<em>as is</em>). L'Éditeur ne garantit pas :
+                SECURIT-E est fourni "en l'état" (<em>as is</em>). L'Éditeur ne garantit pas :
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-2">
                 <li>L'absence totale de vulnérabilités dans vos systèmes</li>
@@ -140,7 +140,7 @@ export default function Disclaimer() {
                 Pour une évaluation complète de votre sécurité, nous recommandons de :
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-2">
-                <li>Compléter SENTINEL EDGE par des audits professionnels réguliers</li>
+                <li>Compléter SECURIT-E par des audits professionnels réguliers</li>
                 <li>Faire valider les résultats par un expert en cybersécurité</li>
                 <li>Mettre à jour régulièrement vos analyses</li>
                 <li>Consulter un avocat pour les questions juridiques</li>
@@ -149,7 +149,7 @@ export default function Disclaimer() {
 
             <div className="mt-8 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
               <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                <strong>En résumé :</strong> SENTINEL EDGE est un outil puissant pour piloter 
+                <strong>En résumé :</strong> SECURIT-E est un outil puissant pour piloter 
                 votre gouvernance cyber et constituer des preuves de diligence, mais il ne 
                 remplace pas l'expertise humaine ni les audits approfondis.
               </p>
@@ -157,7 +157,7 @@ export default function Disclaimer() {
 
             <div className="mt-4 p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">
-                <strong>Questions :</strong> contact@sentineledge.fr
+                <strong>Questions :</strong> contact@securit-e.com
               </p>
             </div>
           </CardContent>

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "project": "Cyber Serenity / SENTINEL EDGE",
+    "project": "Securit-E",
     "generated": "2026-03-12",
     "method": "direct_code_inspection",
     "auditor_rule": "PRESENT=found_in_code PARTIAL=exists_but_incomplete ABSENT=not_found"

@@ -19,7 +19,7 @@ export default function AuthorizedUse() {
           </Link>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold">SENTINEL EDGE</span>
+            <span className="font-bold">SECURIT-E</span>
           </div>
         </div>
       </header>
@@ -29,7 +29,7 @@ export default function AuthorizedUse() {
           <CardHeader>
             <CardTitle className="text-2xl">Charte d'Usage Autorisé</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Règles d'utilisation éthique et légale de SENTINEL EDGE
+              Règles d'utilisation éthique et légale de SECURIT-E
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -37,7 +37,7 @@ export default function AuthorizedUse() {
               <AlertTriangle className="h-4 w-4 text-red-500" />
               <AlertTitle className="text-red-600">Avertissement important</AlertTitle>
               <AlertDescription className="text-red-600/80">
-                Toute utilisation de SENTINEL EDGE sans autorisation préalable des propriétaires 
+                Toute utilisation de SECURIT-E sans autorisation préalable des propriétaires 
                 des actifs analysés est strictement interdite et peut constituer un délit pénal.
               </AlertDescription>
             </Alert>
@@ -45,7 +45,7 @@ export default function AuthorizedUse() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Principe fondamental</h2>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est conçu pour aider les organisations à évaluer et améliorer 
+                SECURIT-E est conçu pour aider les organisations à évaluer et améliorer 
                 leur posture de sécurité <strong>sur leurs propres actifs</strong> ou sur des actifs 
                 pour lesquels elles disposent d'une <strong>autorisation écrite explicite</strong>.
               </p>
@@ -115,7 +115,7 @@ export default function AuthorizedUse() {
             <section>
               <h2 className="text-xl font-semibold mb-3">5. Traçabilité et preuve</h2>
               <p className="text-muted-foreground">
-                Toutes les actions effectuées sur SENTINEL EDGE sont enregistrées de manière 
+                Toutes les actions effectuées sur SECURIT-E sont enregistrées de manière 
                 immuable dans l'Evidence Vault :
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-2">
@@ -167,14 +167,14 @@ export default function AuthorizedUse() {
 
             <div className="mt-8 p-4 rounded-lg bg-primary/10 border border-primary/20">
               <p className="text-sm font-medium">
-                En utilisant SENTINEL EDGE, vous acceptez la présente Charte d'Usage Autorisé 
+                En utilisant SECURIT-E, vous acceptez la présente Charte d'Usage Autorisé 
                 et vous engagez à respecter scrupuleusement ses dispositions.
               </p>
             </div>
 
             <div className="mt-4 p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">
-                <strong>Signalement d'abus :</strong> abuse@sentineledge.fr
+                <strong>Signalement d'abus :</strong> abuse@securit-e.com
               </p>
             </div>
           </CardContent>

@@ -153,7 +153,7 @@ export function ReportTabs({ report }: ReportTabsProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sentinel-edge-report-${report.id}.json`;
+    a.download = `securit-e-report-${report.id}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };

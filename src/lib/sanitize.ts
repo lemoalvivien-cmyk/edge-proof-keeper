@@ -1,5 +1,5 @@
 /**
- * SENTINEL EDGE — Client-side sanitization helpers
+ * SECURIT-E — Client-side sanitization helpers
  * Use before rendering any user/import-originated text in the UI.
  */
 

@@ -1,6 +1,6 @@
 version: "3.9"
 
-# Sentinel Immune Edge Agent — Docker Compose
+# Securit-E Edge Agent — Docker Compose
 # Usage:
 #   docker-compose up -d
 #   docker-compose logs -f sentinel-agent
@@ -8,12 +8,12 @@ version: "3.9"
 # Production: use Helm chart (helm/) for Kubernetes deployment
 
 services:
-  sentinel-agent:
+  securit-e-agent:
     build:
       context: .
       dockerfile: sentinel-immune-agent/Dockerfile
-    image: sentinel-immune/edge-agent:2026.1.0
-    container_name: sentinel-immune-agent
+    image: securit-e/edge-agent:2026.1.0
+    container_name: securit-e-agent
     restart: unless-stopped
 
     ports:
@@ -23,9 +23,9 @@ services:
       - SENTINEL_TENANT_ID=${SENTINEL_TENANT_ID:-demo-tenant}
       - SENTINEL_REGION=${SENTINEL_REGION:-fr-paris}
       - SENTINEL_API_PORT=8443
-      - SENTINEL_VAULT_URL=${SENTINEL_VAULT_URL:-https://vault.sentinel-immune.fr}
-      - SENTINEL_SWARM_URL=${SENTINEL_SWARM_URL:-https://swarm.sentinel-immune.fr}
-      - SENTINEL_WG_ENDPOINT=${SENTINEL_WG_ENDPOINT:-immune.sentinel-edge.fr:51820}
+      - SENTINEL_VAULT_URL=${SENTINEL_VAULT_URL:-https://vault.securit-e.com}
+      - SENTINEL_SWARM_URL=${SENTINEL_SWARM_URL:-https://swarm.securit-e.com}
+      - SENTINEL_WG_ENDPOINT=${SENTINEL_WG_ENDPOINT:-edge-agent.securit-e.com:51820}
       # TLS certs — mount from host or K8s secret
       - SENTINEL_TLS_CERT=/certs/agent.crt
       - SENTINEL_TLS_KEY=/certs/agent.key
@@ -38,7 +38,7 @@ services:
       - ./config.yaml:/config.yaml:ro  # Agent config
 
     networks:
-      - sentinel-net
+      - securit-e-net
 
     # Resource limits (< 50MB RAM, minimal CPU)
     deploy:
@@ -57,12 +57,12 @@ services:
       start_period: 10s
 
     labels:
-      - "sentinel.immune.component=edge-agent"
-      - "sentinel.immune.version=2026.1.0"
-      - "sentinel.immune.pq=dilithium3"
+      - "securit-e.component=edge-agent"
+      - "securit-e.version=2026.1.0"
+      - "securit-e.pq=dilithium3"
 
 networks:
-  sentinel-net:
+  securit-e-net:
     driver: bridge
     ipam:
       config:

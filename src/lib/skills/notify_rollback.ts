@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: notify_rollback
+ * SECURIT-E — Skill: notify_rollback
  * Verifier Agent — notify stakeholders + trigger rollback on failed remediation
  *
  * Production integrations:
@@ -57,7 +57,7 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
     timestamp: new Date().toISOString(),
   });
 
-  const message = `[SENTINEL IMMUNE] Action ${input.action_type} sur ${input.target} — ÉCHEC: ${input.failure_reason}.`;
+  const message = `[SECURIT-E] Action ${input.action_type} sur ${input.target} — ÉCHEC: ${input.failure_reason}.`;
 
   // 2. Execute rollback if required
   let rollbackExecuted = false;
@@ -67,7 +67,7 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
       payload: { action_id: input.action_id, action_type: input.action_type, target: input.target },
       agent_id: input.agent_id,
     });
-    // Production: POST https://edge-agent.sentinel-immune.fr/api/v1/skill
+    // Production: POST https://edge-agent.securit-e.com/api/v1/skill
     // { skill: "rollback", payload: { action_id, action_type, target } }
     rollbackExecuted = true;
     apiCallsSummary.push(`edge_agent:POST /api/v1/skill {rollback, action_id=${input.action_id}}`);
@@ -97,8 +97,8 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
         case "email":
           // Production: POST https://api.resend.com/emails
           // Headers: Authorization: Bearer <RESEND_API_KEY>
-          // Body: { from: "sentinel@sentinel-immune.fr", to: [input.dsi_email], subject: "[SENTINEL IMMUNE] Incident", html: ... }
-          apiCallsSummary.push(`resend:POST /emails {to=${input.dsi_email ?? "dsi@client.fr"}, subject="[SENTINEL IMMUNE] ${severity.toUpperCase()} Incident"}`);
+          // Body: { from: "contact@securit-e.com", to: [input.dsi_email], subject: "[SECURIT-E] Incident", html: ... }
+          apiCallsSummary.push(`resend:POST /emails {to=${input.dsi_email ?? "dsi@client.fr"}, subject="[SECURIT-E] ${severity.toUpperCase()} Incident"}`);
           notificationsSent.push("email");
           break;
 
@@ -113,7 +113,7 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
           // Production (P1 only):
           // POST https://events.pagerduty.com/v2/enqueue
           // Body: { routing_key: input.pagerduty_routing_key, event_action: "trigger",
-          //   payload: { summary: fullMessage, severity: "critical", source: "sentinel-immune" } }
+          //   payload: { summary: fullMessage, severity: "critical", source: "securit-e" } }
           if (severity === "critical") {
             apiCallsSummary.push(`pagerduty:POST /v2/enqueue {trigger, severity=critical, summary="${fullMessage.slice(0, 80)}"}`);
             notificationsSent.push("pagerduty");

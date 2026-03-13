@@ -18,7 +18,7 @@ export default function Terms() {
           </Link>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold">SENTINEL EDGE</span>
+            <span className="font-bold">SECURIT-E</span>
           </div>
         </div>
       </header>
@@ -34,10 +34,10 @@ export default function Terms() {
               <h2 className="text-xl font-semibold mb-3">1. Objet</h2>
               <p className="text-muted-foreground">
                 Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation 
-                de la plateforme SENTINEL EDGE, éditée par [Nom de la société], ci-après dénommée "l'Éditeur".
+                de la plateforme SECURIT-E, éditée par [Nom de la société], ci-après dénommée "l'Éditeur".
               </p>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est une plateforme SaaS de gouvernance et de preuve cyber, destinée aux 
+                SECURIT-E est une plateforme SaaS de gouvernance et de preuve cyber, destinée aux
                 entreprises souhaitant piloter leur conformité RGPD et NIS2.
               </p>
             </section>
@@ -60,7 +60,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">3. Accès à la plateforme</h2>
               <p className="text-muted-foreground">
-                L'accès à SENTINEL EDGE nécessite la création d'un compte utilisateur et la souscription 
+                L'accès à SECURIT-E nécessite la création d'un compte utilisateur et la souscription 
                 à un abonnement. L'Utilisateur s'engage à fournir des informations exactes et à jour.
               </p>
               <p className="text-muted-foreground mt-2">
@@ -110,7 +110,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">7. Limitation de responsabilité</h2>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est un outil d'aide à la décision. L'Éditeur ne garantit pas l'absence 
+                SECURIT-E est un outil d'aide à la décision. L'Éditeur ne garantit pas l'absence 
                 totale de vulnérabilités et ne saurait être tenu responsable des dommages résultant 
                 de l'utilisation de la plateforme. Voir notre{" "}
                 <Link to="/legal/disclaimer" className="text-primary hover:underline">
@@ -141,7 +141,7 @@ export default function Terms() {
 
             <div className="mt-8 p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">
-                <strong>Contact :</strong> contact@sentineledge.fr
+                <strong>Contact :</strong> contact@securit-e.com
               </p>
             </div>
           </CardContent>

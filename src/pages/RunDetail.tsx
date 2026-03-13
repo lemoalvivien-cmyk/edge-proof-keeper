@@ -91,7 +91,7 @@ export default function RunDetail() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sentinel-edge-run-${id}.json`;
+    a.download = `securit-e-run-${id}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };

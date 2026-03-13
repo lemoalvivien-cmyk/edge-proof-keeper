@@ -1,5 +1,5 @@
 /**
- * SENTINEL IMMUNE — Skill: patch_vuln
+ * SECURIT-E — Skill: patch_vuln
  * Executor Agent — auto-patch vulnerability (CVE-based)
  *
  * Production integrations:
@@ -137,8 +137,8 @@ async function applyPatch(config: {
   target_version?: string;
   ansible_template_id?: string;
 }): Promise<boolean> {
-  // Production: calls Sentinel Edge Agent sidecar via mTLS WireGuard
-  // POST https://edge-agent.sentinel-immune.fr/api/v1/skill
+  // Production: calls Securit-E Edge Agent sidecar via mTLS WireGuard
+  // POST https://edge-agent.securit-e.com/api/v1/skill
   // { skill: "patch_vuln", payload: config }
   return true;
 }

@@ -1,4 +1,4 @@
-# WORKSPACE GAPS — Cyber Serenity / Sentinel Edge
+# WORKSPACE GAPS — Securit-E
 
 **Source de vérité : workspace Lovable**
 **Date de génération : 2026-03-12T12:00:00Z**

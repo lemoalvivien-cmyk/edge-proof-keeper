@@ -1,8 +1,8 @@
-// SENTINEL IMMUNE — Edge Agent Sidecar
+// SECURIT-E — Edge Agent Sidecar
 // Full production-grade Go implementation
 // WireGuard tunnel + mTLS + CRYSTALS-Dilithium3 + 6 skills + rollback + HTTP API
 // Binary target: < 50MB, zero CGO dependencies at runtime
-// Build: go build -ldflags="-s -w" -o sentinel-agent ./cmd/agent/
+// Build: go build -ldflags="-s -w" -o securit-e-agent ./cmd/agent/
 package main
 
 import (
@@ -24,7 +24,7 @@ import (
 
 const (
 	AgentVersion   = "2026.1.0"
-	AgentName      = "sentinel-immune-edge-agent"
+	AgentName      = "securit-e-edge-agent"
 	DefaultAPIPort = "8443"
 	HealthInterval = 30 * time.Second
 	SelfHealMaxOps = 5 // max auto-remediations per hour
@@ -515,10 +515,10 @@ func main() {
 		CertFile: getEnv("SENTINEL_TLS_CERT", ""),
 		KeyFile:  getEnv("SENTINEL_TLS_KEY", ""),
 		CAFile:   getEnv("SENTINEL_CA_CERT", ""),
-		VaultURL: getEnv("SENTINEL_VAULT_URL", "https://vault.sentinel-immune.fr"),
-		SwarmURL: getEnv("SENTINEL_SWARM_URL", "https://swarm.sentinel-immune.fr"),
+		VaultURL: getEnv("SENTINEL_VAULT_URL", "https://vault.securit-e.com"),
+		SwarmURL: getEnv("SENTINEL_SWARM_URL", "https://swarm.securit-e.com"),
 	}
-	cfg.AgentKeys.WireGuardEndpoint = getEnv("SENTINEL_WG_ENDPOINT", "immune.sentinel-edge.fr:51820")
+	cfg.AgentKeys.WireGuardEndpoint = getEnv("SENTINEL_WG_ENDPOINT", "edge-agent.securit-e.com:51820")
 	cfg.AgentKeys.DilithiumPublicKey = getEnv("SENTINEL_DILITHIUM_PUB", "")
 	cfg.SelfHeal.MaxAutoPerHour = SelfHealMaxOps
 	cfg.SelfHeal.RollbackTimeoutH = 4
