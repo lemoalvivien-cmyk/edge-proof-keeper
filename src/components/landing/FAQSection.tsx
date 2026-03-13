@@ -104,7 +104,7 @@ export function FAQSection() {
             className="mt-12 text-center p-6 rounded-2xl glass-card-premium border border-primary/20"
           >
             <Cpu className="w-8 h-8 text-primary mx-auto mb-3" />
-            <h3 className="text-xl font-bold mb-2">Prêt à activer votre système immunitaire cyber ?</h3>
+            <h3 className="text-xl font-bold mb-2">Prêt à activer votre armure de gouvernance cyber ?</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Commencez avec le plan Starter — <span className="text-foreground font-semibold">490€/an</span>, tout inclus, sans engagement.
             </p>
