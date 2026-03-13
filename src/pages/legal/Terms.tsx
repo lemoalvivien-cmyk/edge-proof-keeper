@@ -110,7 +110,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">7. Limitation de responsabilité</h2>
               <p className="text-muted-foreground">
-                SENTINEL EDGE est un outil d'aide à la décision. L'Éditeur ne garantit pas l'absence 
+                SECURIT-E est un outil d'aide à la décision. L'Éditeur ne garantit pas l'absence 
                 totale de vulnérabilités et ne saurait être tenu responsable des dommages résultant 
                 de l'utilisation de la plateforme. Voir notre{" "}
                 <Link to="/legal/disclaimer" className="text-primary hover:underline">
