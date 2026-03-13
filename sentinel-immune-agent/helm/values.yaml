@@ -114,7 +114,7 @@ sentinel:
 
 # ── TLS certificates (from K8s secret) ───────────────────────────────────────
 tls:
-  existingSecret: "sentinel-agent-mtls-certs"
+  existingSecret: "securit-e-agent-mtls-certs"
   certKey: "tls.crt"
   keyKey: "tls.key"
   caKey: "ca.crt"
@@ -123,7 +123,7 @@ tls:
 extraVolumes:
   - name: certs
     secret:
-      secretName: sentinel-agent-mtls-certs
+      secretName: securit-e-agent-mtls-certs
 
 extraVolumeMounts:
   - name: certs
