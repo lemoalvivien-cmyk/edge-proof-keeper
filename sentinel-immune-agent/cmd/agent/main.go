@@ -24,7 +24,7 @@ import (
 
 const (
 	AgentVersion   = "2026.1.0"
-	AgentName      = "sentinel-immune-edge-agent"
+	AgentName      = "securit-e-edge-agent"
 	DefaultAPIPort = "8443"
 	HealthInterval = 30 * time.Second
 	SelfHealMaxOps = 5 // max auto-remediations per hour
