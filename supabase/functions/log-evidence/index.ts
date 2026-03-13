@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
     if (insertError) {
       console.error("Evidence log insert error:", insertError);
       return new Response(
-        JSON.stringify({ error: "Failed to log evidence", details: insertError.message }),
+        JSON.stringify({ error: "Failed to log evidence" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
