@@ -29,7 +29,7 @@ export default function Disclaimer() {
           <CardHeader>
             <CardTitle className="text-2xl">Limitation de Responsabilité</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Ce que SENTINEL EDGE fait et ne fait pas
+              Ce que SECURIT-E fait et ne fait pas
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
