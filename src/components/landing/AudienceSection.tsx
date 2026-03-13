@@ -109,7 +109,7 @@ export function AudienceSection() {
           >
             <Cpu className="w-6 h-6 text-primary mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
-              <span className="text-foreground font-semibold">Sentinel Immune</span> est le premier Digital Immune System souverain français.{" "}
+              <span className="text-foreground font-semibold">Securit-E</span> est la première armure de gouvernance cyber autonome souveraine française.{" "}
               20 ans d'avance sur vos concurrents. Zéro équipe cyber. 100% autonome.
             </p>
           </motion.div>

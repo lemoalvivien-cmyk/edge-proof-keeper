@@ -59,7 +59,7 @@ export function FooterSection() {
                 <a href="#" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="Twitter">
                   <Twitter className="w-4 h-4" />
                 </a>
-                <a href="mailto:contact@sentinel-immune.fr" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="Email">
+                <a href="mailto:contact@securit-e.com" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="Email">
                   <Mail className="w-4 h-4" />
                 </a>
               </div>
