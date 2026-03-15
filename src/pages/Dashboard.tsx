@@ -497,6 +497,30 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* ── Live Agents Demo — Pipeline 100% réelle ── */}
+        <Card className="border-primary/30">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                Démo Agents Autonomes — Séquence 47s Live
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-primary/10 text-primary border-primary/30 text-xs">DEMO LIVE</Badge>
+                <Badge variant="outline" className="text-xs text-success border-success/30 bg-success/10">
+                  Pipeline 100% réelle — zéro stub
+                </Badge>
+              </div>
+            </div>
+            <CardDescription>
+              6 skills autonomes réels · SHA-256 · Evidence Vault immutable · NIS2 compliant
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LiveAgentDemo />
+          </CardContent>
+        </Card>
+
       </div>
     </AppLayout>
   );
