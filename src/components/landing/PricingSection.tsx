@@ -1,6 +1,5 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { Check, ArrowRight, Sparkles, CalendarDays, Zap, Crown, Shield, Cpu, Star, Clock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
