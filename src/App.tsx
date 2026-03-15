@@ -117,6 +117,7 @@ const App = () => (
               
               {/* Auth route — public in SaaS mode, redirect in solo mode */}
               <Route path="/auth" element={SOLO_MODE ? <Navigate to="/dashboard" replace /> : <Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Compatibility redirects for removed authorization module */}
               <Route path="/scopeguard" element={<Navigate to="/tools" replace />} />
