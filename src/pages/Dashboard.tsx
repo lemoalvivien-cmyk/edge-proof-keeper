@@ -263,6 +263,14 @@ export default function Dashboard() {
             <CheckCircle2 className="w-3 h-3" />
             Pipeline 100% réelle — zéro stub
           </Badge>
+          {/* Palantir-Killer Badge */}
+          <Badge className="bg-primary/15 text-primary border border-primary/30 gap-1.5 font-semibold">
+            <Network className="w-3 h-3" />
+            🏆 Palantir-Killer : Ontology + Self-Healing + Preuve Post-Quantique
+          </Badge>
+          <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5 gap-1.5">
+            🇫🇷 Souverain Français — 20× moins cher que Palantir
+          </Badge>
           {subscription.trialActive && (
             <Badge className="bg-warning/10 text-warning border border-warning/30 gap-1.5">
               <Clock className="w-3 h-3" />
