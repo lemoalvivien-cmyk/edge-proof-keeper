@@ -431,7 +431,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-3 text-green-600">
+              <div className="flex items-center gap-3 text-success">
                 <CheckCircle2 className="h-6 w-6" />
                 <div>
                   <p className="font-medium">Plateforme active</p>
