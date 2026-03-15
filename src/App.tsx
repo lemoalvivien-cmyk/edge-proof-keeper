@@ -121,6 +121,8 @@ const App = () => (
             <Routes>
               {/* Public landing pages */}
               <Route path="/" element={<Landing />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/status" element={<Status />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/demo" element={<Demo />} />
               
