@@ -12,6 +12,7 @@ import {
   BarChart3,
   Play,
   Loader2,
+  Activity,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,9 +26,11 @@ import { useTaskCounts } from '@/hooks/useRemediation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { generatePortfolioSummary } from '@/lib/api-client';
+import { LiveAgentDemo } from '@/components/demo/LiveAgentDemo';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -491,6 +494,30 @@ export default function Dashboard() {
                 Aucun run en DB · Cliquez "Lancer la preuve live" pour exécuter le pipeline avec des données [DEMO] fictives et prouver la chaîne de valeur
               </p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* ── Live Agents Demo — Pipeline 100% réelle ── */}
+        <Card className="border-primary/30">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                Démo Agents Autonomes — Séquence 47s Live
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-primary/10 text-primary border-primary/30 text-xs">DEMO LIVE</Badge>
+                <Badge variant="outline" className="text-xs text-success border-success/30 bg-success/10">
+                  Pipeline 100% réelle — zéro stub
+                </Badge>
+              </div>
+            </div>
+            <CardDescription>
+              6 skills autonomes réels · SHA-256 · Evidence Vault immutable · NIS2 compliant
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LiveAgentDemo />
           </CardContent>
         </Card>
 
