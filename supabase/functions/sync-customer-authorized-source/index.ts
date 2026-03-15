@@ -158,7 +158,7 @@ Deno.serve(async (req: Request) => {
     const { data: profile } = await serviceClient
       .from('profiles')
       .select('organization_id')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     if (!profile?.organization_id) {
