@@ -1,11 +1,12 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { Check, ArrowRight, Sparkles, CalendarDays, Zap, Crown, Shield, Cpu, Star } from "lucide-react";
+import { Check, ArrowRight, Sparkles, CalendarDays, Zap, Crown, Shield, Star, Clock, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
-import { usePublicCta } from "@/hooks/usePublicCta";
+import { TrialModal } from "@/components/ui/TrialModal";
+import { openCheckout, PAYMENT_LINKS } from "@/hooks/useSubscription";
+import { toast } from "sonner";
+import { trackEvent } from "@/lib/tracking";
 
 const plans = [
   {
@@ -82,13 +83,33 @@ export function PricingSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
   const { user } = useAuth();
-  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
-  const cta = usePublicCta();
+  const [trialModalOpen, setTrialModalOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  async function handleStripeCheckout(planId: "starter" | "pro") {
+    if (user) {
+      setCheckoutLoading(planId);
+      trackEvent('cta_stripe_checkout', { source_page: '/#pricing', cta_origin: `pricing_${planId}` });
+      try {
+        await openCheckout(planId);
+      } catch {
+        toast.error("Erreur checkout. Lien direct ouvert.");
+        window.open(PAYMENT_LINKS[planId], "_blank", "noopener,noreferrer");
+      } finally {
+        setCheckoutLoading(null);
+      }
+    } else {
+      trackEvent('cta_stripe_checkout', { source_page: '/#pricing', cta_origin: `pricing_${planId}_anon` });
+      window.open(PAYMENT_LINKS[planId], "_blank", "noopener,noreferrer");
+    }
+  }
 
   return (
     <section ref={ref} className="relative py-28 overflow-hidden" id="pricing">
       <div className="absolute inset-0 gradient-radial opacity-40" />
       <div className="absolute inset-0 gradient-radial-purple opacity-30" />
+
+      <TrialModal open={trialModalOpen} onClose={() => setTrialModalOpen(false)} />
 
       <div className="container relative px-4">
         <div className="max-w-6xl mx-auto">
@@ -97,7 +118,7 @@ export function PricingSection() {
             initial={{ opacity: 0, y: 24 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="text-center space-y-4 mb-14"
+            className="text-center space-y-4 mb-10"
           >
             <div className="label-badge label-badge-cyan mx-auto w-fit">
               <Sparkles className="w-3 h-3" />
@@ -110,6 +131,36 @@ export function PricingSection() {
               De la détection seule à la souveraineté autonome totale.
               Chaque euro justifié par des agents qui travaillent en permanence.
             </p>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/30 text-success text-sm font-semibold">
+              <Clock className="w-4 h-4" />
+              Essai 14 jours gratuit · Paiement Stripe sécurisé 🔒 · Satisfait ou remboursé 30j
+            </div>
+          </motion.div>
+
+          {/* Competitor comparison */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-10 overflow-x-auto"
+          >
+            <div className="min-w-[580px] rounded-xl border border-border glass-card p-4">
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-3">Comparaison concurrents</p>
+              <div className="grid grid-cols-4 gap-2 text-sm">
+                {[
+                  { name: "SECURIT-E Starter", price: "490 € / an", highlight: true, note: "✓ 14j gratuits" },
+                  { name: "SECURIT-E Pro", price: "6 900 € / an", highlight: true, note: "✓ 14j gratuits" },
+                  { name: "Palantir Enterprise", price: "≥ 50 000 € / an", highlight: false, note: "10× plus cher" },
+                  { name: "Capgemini Consulting", price: "≥ 120 000 € / an", highlight: false, note: "Prestation manuelle" },
+                ].map((c) => (
+                  <div key={c.name} className={`rounded-lg p-3 border ${c.highlight ? "border-primary/40 bg-primary/5" : "border-border bg-muted/20"}`}>
+                    <p className={`font-bold text-xs mb-1 ${c.highlight ? "text-primary" : "text-foreground"}`}>{c.name}</p>
+                    <p className="font-mono font-black text-sm text-foreground">{c.price}</p>
+                    <p className={`text-[10px] mt-1 ${c.highlight ? "text-success" : "text-muted-foreground"}`}>{c.note}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
 
           {/* Pricing grid */}
@@ -128,14 +179,12 @@ export function PricingSection() {
                       : "glass-card border border-border hover:border-primary/20"
                   } transition-all duration-500`}
                 >
-                  {/* Popular glow */}
                   {plan.highlight && (
                     <div className="absolute inset-0 rounded-2xl pointer-events-none"
                       style={{ background: "radial-gradient(ellipse at top, hsl(258 90% 66% / 0.10) 0%, transparent 60%)" }} />
                   )}
 
                   <div className="relative flex-1 flex flex-col">
-                    {/* Header */}
                     <div className="flex items-start justify-between mb-5">
                       <div>
                         <div className={`label-badge ${plan.badgeColor} mb-2`}>{plan.badge}</div>
@@ -147,7 +196,6 @@ export function PricingSection() {
                       </div>
                     </div>
 
-                    {/* Price */}
                     <div className="mb-6 p-4 rounded-xl bg-secondary/50">
                       <div className="flex items-baseline gap-2">
                         <span className={`text-4xl font-bold font-mono ${plan.highlight ? "text-gradient neon-text" : "text-foreground"}`}>
@@ -156,9 +204,13 @@ export function PricingSection() {
                         <span className="text-muted-foreground text-sm">{plan.period}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">soit {plan.monthly}</p>
+                      {plan.id !== "enterprise" && (
+                        <p className="text-xs text-success font-medium mt-1.5 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> 14 jours gratuits inclus
+                        </p>
+                      )}
                     </div>
 
-                    {/* Features */}
                     <div className="space-y-2.5 flex-1 mb-6">
                       {plan.features.map((feature, i) => (
                         <div key={i} className="flex items-start gap-2.5">
@@ -170,50 +222,50 @@ export function PricingSection() {
                       ))}
                     </div>
 
-                    {/* CTA */}
                     <div className="space-y-2 mt-auto">
-                      {user ? (
-                        <Button
-                          size="lg"
-                          className={`w-full font-bold ${plan.highlight ? "neon-glow btn-magnetic" : ""}`}
-                          variant={plan.highlight ? "default" : "outline"}
-                          asChild
-                        >
-                          <Link to="/dashboard">
-                            Accéder au cockpit
-                            <ArrowRight className="w-4 h-4 ml-1" />
-                          </Link>
-                        </Button>
-                      ) : plan.id === "starter" ? (
+                      {plan.id === "enterprise" ? (
                         <Button
                           size="lg"
                           className="w-full font-bold hover:scale-[1.02] transition-transform"
                           variant="outline"
-                          disabled={cta.isLoading}
-                          onClick={() => cta.handleCheckout('starter', {
-                            sourcePage: '/#pricing',
-                            ctaOrigin: `pricing_${plan.id}`,
-                            onFallback: () => setDemoDialogOpen(true),
-                          })}
+                          onClick={() => setTrialModalOpen(true)}
                         >
-                          Commencer gratuit — {plan.price} / an
+                          <CalendarDays className="w-4 h-4 mr-1.5" />
+                          Contacter les ventes
+                          <ArrowRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      ) : user ? (
+                        <Button
+                          size="lg"
+                          className={`w-full font-bold ${plan.highlight ? "neon-glow btn-magnetic hover:scale-[1.02] transition-transform" : "hover:scale-[1.02] transition-transform"}`}
+                          variant={plan.highlight ? "default" : "outline"}
+                          disabled={checkoutLoading === plan.id}
+                          onClick={() => handleStripeCheckout(plan.id as "starter" | "pro")}
+                        >
+                          {checkoutLoading === plan.id
+                            ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
+                            : <CreditCard className="w-4 h-4 mr-1.5" />}
+                          {plan.id === "starter" ? `Starter — ${plan.price}` : `Activer Pro — ${plan.price}`}
                           <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       ) : (
                         <Button
                           size="lg"
                           className={`w-full font-bold ${plan.highlight ? "neon-glow btn-magnetic hover:scale-[1.02] transition-transform" : "hover:scale-[1.02] transition-transform"}`}
-                          disabled={cta.isLoading}
-                          onClick={() => cta.handleDemoRequest({
-                            sourcePage: '/#pricing',
-                            ctaOrigin: `pricing_${plan.id}`,
-                            onFallback: () => setDemoDialogOpen(true),
-                          })}
+                          disabled={checkoutLoading === plan.id}
+                          onClick={() => handleStripeCheckout(plan.id as "starter" | "pro")}
                         >
-                          <CalendarDays className="w-4 h-4 mr-1.5" />
-                          {plan.id === "pro" ? "Activer les 6 Agents" : "Contacter les ventes"}
+                          {checkoutLoading === plan.id
+                            ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
+                            : <CreditCard className="w-4 h-4 mr-1.5" />}
+                          Essayer 14j gratuit — {plan.price} / an
                           <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
+                      )}
+                      {plan.id !== "enterprise" && (
+                        <p className="text-[10px] text-center text-muted-foreground">
+                          🔒 Stripe · Satisfait ou remboursé 30j · Aucune carte pendant 14j
+                        </p>
                       )}
                     </div>
                   </div>
@@ -242,13 +294,6 @@ export function PricingSection() {
           </motion.div>
         </div>
       </div>
-
-      <DemoRequestDialog
-        open={demoDialogOpen}
-        onOpenChange={setDemoDialogOpen}
-        ctaOrigin="pricing_section_cta"
-        sourcePage="/#pricing"
-      />
     </section>
   );
 }

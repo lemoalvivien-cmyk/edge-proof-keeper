@@ -14,6 +14,8 @@ import {
   Loader2,
   Activity,
   Sparkles,
+  CreditCard,
+  Clock,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +32,8 @@ import { generatePortfolioSummary } from '@/lib/api-client';
 import { LiveAgentDemo } from '@/components/demo/LiveAgentDemo';
 import { GuidedTour } from '@/components/onboarding/GuidedTour';
 import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
+import { TrialModal } from '@/components/ui/TrialModal';
+import { useSubscription } from '@/hooks/useSubscription';
 import { motion } from 'framer-motion';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -42,11 +46,15 @@ export default function Dashboard() {
   const { data: findingCounts } = useFindingCounts();
   const { data: topFindings = [] } = useTopPriorityFindings(5);
   const { data: taskCounts } = useTaskCounts();
+  const subscription = useSubscription();
 
   // Pipeline state
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineState, setPipelineState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [pipelineMsg, setPipelineMsg] = useState<string | null>(null);
+
+  // Trial modal
+  const [trialModalOpen, setTrialModalOpen] = useState(false);
 
   // Auto-seed on first visit if no data
   const [autoSeeding, setAutoSeeding] = useState(false);
@@ -201,6 +209,13 @@ export default function Dashboard() {
       {/* Guided tour — first visit only */}
       <GuidedTour />
 
+      {/* Trial / Upgrade modal */}
+      <TrialModal
+        open={trialModalOpen}
+        onClose={() => setTrialModalOpen(false)}
+        afterDemo={false}
+      />
+
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -230,7 +245,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Aha Moment badge */}
+        {/* Badges row */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -245,6 +260,21 @@ export default function Dashboard() {
             <CheckCircle2 className="w-3 h-3" />
             Pipeline 100% réelle — zéro stub
           </Badge>
+          {subscription.trialActive && (
+            <Badge className="bg-warning/10 text-warning border border-warning/30 gap-1.5">
+              <Clock className="w-3 h-3" />
+              Essai 14j gratuit actif
+            </Badge>
+          )}
+          {!subscription.subscribed && !subscription.isLoading && (
+            <Badge
+              className="bg-accent/10 text-accent border border-accent/30 gap-1.5 cursor-pointer hover:bg-accent/20 transition-colors"
+              onClick={() => setTrialModalOpen(true)}
+            >
+              <CreditCard className="w-3 h-3" />
+              Essai 14 jours gratuit — Paiement Stripe sécurisé
+            </Badge>
+          )}
           {autoSeeding && (
             <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5 gap-1.5">
               <Loader2 className="w-3 h-3 animate-spin" />
@@ -252,6 +282,35 @@ export default function Dashboard() {
             </Badge>
           )}
         </motion.div>
+
+        {/* Trial upgrade banner — only for non-subscribers */}
+        {!subscription.subscribed && !subscription.isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-primary/30 bg-primary/5 p-4 flex items-center justify-between flex-wrap gap-3"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center">
+                <Zap className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground text-sm">Essai 14 jours gratuit — Paiement Stripe sécurisé</p>
+                <p className="text-xs text-muted-foreground">Starter 490 € / an · Pro 6 900 € / an · Satisfait ou remboursé 30j</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="gap-2 neon-glow font-bold"
+              onClick={() => setTrialModalOpen(true)}
+            >
+              <CreditCard className="w-4 h-4" />
+              Passer au plan payant 490 €
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          </motion.div>
+        )}
+
 
         {/* Empty state if no data at all */}
         {!hasData && !autoSeeding && (

@@ -195,13 +195,12 @@ export function HeroSection() {
                   size="lg"
                   className="h-12 px-6 text-sm font-bold neon-glow btn-magnetic hover:scale-[1.03] transition-all gap-2 group"
                   onClick={() => {
-                    trackEvent('cta_voir_demo', { source_page: '/', cta_origin: 'hero_primary' });
-                    navigate('/demo');
+                    trackEvent('cta_essai_gratuit', { source_page: '/', cta_origin: 'hero_primary' });
+                    navigate('/auth?tab=signup');
                   }}
                 >
                   <Play className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" />
-                  Voir la démo agents en live
-                  <span className="font-mono text-primary-foreground/60">(47s)</span>
+                  Essayer gratuitement 14 jours
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </Button>
 
@@ -209,14 +208,13 @@ export function HeroSection() {
                   variant="outline"
                   size="lg"
                   className="h-12 px-5 text-sm border-border hover:border-primary/40 hover:bg-primary/5 gap-2 group transition-all"
-                  disabled={cta.isLoading}
                   onClick={() => {
-                    trackEvent('cta_demander_demo', { source_page: '/', cta_origin: 'hero_ghost' });
-                    cta.handleDemoRequest({ sourcePage: '/', ctaOrigin: 'hero_ghost', onFallback: () => setDemoDialogOpen(true) });
+                    trackEvent('cta_voir_demo', { source_page: '/', cta_origin: 'hero_ghost' });
+                    navigate('/demo');
                   }}
                 >
                   <CalendarDays className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  Book 15-min demo
+                  Voir la démo agents (47s)
                 </Button>
               </motion.div>
 
