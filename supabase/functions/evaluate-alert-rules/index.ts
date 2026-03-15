@@ -102,7 +102,7 @@ async function dispatchWebhook(
       }
 
       const color = criticalCount > 0 ? "danger" : highCount > 0 ? "warning" : "good";
-      const text  = `🚨 *Sentinel Immune — ${matchedAlerts.length} alerte(s) active(s)*\n` +
+      const text  = `🚨 *Securit-E — ${matchedAlerts.length} alerte(s) active(s)*\n` +
         `Critique: ${criticalCount} · Élevé: ${highCount} · Org: ${orgId.slice(0, 8)}…\n` +
         matchedAlerts.slice(0, 5).map(a => `• [${a.severity.toUpperCase()}] ${a.title}`).join("\n");
 
@@ -148,7 +148,7 @@ async function dispatchWebhook(
           "@type": "MessageCard",
           "@context": "http://schema.org/extensions",
           themeColor,
-          summary: `Sentinel Immune — ${matchedAlerts.length} alerte(s)`,
+          summary: `Securit-E — ${matchedAlerts.length} alerte(s)`,
           sections: [{
             activityTitle: `🚨 ${matchedAlerts.length} alerte(s) active(s) · ${criticalCount} critique(s)`,
             activitySubtitle: `Organisation: ${orgId.slice(0, 8)}…`,

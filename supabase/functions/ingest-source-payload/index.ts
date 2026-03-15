@@ -127,13 +127,14 @@ Deno.serve(async (req: Request) => {
     global: { headers: { Authorization: `Bearer ${userToken}` } },
   });
 
-  const { data: { user }, error: authError } = await userClient.auth.getUser();
-  if (authError || !user) {
+  const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(userToken);
+  if (claimsError || !claimsData?.claims) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+  const userId = claimsData.claims.sub;
 
   const serviceClient = createClient(supabaseUrl, serviceRoleKey);
 
@@ -175,7 +176,7 @@ Deno.serve(async (req: Request) => {
     const { data: userProfile } = await serviceClient
       .from('profiles')
       .select('organization_id')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     if (!userProfile?.organization_id) {

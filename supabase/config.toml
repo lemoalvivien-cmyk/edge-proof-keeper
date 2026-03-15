@@ -27,7 +27,7 @@ verify_jwt = true
 [functions.export-proof-pack]
 verify_jwt = true
 
-# ─── Core Engine Functions ──────────────────────────────────────────────────
+# ─── Core Engine Functions — JWT validated in code via getClaims() ──────────
 [functions.ingest-signals]
 verify_jwt = false
 
@@ -49,25 +49,25 @@ verify_jwt = false
 [functions.submit-sales-lead]
 verify_jwt = false
 
-# ─── Ingestion Hub Functions ────────────────────────────────────────────────
+# ─── Ingestion Hub Functions — JWT validated in code via getClaims() ────────
 [functions.ingest-source-payload]
 verify_jwt = false
 
 [functions.sync-public-intel-source]
 verify_jwt = false
 
-# ─── Entity Graph Functions ─────────────────────────────────────────────────
+# ─── Entity Graph Functions — JWT validated in code via getClaims() ─────────
 [functions.correlate-entities]
 verify_jwt = false
 
-# ─── AI Intelligence Functions ───────────────────────────────────────────────
+# ─── AI Intelligence Functions — JWT validated in code via getClaims() ───────
 [functions.analyze-risk-intelligence]
 verify_jwt = false
 
 [functions.enhance-remediation-actions]
 verify_jwt = false
 
-# ─── Monitoring & Alerting Functions ────────────────────────────────────────
+# ─── Monitoring & Alerting Functions — JWT validated in code via getClaims() ─
 [functions.schedule-source-sync]
 verify_jwt = false
 
@@ -83,6 +83,26 @@ verify_jwt = false
 # ─── Decision Layer ──────────────────────────────────────────────────────────
 [functions.generate-portfolio-summary]
 verify_jwt = true
+
+# ─── Additional Functions — JWT validated in code via getClaims() ────────────
+[functions.seed-demo-run]
+verify_jwt = false
+
+[functions.seed-minimal-data]
+verify_jwt = false
+
+[functions.bootstrap-owner]
+verify_jwt = false
+
+[functions.get-demo-fixture]
+verify_jwt = false
+
+[functions.upload-tool-run-artifact]
+verify_jwt = true
+
+# ─── Security Test ───────────────────────────────────────────────────────────
+[functions.test-unauthorized-call]
+verify_jwt = false
 
 # ─── Public Config (no JWT — field-level whitelist enforced inside) ──────────
 [functions.get-public-config]
