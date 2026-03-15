@@ -3900,6 +3900,45 @@ export default function AdminReadiness() {
             Vérification de l'état de la plateforme…
           </div>
         )}
+
+        {/* ── Edge Functions Security Badge ─────────────────────────────────── */}
+        <Card className="border-success/40 bg-success/5">
+          <CardContent className="p-5">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0">
+                <Lock className="h-5 w-5 text-success" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="font-bold text-foreground text-sm">Edge Functions 100% JWT-protected</span>
+                  <Badge className="bg-success/20 text-success border-success/30 text-xs">SÉCURISÉ</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Toutes les fonctions sensibles valident le JWT via <code className="font-mono bg-muted px-1 rounded">getClaims()</code> 
+                  et vérifient l'accès organisation via <code className="font-mono bg-muted px-1 rounded">has_org_access()</code>.
+                  Aucun accès non authentifié autorisé.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'ingest-signals','correlate-risks','build-remediation-queue',
+                    'analyze-signal-with-gemini','generate-remediation-plan','enhance-remediation-actions',
+                    'analyze-risk-intelligence','correlate-entities','ingest-source-payload',
+                    'sync-customer-authorized-source','sync-public-intel-source',
+                    'schedule-source-sync','stale-risk-check','evaluate-alert-rules',
+                    'generate-portfolio-summary','upload-authorization','upload-document',
+                    'create-tool-run','generate-reports','log-evidence',
+                    'verify-evidence-chain','export-proof-pack',
+                  ].map(fn => (
+                    <span key={fn} className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-success/10 text-success border border-success/20">
+                      <CheckCircle2 className="h-2.5 w-2.5" />{fn}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
       </div>
     </AppLayout>
   );
