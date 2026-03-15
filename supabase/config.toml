@@ -107,3 +107,13 @@ verify_jwt = false
 # ─── Public Config (no JWT — field-level whitelist enforced inside) ──────────
 [functions.get-public-config]
 verify_jwt = false
+
+# ─── Sovereign AI Agent — JWT validated in code ──────────────────────────────
+[functions.sovereign-analyze]
+verify_jwt = false
+
+[functions.build-ontology]
+verify_jwt = false
+
+[functions.export-sovereign-report]
+verify_jwt = false
