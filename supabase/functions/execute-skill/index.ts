@@ -332,7 +332,7 @@ Deno.serve(async (req) => {
     };
 
     if (!skill) {
-      return new Response(JSON.stringify({ error: 'skill is required' }), {
+      return new Response(JSON.stringify({ error: 'skill est requis' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
