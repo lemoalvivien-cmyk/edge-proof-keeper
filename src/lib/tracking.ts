@@ -9,6 +9,8 @@ export type TrackEventName =
   | 'cta_voir_demo'
   | 'cta_tester_fichier'
   | 'cta_demander_demo'
+  | 'cta_essai_gratuit'
+  | 'cta_stripe_checkout'
   | 'demo_dialog_open'
   | 'demo_dialog_submit'
   | 'cta_pricing'
