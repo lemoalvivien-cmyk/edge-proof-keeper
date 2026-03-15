@@ -1,5 +1,3 @@
-// WiinupMax - Application Configuration has been fully renamed to SECURIT-E FINAL
-
 /**
  * SECURIT-E FINAL — Application Configuration
  *

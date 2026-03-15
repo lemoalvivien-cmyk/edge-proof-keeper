@@ -187,9 +187,9 @@ export default function Dashboard() {
   const riskScore = Math.max(0, 100 - (criticalHighCount * 5));
 
   const getRiskColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    if (score >= 40) return 'text-orange-600';
+    if (score >= 80) return 'text-success';
+    if (score >= 60) return 'text-warning';
+    if (score >= 40) return 'text-accent';
     return 'text-destructive';
   };
 
@@ -202,7 +202,7 @@ export default function Dashboard() {
 
   const severityColors: Record<string, string> = {
     critical: 'bg-destructive text-destructive-foreground',
-    high: 'bg-orange-500 text-white',
+    high: 'bg-warning text-warning-foreground',
   };
 
   const hasData = (findingCounts?.total ?? 0) > 0 || (pipelineProof?.findings ?? 0) > 0;
@@ -364,7 +364,7 @@ export default function Dashboard() {
                   <Badge variant="destructive">{findingCounts?.critical} critiques</Badge>
                 )}
                 {(findingCounts?.high ?? 0) > 0 && (
-                  <Badge className="bg-[hsl(25,95%,53%)] text-white">{findingCounts?.high} élevés</Badge>
+                  <Badge className="bg-warning text-warning-foreground">{findingCounts?.high} élevés</Badge>
                 )}
                 {(findingCounts?.total ?? 0) === 0 && (
                   <Badge variant="outline" className="text-muted-foreground">En attente d'analyse</Badge>
@@ -462,12 +462,12 @@ export default function Dashboard() {
               <>
                 <div className="flex flex-wrap gap-4">
                   <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[hsl(217,91%,60%)]" />
+              <div className="w-3 h-3 rounded-full bg-primary" />
                     <span className="font-bold">{taskCounts?.open ?? 0}</span>
                     <span className="text-muted-foreground">ouvertes</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[hsl(38,92%,50%)]" />
+                    <div className="w-3 h-3 rounded-full bg-warning" />
                     <span className="font-bold">{taskCounts?.in_progress ?? 0}</span>
                     <span className="text-muted-foreground">en cours</span>
                   </div>

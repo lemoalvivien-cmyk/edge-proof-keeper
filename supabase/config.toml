@@ -116,8 +116,11 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.export-sovereign-report]
+verify_jwt = false
 
-# ─── Smoke Test & Auto-Audit ─────────────────────────────────────────────────
+# ─── Skill Executor — JWT validated in code ──────────────────────────────────
+[functions.execute-skill]
+verify_jwt = false
 [functions.run-smoke-test]
 verify_jwt = false
 

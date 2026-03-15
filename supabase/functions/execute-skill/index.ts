@@ -7,8 +7,22 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+// ── In-memory rate limiter: 10 req/min per user ────────────────────────────
+const skillRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+function checkSkillRateLimit(userId: string, maxPerMin = 10): boolean {
+  const now = Date.now();
+  const entry = skillRateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    skillRateLimitMap.set(userId, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  if (entry.count >= maxPerMin) return false;
+  entry.count++;
+  return true;
+}
 
 // ── Real SHA-256 using WebCrypto (no btoa) ─────────────────────────────────
 async function sha256hex(data: string): Promise<string> {
@@ -297,9 +311,17 @@ Deno.serve(async (req) => {
     });
     const { data: { user }, error: authErr } = await userClient.auth.getUser();
     if (authErr || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'Non autorisé' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // ── Rate limit: 10 appels/min par user ────────────────────────────────────
+    if (!checkSkillRateLimit(user.id, 10)) {
+      return new Response(
+        JSON.stringify({ error: "Limite de 10 exécutions/min atteinte — réessayez dans un moment" }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
+      );
     }
 
     const body = await req.json().catch(() => ({}));
@@ -310,7 +332,7 @@ Deno.serve(async (req) => {
     };
 
     if (!skill) {
-      return new Response(JSON.stringify({ error: 'skill is required' }), {
+      return new Response(JSON.stringify({ error: 'skill est requis' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -350,7 +372,7 @@ Deno.serve(async (req) => {
         result = await executeSwarmCollaborate(params);
         break;
       default:
-        return new Response(JSON.stringify({ error: `Unknown skill: ${skill}` }), {
+        return new Response(JSON.stringify({ error: `Skill inconnu : ${skill}` }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
