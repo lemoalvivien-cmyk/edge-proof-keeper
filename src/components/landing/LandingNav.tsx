@@ -55,6 +55,9 @@ export function LandingNav() {
                 <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
                 🇫🇷 100% Souverain France
               </span>
+              <span className="hidden lg:flex items-center gap-1.5 font-semibold">
+                🏆 Palantir-Killer : Ontology + Self-Healing + Preuve Post-Quantique
+              </span>
             </div>
           </div>
         </div>

@@ -620,6 +620,12 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Ontologie Souveraine */}
+        <OntologyView />
+
+        {/* Rapport souverain export */}
+        <SovereignReportExport />
+
         {/* Live Agents Demo */}
         <Card className="border-primary/30">
           <CardHeader className="pb-3">
