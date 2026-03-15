@@ -428,7 +428,7 @@ function generateExecutiveMarkdown(exec: Record<string, unknown>, factPack: Reco
   const topRisks = Array.isArray(e.top_risks) ? e.top_risks : [];
   const actionPlan = (e.action_plan as Record<string, string>) || {};
   
-  return `# Rapport Direction - SENTINEL EDGE
+  return `# Rapport Direction - SECURIT-E
 
 ## Résumé Exécutif
 
@@ -443,7 +443,7 @@ ${topRisks.length > 0
     ).join("\n\n")
   : "Aucun risque identifié - données insuffisantes pour l'analyse."}
 
-## Risques Juridiques & Conformité (GDPR/NIS2)
+## Risques Juridiques & Conformité (RGPD/NIS2)
 
 ${e.legal_risks || "Non déterminable - analyse complémentaire requise."}
 
@@ -460,7 +460,7 @@ ${e.legal_risks || "Non déterminable - analyse complémentaire requise."}
 **Niveau:** ${e.confidence || (factPack as Record<string, unknown>).data_confidence || "Non déterminable"}
 
 ---
-*Rapport généré par SENTINEL EDGE - ${new Date().toLocaleDateString("fr-FR")}*
+*Rapport généré par SECURIT-E — Armure Cyber Autonome Souveraine 🇫🇷 — ${new Date().toLocaleDateString("fr-FR")}*
 `;
 }
 
