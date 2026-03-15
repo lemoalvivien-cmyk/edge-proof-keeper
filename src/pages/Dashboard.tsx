@@ -16,6 +16,7 @@ import {
   Sparkles,
   CreditCard,
   Clock,
+  Network,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,6 +35,8 @@ import { GuidedTour } from '@/components/onboarding/GuidedTour';
 import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
 import { TrialModal } from '@/components/ui/TrialModal';
 import { useSubscription } from '@/hooks/useSubscription';
+import { OntologyView } from '@/components/ontology/OntologyView';
+import { SovereignReportExport } from '@/components/sovereign/SovereignReportExport';
 import { motion } from 'framer-motion';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
