@@ -372,7 +372,7 @@ Deno.serve(async (req) => {
         result = await executeSwarmCollaborate(params);
         break;
       default:
-        return new Response(JSON.stringify({ error: `Unknown skill: ${skill}` }), {
+        return new Response(JSON.stringify({ error: `Skill inconnu : ${skill}` }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
