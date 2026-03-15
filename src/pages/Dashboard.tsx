@@ -14,6 +14,8 @@ import {
   Loader2,
   Activity,
   Sparkles,
+  CreditCard,
+  Clock,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +32,8 @@ import { generatePortfolioSummary } from '@/lib/api-client';
 import { LiveAgentDemo } from '@/components/demo/LiveAgentDemo';
 import { GuidedTour } from '@/components/onboarding/GuidedTour';
 import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
+import { TrialModal } from '@/components/ui/TrialModal';
+import { useSubscription } from '@/hooks/useSubscription';
 import { motion } from 'framer-motion';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
