@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Shield, Building2, ArrowRight, Loader2, CheckCircle2, Sparkles, Zap, Skip 
+  Shield, Building2, Loader2, CheckCircle2, Zap 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
