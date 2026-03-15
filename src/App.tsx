@@ -58,8 +58,17 @@ import Signals from "./pages/Signals";
 import RevenueSettings from "./pages/RevenueSettings";
 import Remediation from "./pages/Remediation";
 import PlatformHealth from "./pages/PlatformHealth";
+import FAQ from "./pages/FAQ";
+import Status from "./pages/Status";
+import { useNetworkStatus } from "./hooks/useNetworkStatus";
 
 const queryClient = new QueryClient();
+
+// Global network status monitor
+function NetworkMonitor() {
+  useNetworkStatus();
+  return null;
+}
 
 // SoloModeWrapper: only active when VITE_SOLO_MODE=true.
 // In public SaaS mode (default), this is a transparent pass-through.
