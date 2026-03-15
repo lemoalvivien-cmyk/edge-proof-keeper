@@ -12,6 +12,7 @@ import {
   BarChart3,
   Play,
   Loader2,
+  Activity,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,9 +26,11 @@ import { useTaskCounts } from '@/hooks/useRemediation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { generatePortfolioSummary } from '@/lib/api-client';
+import { LiveAgentDemo } from '@/components/demo/LiveAgentDemo';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
