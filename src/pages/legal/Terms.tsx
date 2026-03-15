@@ -34,7 +34,8 @@ export default function Terms() {
               <h2 className="text-xl font-semibold mb-3">1. Objet</h2>
               <p className="text-muted-foreground">
                 Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation 
-                de la plateforme SECURIT-E, éditée par [Nom de la société], ci-après dénommée "l'Éditeur".
+                de la plateforme SECURIT-E, éditée par <strong>VLM Consulting</strong> — SIRET 835 125 089 000 28 — 59170 Croix, 
+                ci-après dénommée "l'Éditeur".
               </p>
               <p className="text-muted-foreground">
                 SECURIT-E est une plateforme SaaS de gouvernance et de preuve cyber, destinée aux
