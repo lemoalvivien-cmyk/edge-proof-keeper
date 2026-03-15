@@ -7,7 +7,7 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, CheckCircle2, AlertCircle, Loader2, Shield, Zap,
-  Terminal, Lock, Activity, Clock, Database, ArrowRight, RefreshCw,
+  Terminal, Lock, Activity, Clock, Database, RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
