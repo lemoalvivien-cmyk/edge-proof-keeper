@@ -16,6 +16,7 @@ import {
   Sparkles,
   CreditCard,
   Clock,
+  Network,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,6 +35,8 @@ import { GuidedTour } from '@/components/onboarding/GuidedTour';
 import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
 import { TrialModal } from '@/components/ui/TrialModal';
 import { useSubscription } from '@/hooks/useSubscription';
+import { OntologyView } from '@/components/ontology/OntologyView';
+import { SovereignReportExport } from '@/components/sovereign/SovereignReportExport';
 import { motion } from 'framer-motion';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -259,6 +262,14 @@ export default function Dashboard() {
           <Badge variant="outline" className="text-success border-success/30 bg-success/5 gap-1.5">
             <CheckCircle2 className="w-3 h-3" />
             Pipeline 100% réelle — zéro stub
+          </Badge>
+          {/* Palantir-Killer Badge */}
+          <Badge className="bg-primary/15 text-primary border border-primary/30 gap-1.5 font-semibold">
+            <Network className="w-3 h-3" />
+            🏆 Palantir-Killer : Ontology + Self-Healing + Preuve Post-Quantique
+          </Badge>
+          <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5 gap-1.5">
+            🇫🇷 Souverain Français — 20× moins cher que Palantir
           </Badge>
           {subscription.trialActive && (
             <Badge className="bg-warning/10 text-warning border border-warning/30 gap-1.5">
@@ -608,6 +619,12 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Ontologie Souveraine */}
+        <OntologyView />
+
+        {/* Rapport souverain export */}
+        <SovereignReportExport />
 
         {/* Live Agents Demo */}
         <Card className="border-primary/30">

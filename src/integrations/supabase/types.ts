@@ -894,6 +894,63 @@ export type Database = {
           },
         ]
       }
+      healing_scripts: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          execution_log: string | null
+          execution_status: string
+          id: string
+          organization_id: string
+          proof_hash: string | null
+          remediation_action_id: string
+          script_content: string
+          script_type: string
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          execution_log?: string | null
+          execution_status?: string
+          id?: string
+          organization_id: string
+          proof_hash?: string | null
+          remediation_action_id: string
+          script_content: string
+          script_type?: string
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          execution_log?: string | null
+          execution_status?: string
+          id?: string
+          organization_id?: string
+          proof_hash?: string | null
+          remediation_action_id?: string
+          script_content?: string
+          script_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "healing_scripts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "healing_scripts_remediation_action_id_fkey"
+            columns: ["remediation_action_id"]
+            isOneToOne: false
+            referencedRelation: "remediation_actions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_rules: {
         Row: {
           channel: string
@@ -931,6 +988,102 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "notification_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ontology_edges: {
+        Row: {
+          created_at: string
+          evidence: Json
+          from_node_id: string
+          id: string
+          organization_id: string
+          relation: string
+          to_node_id: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          evidence?: Json
+          from_node_id: string
+          id?: string
+          organization_id: string
+          relation: string
+          to_node_id: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          evidence?: Json
+          from_node_id?: string
+          id?: string
+          organization_id?: string
+          relation?: string
+          to_node_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ontology_edges_from_node_id_fkey"
+            columns: ["from_node_id"]
+            isOneToOne: false
+            referencedRelation: "ontology_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ontology_edges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ontology_edges_to_node_id_fkey"
+            columns: ["to_node_id"]
+            isOneToOne: false
+            referencedRelation: "ontology_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ontology_nodes: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          label: string
+          node_type: string
+          organization_id: string
+          properties: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          label: string
+          node_type: string
+          organization_id: string
+          properties?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          label?: string
+          node_type?: string
+          organization_id?: string
+          properties?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ontology_nodes_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
