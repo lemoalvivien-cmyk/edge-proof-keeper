@@ -52,6 +52,7 @@ import ContinuousGovernance from "./pages/offres/ContinuousGovernance";
 import EasmOsintSignals from "./pages/offres/EasmOsintSignals";
 import PlansAddons from "./pages/PlansAddons";
 import Demo from "./pages/Demo";
+import ResetPassword from "./pages/ResetPassword";
 import Sources from "./pages/Sources";
 import Signals from "./pages/Signals";
 import RevenueSettings from "./pages/RevenueSettings";
@@ -116,6 +117,7 @@ const App = () => (
               
               {/* Auth route — public in SaaS mode, redirect in solo mode */}
               <Route path="/auth" element={SOLO_MODE ? <Navigate to="/dashboard" replace /> : <Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Compatibility redirects for removed authorization module */}
               <Route path="/scopeguard" element={<Navigate to="/tools" replace />} />

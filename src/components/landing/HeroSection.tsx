@@ -226,6 +226,7 @@ export function HeroSection() {
                   { label: "Self-healing autonome", color: "text-success", bg: "bg-success/10", dot: "bg-success" },
                   { label: "Evidence post-quantique", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
                   { label: "100% Souverain 🇫🇷", color: "text-accent", bg: "bg-accent/10", dot: "bg-accent" },
+                  { label: "Aha Moment en 47s", color: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
                 ].map((b, i) => (
                   <motion.div
                     key={i}

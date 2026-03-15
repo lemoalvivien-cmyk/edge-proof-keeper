@@ -13,8 +13,9 @@ import {
   Play,
   Loader2,
   Activity,
+  Sparkles,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,10 +28,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { generatePortfolioSummary } from '@/lib/api-client';
 import { LiveAgentDemo } from '@/components/demo/LiveAgentDemo';
+import { GuidedTour } from '@/components/onboarding/GuidedTour';
+import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
+import { motion } from 'framer-motion';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -40,12 +43,15 @@ export default function Dashboard() {
   const { data: topFindings = [] } = useTopPriorityFindings(5);
   const { data: taskCounts } = useTaskCounts();
 
-  // Pipeline live proof state
+  // Pipeline state
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineState, setPipelineState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [pipelineMsg, setPipelineMsg] = useState<string | null>(null);
 
-  // Fetch compliance stats
+  // Auto-seed on first visit if no data
+  const [autoSeeding, setAutoSeeding] = useState(false);
+
+  // Compliance stats
   const { data: complianceStats } = useQuery({
     queryKey: ['compliance-stats', organization?.id],
     queryFn: async () => {
@@ -69,7 +75,7 @@ export default function Dashboard() {
     enabled: !!organization?.id,
   });
 
-  // Fetch asset count
+  // Asset count
   const { data: assetCount } = useQuery({
     queryKey: ['asset-count', organization?.id],
     queryFn: async () => {
@@ -83,7 +89,7 @@ export default function Dashboard() {
     enabled: !!organization?.id,
   });
 
-  // Pipeline proof status (DB state)
+  // Pipeline proof status
   const { data: pipelineProof, refetch: refetchProof } = useQuery({
     queryKey: ['dashboard-pipeline-proof', organization?.id],
     queryFn: async () => {
@@ -100,9 +106,38 @@ export default function Dashboard() {
       };
     },
     enabled: !!organization?.id,
+    refetchInterval: autoSeeding ? 2000 : false,
   });
 
-  // Quick E2E pipeline launcher (uses seed path for speed)
+  // Auto-seed if no data (new user, <12s target)
+  useEffect(() => {
+    if (!organization?.id || pipelineProof === undefined) return;
+    if (pipelineProof.findings === 0 && !autoSeeding) {
+      setAutoSeeding(true);
+      (async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.access_token) return;
+          await fetch(`${SUPABASE_URL}/functions/v1/seed-demo-run`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+              apikey: SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({ organization_id: organization.id }),
+          });
+          refetchProof();
+          qc.invalidateQueries({ queryKey: ['findings'] });
+          qc.invalidateQueries({ queryKey: ['finding-counts'] });
+        } catch { /* non-blocking */ }
+        finally { setAutoSeeding(false); }
+      })();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organization?.id, pipelineProof?.findings]);
+
+  // Quick pipeline launcher
   const handleQuickPipeline = async () => {
     if (!organization?.id || pipelineRunning) return;
     setPipelineRunning(true);
@@ -113,7 +148,6 @@ export default function Dashboard() {
       if (!session?.access_token) throw new Error('Session expirée');
       const tok = session.access_token;
 
-      // Step 1: seed demo run
       const seedRes = await fetch(`${SUPABASE_URL}/functions/v1/seed-demo-run`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
@@ -123,11 +157,10 @@ export default function Dashboard() {
       if (!seedRes.ok || !seedJson.tool_run_id) throw new Error(seedJson?.error ?? `HTTP ${seedRes.status}`);
       setPipelineMsg(`Run créé (${seedJson.findings_inserted} findings). Génération synthèse…`);
 
-      // Step 2: portfolio summary
       await generatePortfolioSummary(organization.id, 'executive_brief');
 
       setPipelineState('done');
-      setPipelineMsg(`✓ ${seedJson.findings_inserted} findings [DEMO] en DB · synthèse executive générée · pipeline prouvé`);
+      setPipelineMsg(`✓ ${seedJson.findings_inserted} findings [DEMO] · synthèse executive générée · pipeline prouvé`);
       refetchProof();
       qc.invalidateQueries({ queryKey: ['findings'] });
       qc.invalidateQueries({ queryKey: ['finding-counts'] });
@@ -146,7 +179,7 @@ export default function Dashboard() {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
     if (score >= 40) return 'text-orange-600';
-    return 'text-red-600';
+    return 'text-destructive';
   };
 
   const getRiskLabel = (score: number) => {
@@ -161,26 +194,76 @@ export default function Dashboard() {
     high: 'bg-orange-500 text-white',
   };
 
+  const hasData = (findingCounts?.total ?? 0) > 0 || (pipelineProof?.findings ?? 0) > 0;
+
   return (
     <AppLayout>
+      {/* Guided tour — first visit only */}
+      <GuidedTour />
+
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Vue Direction</h1>
             <p className="text-muted-foreground">
-              Bienvenue, {profile?.full_name ?? 'Utilisateur'}. Voici l'état de votre posture cyber.
+              Bienvenue{profile?.full_name ? `, ${profile.full_name}` : ''}. Voici l'état de votre posture cyber.
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate('/dashboard/technical')}>
-            Vue Technique
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Always-visible "Lancer analyse" CTA */}
+            <Button
+              onClick={handleQuickPipeline}
+              disabled={!organization?.id || pipelineRunning || autoSeeding}
+              className="gap-2 bg-primary hover:bg-primary/90"
+              size="sm"
+            >
+              {pipelineRunning || autoSeeding
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Zap className="w-4 h-4" />}
+              Lancer analyse immédiate
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/technical')}>
+              Vue Technique
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
+
+        {/* Aha Moment badge */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex flex-wrap items-center gap-2"
+        >
+          <Badge className="bg-primary/10 text-primary border border-primary/20 gap-1.5">
+            <Sparkles className="w-3 h-3" />
+            Aha Moment en 47s — Analyse autonome immédiate
+          </Badge>
+          <Badge variant="outline" className="text-success border-success/30 bg-success/5 gap-1.5">
+            <CheckCircle2 className="w-3 h-3" />
+            Pipeline 100% réelle — zéro stub
+          </Badge>
+          {autoSeeding && (
+            <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5 gap-1.5">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Initialisation données démo…
+            </Badge>
+          )}
+        </motion.div>
+
+        {/* Empty state if no data at all */}
+        {!hasData && !autoSeeding && (
+          <DashboardEmptyState
+            onLaunchDemo={() => navigate('/demo')}
+            onLaunchAnalysis={handleQuickPipeline}
+            isLoading={pipelineRunning}
+          />
+        )}
 
         {/* Key Metrics */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Risk Score */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Score de Risque</CardTitle>
@@ -199,7 +282,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Findings Count */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Findings Ouverts</CardTitle>
@@ -207,18 +289,20 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{findingCounts?.total ?? 0}</div>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-2 flex-wrap">
                 {(findingCounts?.critical ?? 0) > 0 && (
                   <Badge variant="destructive">{findingCounts?.critical} critiques</Badge>
                 )}
                 {(findingCounts?.high ?? 0) > 0 && (
-                  <Badge className="bg-orange-500">{findingCounts?.high} élevés</Badge>
+                  <Badge className="bg-[hsl(25,95%,53%)] text-white">{findingCounts?.high} élevés</Badge>
+                )}
+                {(findingCounts?.total ?? 0) === 0 && (
+                  <Badge variant="outline" className="text-muted-foreground">En attente d'analyse</Badge>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Compliance */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Conformité GDPR/NIS2</CardTitle>
@@ -233,7 +317,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Assets */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Actifs Surveillés</CardTitle>
@@ -255,20 +338,16 @@ export default function Dashboard() {
               <AlertTriangle className="h-5 w-5 text-destructive" />
               Top 5 Priorités
             </CardTitle>
-            <CardDescription>
-              Findings critiques et élevés nécessitant une action immédiate
-            </CardDescription>
+            <CardDescription>Findings critiques et élevés nécessitant une action immédiate</CardDescription>
           </CardHeader>
           <CardContent>
-          {topFindings.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-success" />
-                <p className="mb-4">Aucun finding critique ou élevé à traiter</p>
-                <Button variant="outline" size="sm" onClick={() => navigate('/tools')} className="gap-2">
-                  <Zap className="h-4 w-4" />
-                  Importer un scan
-                </Button>
-              </div>
+            {topFindings.length === 0 ? (
+              <DashboardEmptyState
+                onLaunchDemo={() => navigate('/demo')}
+                onLaunchAnalysis={handleQuickPipeline}
+                isLoading={pipelineRunning || autoSeeding}
+                variant="findings"
+              />
             ) : (
               <div className="space-y-3">
                 {topFindings.map((finding, i) => (
@@ -299,41 +378,50 @@ export default function Dashboard() {
               <ListTodo className="h-5 w-5" />
               Tâches de Remédiation
             </CardTitle>
-            <CardDescription>
-              Suivi des actions correctives
-            </CardDescription>
+            <CardDescription>Suivi des actions correctives</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                <span className="font-bold">{taskCounts?.open ?? 0}</span>
-                <span className="text-muted-foreground">ouvertes</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <span className="font-bold">{taskCounts?.in_progress ?? 0}</span>
-                <span className="text-muted-foreground">en cours</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-destructive" />
-                <span className="font-bold text-destructive">{taskCounts?.overdue ?? 0}</span>
-                <span className="text-muted-foreground">en retard</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="font-bold">{taskCounts?.done ?? 0}</span>
-                <span className="text-muted-foreground">terminées</span>
-              </div>
-            </div>
-            <Button variant="outline" className="mt-4" onClick={() => navigate('/tasks')}>
-              Voir toutes les tâches
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            {(taskCounts?.open ?? 0) + (taskCounts?.in_progress ?? 0) + (taskCounts?.done ?? 0) === 0 ? (
+              <DashboardEmptyState
+                onLaunchDemo={() => navigate('/demo')}
+                onLaunchAnalysis={handleQuickPipeline}
+                isLoading={pipelineRunning || autoSeeding}
+                variant="tasks"
+              />
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[hsl(217,91%,60%)]" />
+                    <span className="font-bold">{taskCounts?.open ?? 0}</span>
+                    <span className="text-muted-foreground">ouvertes</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[hsl(38,92%,50%)]" />
+                    <span className="font-bold">{taskCounts?.in_progress ?? 0}</span>
+                    <span className="text-muted-foreground">en cours</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-destructive" />
+                    <span className="font-bold text-destructive">{taskCounts?.overdue ?? 0}</span>
+                    <span className="text-muted-foreground">en retard</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-success" />
+                    <span className="font-bold">{taskCounts?.done ?? 0}</span>
+                    <span className="text-muted-foreground">terminées</span>
+                  </div>
+                </div>
+                <Button variant="outline" className="mt-4" onClick={() => navigate('/tasks')}>
+                  Voir toutes les tâches
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 
-        {/* Status Summary */}
+        {/* Status + Résumé */}
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -341,18 +429,13 @@ export default function Dashboard() {
                 <CheckCircle2 className="h-5 w-5" />
                 Statut Opérationnel
               </CardTitle>
-              <CardDescription>
-                État de votre plateforme
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-3 text-green-600">
+              <div className="flex items-center gap-3 text-success">
                 <CheckCircle2 className="h-6 w-6" />
                 <div>
                   <p className="font-medium">Plateforme active</p>
-                  <p className="text-sm text-muted-foreground">
-                    Prêt pour les opérations
-                  </p>
+                  <p className="text-sm text-muted-foreground">Agents autonomes opérationnels</p>
                 </div>
               </div>
             </CardContent>
@@ -364,37 +447,29 @@ export default function Dashboard() {
                 <TrendingUp className="h-5 w-5" />
                 Résumé Exécutif
               </CardTitle>
-              <CardDescription>
-                Points clés à retenir
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-2">
                 <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
                 <p className="text-sm">
-                  {criticalHighCount > 0 
+                  {criticalHighCount > 0
                     ? `${criticalHighCount} finding(s) critique(s)/élevé(s) à traiter en priorité`
-                    : 'Aucun finding critique ou élevé'
-                  }
+                    : 'Aucun finding critique ou élevé'}
                 </p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                <p className="text-sm">
-                  Conformité globale à {complianceStats?.percentage ?? 0}% pour GDPR/NIS2
-                </p>
+                <p className="text-sm">Conformité globale à {complianceStats?.percentage ?? 0}% pour GDPR/NIS2</p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                <p className="text-sm">
-                  {assetCount ?? 0} actif(s) sous surveillance active
-                </p>
+                <p className="text-sm">{assetCount ?? 0} actif(s) sous surveillance active</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Live Proof Panel — Pipeline Produit */}
+        {/* Pipeline Proof Panel */}
         <Card className={`border-2 ${
           pipelineState === 'done' ? 'border-success/50 bg-success/[0.02]' :
           pipelineState === 'error' ? 'border-destructive/50 bg-destructive/[0.02]' :
@@ -410,7 +485,7 @@ export default function Dashboard() {
               </CardTitle>
               <div className="flex items-center gap-2">
                 {pipelineState === 'idle' && (pipelineProof?.runs ?? 0) === 0 && (
-                  <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted">NON LANCÉ</Badge>
+                  <Badge variant="outline" className="text-xs">NON LANCÉ</Badge>
                 )}
                 {pipelineState === 'idle' && (pipelineProof?.runs ?? 0) > 0 && (
                   <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">✓ PIPELINE ACTIF</Badge>
@@ -426,34 +501,22 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
-            <CardDescription>
-              État réel du pipeline : runs · findings · synthèse executive
-            </CardDescription>
+            <CardDescription>État réel du pipeline : runs · findings · synthèse executive</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {/* DB state indicators */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Runs en DB</p>
-                <p className={`text-2xl font-black ${(pipelineProof?.runs ?? 0) > 0 ? 'text-success' : 'text-muted-foreground'}`}>
-                  {pipelineProof?.runs ?? 0}
-                </p>
-              </div>
-              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Findings normalisés</p>
-                <p className={`text-2xl font-black ${(pipelineProof?.findings ?? 0) > 0 ? 'text-success' : 'text-muted-foreground'}`}>
-                  {pipelineProof?.findings ?? 0}
-                </p>
-              </div>
-              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Synthèses IA</p>
-                <p className={`text-2xl font-black ${(pipelineProof?.summaries ?? 0) > 0 ? 'text-success' : 'text-muted-foreground'}`}>
-                  {pipelineProof?.summaries ?? 0}
-                </p>
-              </div>
+              {[
+                { label: 'Runs en DB', val: pipelineProof?.runs ?? 0 },
+                { label: 'Findings normalisés', val: pipelineProof?.findings ?? 0 },
+                { label: 'Synthèses IA', val: pipelineProof?.summaries ?? 0 },
+              ].map(({ label, val }) => (
+                <div key={label} className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">{label}</p>
+                  <p className={`text-2xl font-black ${val > 0 ? 'text-success' : 'text-muted-foreground'}`}>{val}</p>
+                </div>
+              ))}
             </div>
 
-            {/* Pipeline result message */}
             {pipelineMsg && (
               <div className={`rounded-lg border px-3 py-2 text-xs font-mono ${
                 pipelineState === 'done' ? 'border-success/30 bg-success/5 text-success' :
@@ -466,12 +529,7 @@ export default function Dashboard() {
             )}
 
             <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                onClick={handleQuickPipeline}
-                disabled={!organization?.id || pipelineRunning}
-                className="gap-1.5"
-              >
+              <Button size="sm" onClick={handleQuickPipeline} disabled={!organization?.id || pipelineRunning} className="gap-1.5">
                 {pipelineRunning
                   ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
                   : <><Play className="h-4 w-4" />Lancer la preuve live</>}
@@ -489,15 +547,10 @@ export default function Dashboard() {
                 </Link>
               </Button>
             </div>
-            {(pipelineProof?.runs ?? 0) === 0 && pipelineState === 'idle' && (
-              <p className="text-[10px] font-mono text-muted-foreground">
-                Aucun run en DB · Cliquez "Lancer la preuve live" pour exécuter le pipeline avec des données [DEMO] fictives et prouver la chaîne de valeur
-              </p>
-            )}
           </CardContent>
         </Card>
 
-        {/* ── Live Agents Demo — Pipeline 100% réelle ── */}
+        {/* Live Agents Demo */}
         <Card className="border-primary/30">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -508,7 +561,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <Badge className="bg-primary/10 text-primary border-primary/30 text-xs">DEMO LIVE</Badge>
                 <Badge variant="outline" className="text-xs text-success border-success/30 bg-success/10">
-                  Pipeline 100% réelle — zéro stub
+                  Aha Moment en 47s
                 </Badge>
               </div>
             </div>
@@ -520,7 +573,6 @@ export default function Dashboard() {
             <LiveAgentDemo />
           </CardContent>
         </Card>
-
       </div>
     </AppLayout>
   );

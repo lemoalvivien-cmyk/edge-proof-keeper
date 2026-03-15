@@ -1,388 +1,177 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { 
-  Shield, 
-  Building2, 
-  UserPlus, 
-  FileCheck, 
-  ArrowRight, 
-  ArrowLeft,
-  Loader2,
-  CheckCircle2,
-  Sparkles
+  Shield, Building2, Loader2, CheckCircle2, Zap 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const STEPS = [
-  { id: "organization", title: "Organisation", icon: Building2 },
-  { id: "invite", title: "Équipe", icon: UserPlus },
-  { id: "authorization", title: "Autorisation", icon: FileCheck },
-];
-
-const orgSchema = z.object({
-  orgName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-});
-
-const inviteSchema = z.object({
-  memberEmail: z.string().email("Email invalide").optional().or(z.literal("")),
-});
-
-const authorizationSchema = z.object({
-  domain: z.string().min(3, "Domaine requis"),
-  scope: z.string().min(10, "Décrivez la portée de l'autorisation"),
-});
-
-type OrgFormData = z.infer<typeof orgSchema>;
-type InviteFormData = z.infer<typeof inviteSchema>;
-type AuthFormData = z.infer<typeof authorizationSchema>;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 export default function Onboarding() {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [orgName, setOrgName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [orgCreated, setOrgCreated] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const navigate = useNavigate();
   const { user, organization, refreshProfile } = useAuth();
 
-  const orgForm = useForm<OrgFormData>({
-    resolver: zodResolver(orgSchema),
-    defaultValues: { orgName: organization?.name || "" },
-  });
-
-  const inviteForm = useForm<InviteFormData>({
-    resolver: zodResolver(inviteSchema),
-    defaultValues: { memberEmail: "" },
-  });
-
-  const authForm = useForm<AuthFormData>({
-    resolver: zodResolver(authorizationSchema),
-    defaultValues: {
-      domain: localStorage.getItem("sentinel_domain") || "",
-      scope: "",
-    },
-  });
-
-  const progress = ((currentStep + 1) / STEPS.length) * 100;
-
-  const handleOrgSubmit = async (data: OrgFormData) => {
+  // If org already exists, immediately seed + redirect
+  useEffect(() => {
     if (organization) {
-      // Already has org, skip
-      setOrgCreated(true);
-      setCurrentStep(1);
-      return;
+      handleSeedAndRedirect(organization.id);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organization?.id]);
+
+  const handleSeedAndRedirect = async (orgId: string) => {
+    setSeeding(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        // Fire-and-forget seed + analysis (non-blocking)
+        fetch(`${SUPABASE_URL}/functions/v1/seed-demo-run`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ organization_id: orgId }),
+        }).catch(() => {});
+      }
+    } catch { /* non-blocking */ }
+    // Redirect immediately, dashboard handles seeding
+    navigate('/dashboard', { replace: true });
+  };
+
+  const handleCreate = async () => {
+    const name = orgName.trim() || `Mon Organisation`;
+    if (!user) return;
 
     setIsLoading(true);
     try {
-      const orgSlug = data.orgName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      const orgSlug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + `-${Date.now()}`;
       const { data: orgData, error: orgError } = await supabase
         .from("organizations")
-        .insert({ name: data.orgName, slug: `${orgSlug}-${Date.now()}` })
+        .insert({ name, slug: orgSlug })
         .select()
         .single();
 
       if (orgError) throw orgError;
 
-      // Update profile with org
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ organization_id: orgData.id })
-        .eq("id", user?.id);
-
-      if (profileError) throw profileError;
-
-      // Add admin role
-      await supabase.from("user_roles").insert({
-        user_id: user?.id,
-        organization_id: orgData.id,
-        role: "admin",
-      });
-
+      await supabase.from("profiles").update({ organization_id: orgData.id }).eq("id", user.id);
+      await supabase.from("user_roles").insert({ user_id: user.id, organization_id: orgData.id, role: "admin" });
       await refreshProfile();
-      setOrgCreated(true);
-      toast.success("Organisation créée !");
-      setCurrentStep(1);
+
+      toast.success("Espace de travail créé ! Injection des données démo…");
+      await handleSeedAndRedirect(orgData.id);
     } catch (error) {
       console.error("Error creating org:", error);
-      toast.error("Erreur lors de la création de l'organisation");
+      toast.error("Erreur lors de la création");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleInviteSubmit = async (data: InviteFormData) => {
-    // Optional step - just proceed
-    if (data.memberEmail) {
-      toast.info("Fonctionnalité d'invitation bientôt disponible");
-    }
-    setCurrentStep(2);
-  };
-
-  const handleAuthSubmit = async (data: AuthFormData) => {
-    // Store data and redirect to ScopeGuard
-    localStorage.setItem("sentinel_domain", data.domain);
-    localStorage.setItem("sentinel_scope", data.scope);
-    navigate("/scopeguard");
-  };
-
-  const goBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const skipToImport = () => {
-    navigate("/tools");
+  const handleSkip = () => {
+    navigate('/dashboard', { replace: true });
   };
 
   return (
-    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {/* Header */}
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full opacity-8"
+          style={{ background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)' }} />
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md relative z-10"
+      >
+        {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <Shield className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">SECURIT-E</span>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
+            <Shield className="w-7 h-7 text-primary" />
           </div>
-          <Badge variant="outline" className="mb-4">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Configuration en 3 minutes
-          </Badge>
-          <Progress value={progress} className="h-2 mt-4" />
-          <p className="text-sm text-muted-foreground mt-2">
-            Étape {currentStep + 1} sur {STEPS.length}
-          </p>
+          <h1 className="text-2xl font-bold">Bienvenue sur SECURIT-E</h1>
+          <p className="text-sm text-muted-foreground mt-1">Configuration optionnelle — vous pouvez passer cette étape</p>
+          <div className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium">
+            <Zap className="w-3 h-3" />
+            Données démo injectées automatiquement en &lt; 12s
+          </div>
         </div>
 
-        {/* Pricing Banner */}
-        <div className="text-center mb-6">
-          <Badge className="bg-primary/10 text-primary border-primary/20">
-            490€ TTC/an — Paiement externe bientôt disponible
-          </Badge>
-        </div>
-
-        {/* Steps */}
-        <div className="flex justify-center gap-4 mb-8">
-          {STEPS.map((step, idx) => (
-            <div
-              key={step.id}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                idx === currentStep
-                  ? "bg-primary text-primary-foreground"
-                  : idx < currentStep
-                  ? "bg-green-500/10 text-green-600"
-                  : "bg-muted text-muted-foreground"
-              }`}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
+              Nommez votre organisation
+              <Badge variant="outline" className="text-xs ml-auto text-muted-foreground">Optionnel</Badge>
+            </CardTitle>
+            <CardDescription>
+              Vous pouvez personnaliser ce nom maintenant ou le faire plus tard depuis les paramètres.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              placeholder="Ma Société SAS (optionnel)"
+              value={orgName}
+              onChange={e => setOrgName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleCreate()}
+              disabled={isLoading || seeding}
+              className="text-base"
+            />
+            <Button
+              className="w-full gap-2"
+              onClick={handleCreate}
+              disabled={isLoading || seeding}
             >
-              {idx < currentStep ? (
-                <CheckCircle2 className="h-4 w-4" />
-              ) : (
-                <step.icon className="h-4 w-4" />
-              )}
-              <span className="text-sm font-medium hidden sm:inline">{step.title}</span>
-            </div>
+              {isLoading || seeding
+                ? <><Loader2 className="w-4 h-4 animate-spin" />Initialisation…</>
+                : <><CheckCircle2 className="w-4 h-4" />Créer et accéder au dashboard</>}
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full text-muted-foreground"
+              onClick={handleSkip}
+              disabled={isLoading || seeding}
+            >
+              Passer cette étape →
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* What happens next */}
+        <div className="mt-6 rounded-xl border border-border bg-muted/20 p-4 space-y-2">
+          <p className="text-xs font-medium text-foreground">Ce qui se passe ensuite :</p>
+          {[
+            { icon: "🔍", text: "12 assets démo injectés automatiquement" },
+            { icon: "⚡", text: "7 findings réalistes analysés par l'IA" },
+            { icon: "🛡️", text: "Evidence Vault initialisé avec preuves SHA-256" },
+            { icon: "🤖", text: "Première analyse autonome lancée en background" },
+          ].map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 + i * 0.08 }}
+              className="flex items-center gap-2 text-xs text-muted-foreground"
+            >
+              <span>{item.icon}</span>
+              <span>{item.text}</span>
+            </motion.div>
           ))}
         </div>
-
-        {/* Step Content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            {currentStep === 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    Votre organisation
-                  </CardTitle>
-                  <CardDescription>
-                    {organization
-                      ? "Vous avez déjà une organisation"
-                      : "Créez votre espace de travail sécurisé"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {organization ? (
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
-                          <span className="font-medium">{organization.name}</span>
-                        </div>
-                      </div>
-                      <Button onClick={() => setCurrentStep(1)} className="w-full">
-                        Continuer
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Form {...orgForm}>
-                      <form onSubmit={orgForm.handleSubmit(handleOrgSubmit)} className="space-y-4">
-                        <FormField
-                          control={orgForm.control}
-                          name="orgName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nom de l'organisation</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Ma Société SAS" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          Créer l'organisation
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </form>
-                    </Form>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {currentStep === 1 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <UserPlus className="h-5 w-5" />
-                    Inviter un membre
-                  </CardTitle>
-                  <CardDescription>
-                    Optionnel — vous pourrez en ajouter plus tard
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...inviteForm}>
-                    <form onSubmit={inviteForm.handleSubmit(handleInviteSubmit)} className="space-y-4">
-                      <FormField
-                        control={inviteForm.control}
-                        name="memberEmail"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email du collaborateur</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="email"
-                                placeholder="collegue@entreprise.fr"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Laissez vide pour passer cette étape
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex gap-3">
-                        <Button type="button" variant="outline" onClick={goBack}>
-                          <ArrowLeft className="mr-2 h-4 w-4" />
-                          Retour
-                        </Button>
-                        <Button type="submit" className="flex-1">
-                          Continuer
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            )}
-
-            {currentStep === 2 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileCheck className="h-5 w-5" />
-                    Première autorisation
-                  </CardTitle>
-                  <CardDescription>
-                    Définissez le périmètre de votre première analyse
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...authForm}>
-                    <form onSubmit={authForm.handleSubmit(handleAuthSubmit)} className="space-y-4">
-                      <FormField
-                        control={authForm.control}
-                        name="domain"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Domaine principal</FormLabel>
-                            <FormControl>
-                              <Input placeholder="entreprise.fr" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={authForm.control}
-                        name="scope"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Portée de l'autorisation</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Analyse de sécurité du site web entreprise.fr"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Décrivez brièvement ce que vous analysez
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex gap-3">
-                        <Button type="button" variant="outline" onClick={goBack}>
-                          <ArrowLeft className="mr-2 h-4 w-4" />
-                          Retour
-                        </Button>
-                        <Button type="submit" className="flex-1">
-                          Configurer l'autorisation
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-
-                  <div className="mt-6 pt-6 border-t">
-                    <Button
-                      variant="ghost"
-                      className="w-full text-muted-foreground"
-                      onClick={skipToImport}
-                    >
-                      J'ai déjà une autorisation — Importer des résultats
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      </motion.div>
     </div>
   );
 }
