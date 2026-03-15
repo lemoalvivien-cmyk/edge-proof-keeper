@@ -33,11 +33,11 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Responsable du traitement</h2>
               <p className="text-muted-foreground">
-                [Nom de la société], éditeur de SECURIT-E, est responsable du traitement des 
-                données personnelles collectées via la plateforme.
+                <strong>VLM Consulting</strong>, SIRET 835 125 089 000 28, 59170 Croix — éditeur de SECURIT-E —
+                est responsable du traitement des données personnelles collectées via la plateforme.
               </p>
               <p className="text-muted-foreground mt-2">
-                <strong>Contact DPO :</strong> dpo@sentineledge.fr
+                <strong>Contact DPO :</strong> <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline">dpo@securit-e.fr</a>
               </p>
             </section>
 
@@ -130,7 +130,7 @@ export default function Privacy() {
                 <li><strong>Limitation :</strong> restreindre le traitement</li>
               </ul>
               <p className="text-muted-foreground mt-2">
-                Pour exercer ces droits : <strong>privacy@sentineledge.fr</strong>
+                Pour exercer ces droits : <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline"><strong>dpo@securit-e.fr</strong></a>
               </p>
             </section>
 
@@ -166,9 +166,12 @@ export default function Privacy() {
               </p>
             </section>
 
-            <div className="mt-8 p-4 rounded-lg bg-muted">
+            <div className="mt-8 p-4 rounded-lg bg-muted space-y-1">
               <p className="text-sm text-muted-foreground">
-                <strong>Contact :</strong> privacy@sentineledge.fr
+                <strong>DPO :</strong> <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline">dpo@securit-e.fr</a>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong>Éditeur :</strong> VLM Consulting — SIRET 835 125 089 000 28 — 59170 Croix
               </p>
             </div>
           </CardContent>

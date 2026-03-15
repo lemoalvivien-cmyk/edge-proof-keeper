@@ -249,25 +249,12 @@ const Pricing = () => {
                         </Button>
                       )}
                       
-                      {/* Runtime source indicator — visible, honest, testable */}
-                      {!cta.isLoading && (
-                        <div className="p-3 rounded-xl bg-muted/20 border border-border text-center space-y-1">
-                          {hasCheckout && (
-                            <p className="text-xs text-success">✓ Paiement direct activé — mode checkout</p>
-                          )}
-                          {!hasCheckout && hasBooking && (
-                            <p className="text-xs text-primary">📅 Prise de rendez-vous — mode booking</p>
-                          )}
-                          {!hasCheckout && !hasBooking && (
-                            <p className="text-xs text-muted-foreground">
-                              Formulaire de demande — mode lead_capture
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground/60 font-mono">
-                            source:{cta.configSource} · tenant:{cta.tenantResolved ? 'ok' : 'none'} · cta:{cta.demoCta} · phase:{cta.bootstrapPhase}
-                          </p>
-                        </div>
-                      )}
+                      {/* Beta disclaimer */}
+                      <div className="p-3 rounded-xl bg-warning/5 border border-warning/30 text-center">
+                        <p className="text-xs text-warning/90 font-medium">
+                          ⚗️ Agents IA en beta — self-healing réel en cours de déploiement Q2 2026
+                        </p>
+                      </div>
                     </div>
 
                     {/* Trust badges */}
