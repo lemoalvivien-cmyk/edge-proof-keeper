@@ -4,6 +4,8 @@ import { Cpu, Mail, Linkedin, Twitter, ArrowUpRight } from "lucide-react";
 const productLinks = [
   { to: "/pricing", label: "Tarifs" },
   { to: "/demo", label: "Démo agents live (47s)" },
+  { to: "/faq", label: "FAQ NIS2/RGPD" },
+  { to: "/status", label: "État des services" },
   { to: "/auth", label: "Connexion" },
   { to: "/dashboard", label: "Cockpit DSI" },
 ];
