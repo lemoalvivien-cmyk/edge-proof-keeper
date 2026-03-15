@@ -364,7 +364,7 @@ export default function Dashboard() {
                   <Badge variant="destructive">{findingCounts?.critical} critiques</Badge>
                 )}
                 {(findingCounts?.high ?? 0) > 0 && (
-                  <Badge className="bg-[hsl(25,95%,53%)] text-white">{findingCounts?.high} élevés</Badge>
+                  <Badge className="bg-warning text-warning-foreground">{findingCounts?.high} élevés</Badge>
                 )}
                 {(findingCounts?.total ?? 0) === 0 && (
                   <Badge variant="outline" className="text-muted-foreground">En attente d'analyse</Badge>
