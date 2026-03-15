@@ -158,6 +158,14 @@ Deno.serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
+    // ── Rate limit: 10 appels/min par user ────────────────────────────────────
+    if (!checkRateLimit(userId, 10)) {
+      return new Response(
+        JSON.stringify({ error: "Limite de 10 appels/min atteinte — réessayez dans un moment" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "60" } }
+      );
+    }
+
     // ── Parse body ────────────────────────────────────────────
     let body: {
       organization_id?: string;
