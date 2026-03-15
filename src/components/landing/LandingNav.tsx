@@ -184,7 +184,7 @@ export function LandingNav() {
                 </Link>
                 <div className="pt-2 space-y-2 border-t border-border">
                   <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/5" onClick={() => { setIsMobileMenuOpen(false); setDemoDialogOpen(true); }}>
-                    Book 15-min demo
+                    Réserver démo 15 min
                   </Button>
                   <Button className="w-full neon-glow font-semibold" asChild>
                     <Link to="/demo" onClick={() => setIsMobileMenuOpen(false)}>Voir démo agents live</Link>

@@ -187,9 +187,9 @@ export default function Dashboard() {
   const riskScore = Math.max(0, 100 - (criticalHighCount * 5));
 
   const getRiskColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    if (score >= 40) return 'text-orange-600';
+    if (score >= 80) return 'text-success';
+    if (score >= 60) return 'text-warning';
+    if (score >= 40) return 'text-accent';
     return 'text-destructive';
   };
 
