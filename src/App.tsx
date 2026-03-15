@@ -116,6 +116,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <NetworkMonitor />
           <SoloModeWrapper>
             <NavbarHomeButton />
             <Routes>
