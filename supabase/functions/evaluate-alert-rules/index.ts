@@ -148,7 +148,7 @@ async function dispatchWebhook(
           "@type": "MessageCard",
           "@context": "http://schema.org/extensions",
           themeColor,
-          summary: `Sentinel Immune — ${matchedAlerts.length} alerte(s)`,
+          summary: `Securit-E — ${matchedAlerts.length} alerte(s)`,
           sections: [{
             activityTitle: `🚨 ${matchedAlerts.length} alerte(s) active(s) · ${criticalCount} critique(s)`,
             activitySubtitle: `Organisation: ${orgId.slice(0, 8)}…`,
