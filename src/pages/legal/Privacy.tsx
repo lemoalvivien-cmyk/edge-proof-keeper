@@ -33,11 +33,11 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Responsable du traitement</h2>
               <p className="text-muted-foreground">
-                [Nom de la société], éditeur de SECURIT-E, est responsable du traitement des 
-                données personnelles collectées via la plateforme.
+                <strong>VLM Consulting</strong>, SIRET 835 125 089 000 28, 59170 Croix — éditeur de SECURIT-E —
+                est responsable du traitement des données personnelles collectées via la plateforme.
               </p>
               <p className="text-muted-foreground mt-2">
-                <strong>Contact DPO :</strong> dpo@sentineledge.fr
+                <strong>Contact DPO :</strong> <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline">dpo@securit-e.fr</a>
               </p>
             </section>
 
