@@ -102,7 +102,7 @@ async function dispatchWebhook(
       }
 
       const color = criticalCount > 0 ? "danger" : highCount > 0 ? "warning" : "good";
-      const text  = `🚨 *Sentinel Immune — ${matchedAlerts.length} alerte(s) active(s)*\n` +
+      const text  = `🚨 *Securit-E — ${matchedAlerts.length} alerte(s) active(s)*\n` +
         `Critique: ${criticalCount} · Élevé: ${highCount} · Org: ${orgId.slice(0, 8)}…\n` +
         matchedAlerts.slice(0, 5).map(a => `• [${a.severity.toUpperCase()}] ${a.title}`).join("\n");
 
