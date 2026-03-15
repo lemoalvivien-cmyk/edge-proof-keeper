@@ -311,9 +311,17 @@ Deno.serve(async (req) => {
     });
     const { data: { user }, error: authErr } = await userClient.auth.getUser();
     if (authErr || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'Non autorisé' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // ── Rate limit: 10 appels/min par user ────────────────────────────────────
+    if (!checkSkillRateLimit(user.id, 10)) {
+      return new Response(
+        JSON.stringify({ error: "Limite de 10 exécutions/min atteinte — réessayez dans un moment" }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
+      );
     }
 
     const body = await req.json().catch(() => ({}));
