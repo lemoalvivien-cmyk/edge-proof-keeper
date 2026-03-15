@@ -392,12 +392,12 @@ export default function Dashboard() {
               <>
                 <div className="flex flex-wrap gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+              <div className="w-3 h-3 rounded-full bg-[hsl(217,91%,60%)]" />
                     <span className="font-bold">{taskCounts?.open ?? 0}</span>
                     <span className="text-muted-foreground">ouvertes</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-[hsl(38,92%,50%)]" />
                     <span className="font-bold">{taskCounts?.in_progress ?? 0}</span>
                     <span className="text-muted-foreground">en cours</span>
                   </div>
