@@ -221,8 +221,9 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
 
         try {
           const t0 = Date.now();
-          const result = await Skills[step.skill as keyof typeof Skills](
-            { ...step.params, agent_id: `${step.agent.toLowerCase()}-001` } as Parameters<typeof Skills.fixPort>[0],
+          const skillKey = step.skill as keyof typeof Skills;
+          const result = await Skills[skillKey](
+            { ...step.params, agent_id: `${step.agent.toLowerCase()}-001` },
             orgId
           );
           const duration = Date.now() - t0;
