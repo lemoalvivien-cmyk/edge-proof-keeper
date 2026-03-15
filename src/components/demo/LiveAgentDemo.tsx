@@ -3,7 +3,7 @@
  * 47-second real pipeline: seed → 6 skills → Evidence Vault
  * Real-time logs via Framer Motion + Supabase Realtime
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, CheckCircle2, AlertCircle, Loader2, Shield, Zap,
