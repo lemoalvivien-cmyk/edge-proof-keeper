@@ -202,7 +202,7 @@ export default function Dashboard() {
 
   const severityColors: Record<string, string> = {
     critical: 'bg-destructive text-destructive-foreground',
-    high: 'bg-orange-500 text-white',
+    high: 'bg-warning text-warning-foreground',
   };
 
   const hasData = (findingCounts?.total ?? 0) > 0 || (pipelineProof?.findings ?? 0) > 0;
