@@ -476,12 +476,6 @@ export function PricingSection() {
         </div>
       </div>
 
-      <DemoRequestDialog
-        open={demoDialogOpen}
-        onOpenChange={setDemoDialogOpen}
-        ctaOrigin="pricing_section_cta"
-        sourcePage="/#pricing"
-      />
     </section>
   );
 }
