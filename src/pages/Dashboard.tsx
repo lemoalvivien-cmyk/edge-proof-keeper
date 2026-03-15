@@ -46,11 +46,15 @@ export default function Dashboard() {
   const { data: findingCounts } = useFindingCounts();
   const { data: topFindings = [] } = useTopPriorityFindings(5);
   const { data: taskCounts } = useTaskCounts();
+  const subscription = useSubscription();
 
   // Pipeline state
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineState, setPipelineState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [pipelineMsg, setPipelineMsg] = useState<string | null>(null);
+
+  // Trial modal
+  const [trialModalOpen, setTrialModalOpen] = useState(false);
 
   // Auto-seed on first visit if no data
   const [autoSeeding, setAutoSeeding] = useState(false);
