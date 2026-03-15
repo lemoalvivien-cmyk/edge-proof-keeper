@@ -472,7 +472,7 @@ function generateTechnicalMarkdown(tech: Record<string, unknown>, factPack: Reco
   const traceability = (t.traceability as Record<string, unknown>) || {};
   const run = (factPack.run as Record<string, unknown>) || {};
   
-  return `# Rapport Technique - SENTINEL EDGE
+  return `# Rapport Technique - SECURIT-E
 
 ## Contexte
 
@@ -508,6 +508,6 @@ ${recommendations.length > 0
 | Sources | ${Array.isArray(traceability.sources) && traceability.sources.length > 0 ? traceability.sources.join(", ") : "Aucune"} |
 
 ---
-*Rapport technique généré par SENTINEL EDGE - ${new Date().toLocaleDateString("fr-FR")}*
+*Rapport technique généré par SECURIT-E — Agent CISO IA Souverain 🇫🇷 NIS2/RGPD — ${new Date().toLocaleDateString("fr-FR")}*
 `;
 }
