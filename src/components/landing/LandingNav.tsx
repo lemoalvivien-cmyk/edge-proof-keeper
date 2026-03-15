@@ -124,7 +124,7 @@ export function LandingNav() {
                 onClick={() => setDemoDialogOpen(true)}
               >
                 <Zap className="w-3 h-3" />
-                Book 15-min demo
+                Réserver démo 15 min
               </Button>
               <Button
                 size="sm"
