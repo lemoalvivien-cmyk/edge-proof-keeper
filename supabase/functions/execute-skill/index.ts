@@ -7,8 +7,22 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+// ── In-memory rate limiter: 10 req/min per user ────────────────────────────
+const skillRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+function checkSkillRateLimit(userId: string, maxPerMin = 10): boolean {
+  const now = Date.now();
+  const entry = skillRateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    skillRateLimitMap.set(userId, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  if (entry.count >= maxPerMin) return false;
+  entry.count++;
+  return true;
+}
 
 // ── Real SHA-256 using WebCrypto (no btoa) ─────────────────────────────────
 async function sha256hex(data: string): Promise<string> {
