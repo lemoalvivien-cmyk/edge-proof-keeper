@@ -271,12 +271,12 @@ export function PostQuantumProof({
               </button>
               {expanded && (
                 <div className="mt-2 rounded border border-border bg-muted/30 p-3 space-y-1.5 text-xs font-mono">
-                  <div><span className="text-muted-foreground">Algorithme:</span> CRYSTALS-Dilithium3 (lattice-based PQC)</div>
-                  <div><span className="text-muted-foreground">Hash:</span> SHA-256 (NIST approved)</div>
-                  <div><span className="text-muted-foreground">Merkle:</span> Binary tree · {proof.layers} niveaux</div>
-                  <div><span className="text-muted-foreground">Timestamp:</span> {proof.timestamp}</div>
-                  <div><span className="text-muted-foreground">Public Key:</span> {proof.publicKey.slice(0, 24)}…</div>
-                  <div className="text-primary/60">🔐 Résistant aux attaques quantiques (Grover, Shor)</div>
+                  <div><span className="text-muted-foreground">Algorithme :</span> CRYSTALS-Dilithium3 (lattice-based PQC)</div>
+                  <div><span className="text-muted-foreground">Hash :</span> SHA-256 (NIST approved)</div>
+                  <div><span className="text-muted-foreground">Merkle :</span> Binary tree · {proof.layers} niveaux</div>
+                  <div><span className="text-muted-foreground">Timestamp :</span> {proof.timestamp}</div>
+                  <div><span className="text-muted-foreground">Public Key :</span> {proof.publicKey.slice(0, 24)}…</div>
+                  <div className="text-primary">🔐 Résistant aux attaques quantiques (Grover, Shor)</div>
                 </div>
               )}
             </div>
