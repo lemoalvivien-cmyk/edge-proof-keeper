@@ -140,9 +140,12 @@ export default function Terms() {
               </p>
             </section>
 
-            <div className="mt-8 p-4 rounded-lg bg-muted">
+            <div className="mt-8 p-4 rounded-lg bg-muted space-y-1">
               <p className="text-sm text-muted-foreground">
-                <strong>Contact :</strong> contact@securit-e.com
+                <strong>Contact :</strong> <a href="mailto:contact@securit-e.com" className="text-primary hover:underline">contact@securit-e.com</a>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong>Éditeur :</strong> VLM Consulting — SIRET 835 125 089 000 28 — 59170 Croix
               </p>
             </div>
           </CardContent>
