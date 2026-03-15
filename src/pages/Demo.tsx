@@ -477,11 +477,24 @@ export default function Demo() {
 
               <Separator />
 
-              <div className="rounded-xl border border-border bg-card/60 p-4 flex items-center justify-between flex-wrap gap-3">
+              {/* Post-demo CTA — Stripe checkout */}
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <p className="font-bold text-foreground">Votre essai 14 jours est prêt !</p>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Importez vos propres résultats d'outils de sécurité et générez ce rapport instantanément.
+                  Activez votre compte gratuit maintenant — aucune carte requise pendant 14 jours.
+                  Starter 490 € / an · Pro 6 900 € / an · Satisfait ou remboursé 30j.
                 </p>
                 <div className="flex gap-2 flex-wrap">
+                  <Button
+                    onClick={() => navigate('/auth?tab=signup')}
+                    className="neon-glow gap-2 font-bold"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Commencer l'essai gratuit 14 jours
+                  </Button>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -491,12 +504,13 @@ export default function Demo() {
                     className="gap-2"
                   >
                     <CalendarDays className="h-4 w-4" />
-                    Demander une démo
+                    Book 15-min demo
                   </Button>
-                  <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
-                    <Shield className="h-4 w-4" />
-                    Démarrer gratuitement
-                  </Button>
+                </div>
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-1">
+                  <span>🔒 Paiement Stripe sécurisé</span>
+                  <span>✓ Satisfait ou remboursé 30j</span>
+                  <span>🇫🇷 Hébergement souverain</span>
                 </div>
               </div>
             </motion.div>
