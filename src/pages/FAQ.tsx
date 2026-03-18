@@ -77,7 +77,7 @@ const faqCategories = [
     questions: [
       {
         q: "Y a-t-il des frais cachés dans les plans ?",
-        a: "Non. Starter 490€/an : 6 agents, Evidence Vault, rapports Direction+Technique, conformité NIS2/RGPD, hébergement souverain France. Pro 6 900€/an ajoute EASM/OSINT continu, self-healing autonome < 4h, API dédiée, SLA 99.9%. Enterprise 29 900€/an : souveraineté totale on-premise, agents personnalisés, SLA 99.99%, RSSI IA dédié. Satisfait ou remboursé 30 jours.",
+        a: "Non. Sentinel 490€/an : Evidence Vault SHA-256, rapports Direction+Technique, conformité NIS2/RGPD, hébergement France. Command 6 900€/an ajoute EASM/OSINT continu, remédiation assistée < 4h (cible), API dédiée. Sovereign 29 900€/an : on-premise, agents personnalisés, Account Manager CISO dédié. Essai 14j sans frais.",
       },
       {
         q: "Puis-je tester avant de payer ?",
