@@ -73,11 +73,12 @@ function NeuralField() {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none hidden md:block" style={{ opacity: 0.45 }} />;
 }
 
-/* ── Animated threat counter ── */
+/* ── Vault counter — DEMO MODE (slow increment, labeled) ── */
 function ThreatCounter() {
   const [count, setCount] = useState(2841);
   useEffect(() => {
-    const t = setInterval(() => setCount(c => c + Math.floor(Math.random() * 3)), 3500);
+    // Demo pace: +1 every 30s to avoid implying live data
+    const t = setInterval(() => setCount(c => c + 1), 30000);
     return () => clearInterval(t);
   }, []);
   return <span className="font-mono text-primary tabular-nums">{count.toLocaleString('fr-FR')}</span>;

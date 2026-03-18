@@ -108,7 +108,7 @@ export function PromiseSection() {
               <span className="text-gradient">6 agents IA autonomes : 490€.</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Chaque agent opère 24/7 en autonomie totale. Ensemble, ils forment le premier système immunitaire cyber souverain conçu pour les dirigeants, pas pour les techniciens.
+              Chaque agent opère 24/7 avec supervision humaine. Ensemble, ils forment le premier système immunitaire cyber souverain conçu pour les dirigeants, pas pour les techniciens.
             </p>
           </motion.div>
 
@@ -214,7 +214,7 @@ export function PromiseSection() {
                   { v: "47s", l: "Cycle lab démontré", c: "text-gradient" },
                   { v: "6", l: "Agents supervisés", c: "text-accent" },
                   { v: "SHA-256", l: "Preuve Merkle Chain", c: "text-success" },
-                  { v: "0", l: "Équipe requise", c: "text-primary" },
+                  { v: "1", l: "Clic validation DSI", c: "text-primary" },
                 ].map((s, i) => (
                   <div key={i} className="flex flex-col items-center gap-0.5">
                     <div className={`text-2xl font-bold font-mono ${s.c}`}>{s.v}</div>

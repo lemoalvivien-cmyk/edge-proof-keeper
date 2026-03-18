@@ -141,13 +141,13 @@ function KpiCard({ icon: Icon, label, value, sub, trend, accent, bg, detail }: K
   );
 }
 
-// ── Timeline row ──────────────────────────────────────────────────────────────
-const ACTION_TIMELINE = [
-  { status: 'resolved', title: 'Injection SQL neutralisée', time: '14:22', icon: CheckCircle2, color: 'text-success', bg: 'bg-success/15', agent: 'Executor' },
-  { status: 'resolved', title: 'Credential rotation forcée', time: '11:07', icon: CheckCircle2, color: 'text-success', bg: 'bg-success/15', agent: 'Vault' },
-  { status: 'active', title: 'Certificat TLS — analyse en cours', time: '09:31', icon: Brain, color: 'text-accent', bg: 'bg-accent/15', agent: 'Analyst' },
-  { status: 'active', title: 'Port 8080 — remédiation planifiée', time: '08:15', icon: Zap, color: 'text-warning', bg: 'bg-warning/15', agent: 'Executor' },
-  { status: 'pending', title: 'Audit IAM cloud — en attente', time: 'J+1', icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted/40', agent: 'Scout' },
+// ── Timeline row — DEMO DATA (labeled as demo when no real data available)
+const ACTION_TIMELINE_DEMO = [
+  { status: 'resolved', title: '[DEMO] Injection SQL neutralisée', time: '14:22', icon: CheckCircle2, color: 'text-success', bg: 'bg-success/15', agent: 'Executor' },
+  { status: 'resolved', title: '[DEMO] Credential rotation forcée', time: '11:07', icon: CheckCircle2, color: 'text-success', bg: 'bg-success/15', agent: 'Vault' },
+  { status: 'active', title: '[DEMO] Certificat TLS — analyse en cours', time: '09:31', icon: Brain, color: 'text-accent', bg: 'bg-accent/15', agent: 'Analyst' },
+  { status: 'active', title: '[DEMO] Port 8080 — remédiation planifiée', time: '08:15', icon: Zap, color: 'text-warning', bg: 'bg-warning/15', agent: 'Executor' },
+  { status: 'pending', title: '[DEMO] Audit IAM cloud — en attente', time: 'J+1', icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted/40', agent: 'Scout' },
 ];
 
 export default function ExecutiveCockpit() {
@@ -535,7 +535,7 @@ export default function ExecutiveCockpit() {
               </Button>
             </div>
             <div className="p-4 space-y-2">
-              {ACTION_TIMELINE.map((item, i) => {
+              {ACTION_TIMELINE_DEMO.map((item, i) => {
                 const Icon = item.icon;
                 return (
                   <motion.div

@@ -225,10 +225,11 @@ export function HowItWorksSection() {
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               De la détection à la preuve{" "}
               <span className="text-gradient">en 47 secondes</span>
+              <span className="block text-lg font-normal text-muted-foreground mt-2">(démontré en conditions de laboratoire)</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              6 agents opèrent en swarm autonome. Aucun jargon, aucune intervention, aucun vide.{" "}
-              <span className="text-foreground font-medium">Juste du résultat mesurable.</span>
+              6 agents opèrent avec supervision humaine. Aucun jargon, validation Go/No-Go à chaque étape.{" "}
+              <span className="text-foreground font-medium">Résultat mesurable et prouvable cryptographiquement.</span>
             </p>
           </motion.div>
 

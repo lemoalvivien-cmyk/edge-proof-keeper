@@ -20,8 +20,8 @@ const faqCategories = [
     bg: "bg-primary/10",
     questions: [
       {
-        q: "Securit-E couvre-t-il 100 % des exigences NIS2 2026 ?",
-        a: "Oui. La directive NIS2 impose la gestion des risques, la notification d'incidents sous 24h, la chaîne d'approvisionnement sécurisée et la responsabilité des dirigeants. Securit-E automatise l'intégralité de ces obligations : cartographie des risques en temps réel, alertes automatiques aux autorités, contrôle des fournisseurs tiers et génération des Proof Packs opposables devant l'ANSSI. En cas de contrôle, vous exportez votre dossier en 1 clic.",
+        q: "Securit-E couvre-t-il les exigences NIS2 2026 ?",
+        a: "La directive NIS2 impose la gestion des risques, la notification d'incidents sous 24h, la chaîne d'approvisionnement sécurisée et la responsabilité des dirigeants. Securit-E couvre les obligations documentaires : cartographie des risques, Evidence Vault immuable SHA-256, génération de Proof Packs structurés pour l'ANSSI. Il appartient à votre conseil juridique de valider la couverture complète dans votre contexte spécifique.",
       },
       {
         q: "Comment Securit-E protège-t-il la responsabilité personnelle du DSI ?",
@@ -194,7 +194,7 @@ export default function FAQ() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              490€/an tout inclus · Souverain France 🇫🇷 · Score audit 97/100
+              490€/an tout inclus · Souverain France 🇫🇷 · Essai 14j gratuit
             </p>
           </motion.div>
         </div>
