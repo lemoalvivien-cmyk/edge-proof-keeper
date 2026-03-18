@@ -100,7 +100,7 @@ const NUDGE_CONFIGS: Record<UpsellFeature, NudgeConfig> = {
     icon: Zap,
     title: "Fonctionnalité Premium",
     description: "Cette fonctionnalité est disponible sur le plan Command. Passez à la vitesse supérieure.",
-    gain: "6 agents IA autonomes · SLA 99.9% · Evidence Vault post-quantique",
+    gain: "6 agents IA supervisés · Remédiation assistée · Evidence Vault SHA-256",
     planRequired: "pro",
     planName: "Command",
     planPrice: "6 900€/an",
