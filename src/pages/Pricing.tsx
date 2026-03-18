@@ -1,376 +1,422 @@
-import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { useState } from "react";
-import { Shield, Check, ArrowRight, ArrowLeft, Zap, Lock, BarChart3, FileText, Users, RefreshCw, Globe, Rocket, Package, CalendarDays } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
+import {
+  Shield, Check, ArrowRight, ArrowLeft, Zap, Lock, Crown,
+  CalendarDays, TrendingUp, Clock, CreditCard, Sparkles, X,
+  Star, Building2, AlertTriangle, ChevronDown, ChevronUp, Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { DemoRequestDialog } from "@/components/ui/DemoRequestDialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePublicCta } from "@/hooks/usePublicCta";
+import { openCheckout, PAYMENT_LINKS } from "@/hooks/useSubscription";
+import { trackEvent } from "@/lib/tracking";
+import { toast } from "sonner";
 
-const features = [
+/* ─── Plan definitions ───────────────────────────────────────────── */
+const plans = [
   {
+    id: "starter",
+    name: "Sentinel",
+    price: "490",
+    period: "€ TTC / an",
+    monthly: "40,83€ / mois",
+    tagline: "Première ligne de défense souveraine",
+    badge: "DÉMARRAGE",
+    highlight: false,
+    icon: Shield,
+    color: "primary",
+    roiLabel: "Retour dès la 1ère vulnérabilité corrigée",
+    tension: "Passez à Command pour l'IA autonome →",
+    perks: [
+      { text: "Scout Agent — détection surface d'attaque", available: true },
+      { text: "Dashboard Direction + Technique", available: true },
+      { text: "Conformité RGPD & NIS2 documentée", available: true },
+      { text: "Evidence Vault — preuves SHA-256", available: true },
+      { text: "Rapports d'audit exportables PDF", available: true },
+      { text: "Inventaire actifs + gestion autorisations", available: true },
+      { text: "Hébergement souverain 🇫🇷", available: true },
+      { text: "Support email prioritaire", available: true },
+      { text: "Agents IA Swarm Intelligence", available: false },
+      { text: "Self-healing autonome < 4h", available: false },
+      { text: "RSSI Virtuel IA — brief CODIR", available: false },
+    ],
+    cta: "Activer Sentinel",
+    ctaSecondary: "Démarrer l'essai 14j gratuit",
+  },
+  {
+    id: "pro",
+    name: "Command",
+    price: "6 900",
+    period: "€ TTC / an",
+    monthly: "575€ / mois",
+    tagline: "Centre de commandement cyber autonome",
+    badge: "★ CHOIX DSI / RSSI",
+    highlight: true,
     icon: Zap,
-    title: "Diagnostic cyber complet",
-    description: "Analyse automatisée de vos vulnérabilités et de votre posture de sécurité.",
+    color: "accent",
+    roiLabel: "Équivaut à 5,75% d'un RSSI interne — sans les congés",
+    tension: "Passez à Sovereign pour l'on-premise complet →",
+    perks: [
+      { text: "Tout Sentinel inclus", available: true },
+      { text: "6 Agents IA Swarm Intelligence complets", available: true },
+      { text: "Self-healing autonome · SLA < 4h", available: true },
+      { text: "OSINT & EASM Signals — surveillance continue", available: true },
+      { text: "Evidence Vault post-quantique (CRYSTALS-Dilithium)", available: true },
+      { text: "Predictive Causality Engine · 90j d'horizon", available: true },
+      { text: "RSSI Virtuel IA — brief CODIR mensuel", available: true },
+      { text: "DSI Go/No-Go · validation en 1 clic", available: true },
+      { text: "SLA 99.9% garanti contractuellement", available: true },
+      { text: "Déploiement on-premise dédié", available: false },
+      { text: "Account Manager dédié", available: false },
+    ],
+    cta: "Activer Command",
+    ctaSecondary: "Démarrer l'essai 14j gratuit",
   },
   {
-    icon: BarChart3,
-    title: "Double tableau de bord",
-    description: "Vue Direction (synthèse métier) + Vue Technique (détails pour votre IT).",
-  },
-  {
-    icon: FileText,
-    title: "Conformité RGPD & NIS2",
-    description: "Suivi en temps réel de votre progression sur chaque exigence réglementaire.",
-  },
-  {
-    icon: Lock,
-    title: "Evidence Vault",
-    description: "Journal immuable et certifié de toutes vos actions pour les audits.",
+    id: "sovereign",
+    name: "Sovereign",
+    price: "29 900",
+    period: "€ TTC / an",
+    monthly: "2 491€ / mois",
+    tagline: "Autonomie totale · On-prem · Swarm complet",
+    badge: "SOUVERAINETÉ TOTALE",
+    highlight: false,
+    icon: Crown,
+    color: "primary",
+    roiLabel: "Inclut déploiement on-premise certifié SecNumCloud",
+    tension: null,
+    perks: [
+      { text: "Tout Command inclus", available: true },
+      { text: "Swarm Mode — autonomie totale 24/7", available: true },
+      { text: "Déploiement on-premise certifié", available: true },
+      { text: "Agents IA personnalisés sur vos process", available: true },
+      { text: "SLA 99.99% garanti contractuellement", available: true },
+      { text: "Account Manager dédié CISO-level", available: true },
+      { text: "CISO Board-level reports personnalisés", available: true },
+      { text: "Intégration SIEM / SOC existant", available: true },
+      { text: "Formation équipe technique incluse", available: true },
+    ],
+    cta: "Parler à l'équipe",
+    ctaSecondary: null,
   },
 ];
 
-const included = [
-  "Diagnostic cyber complet",
-  "Double tableau de bord (Direction + Technique)",
-  "Suivi conformité RGPD & NIS2",
-  "Evidence Vault (coffre-fort de preuves immuable)",
-  "Rapports d'audit exportables PDF",
-  "Inventaire des actifs",
-  "Gestion des autorisations légales",
-  "Import de documents (politiques, audits...)",
-  "Mises à jour continues de la plateforme",
-  "Support par email prioritaire",
-  "Hébergement sécurisé en France 🇫🇷",
-  "Chiffrement de bout en bout",
+/* ─── Competitor table ───────────────────────────────────────────── */
+const competitors = [
+  { name: "SECURIT-E Command", price: "6 900€ / an", self: true, trial: true, auto: true, sovereign: true, support: "Inclus" },
+  { name: "RSSI interne", price: "≥ 120 000€ / an", self: false, trial: false, auto: false, sovereign: false, support: "1 personne" },
+  { name: "Splunk / Tanium", price: "≥ 50 000€ / an", self: false, trial: false, auto: false, sovereign: false, support: "Payant" },
+  { name: "Consulting cyber", price: "≥ 15 000€ / mission", self: false, trial: false, auto: false, sovereign: false, support: "Non continu" },
 ];
 
-const addons = [
-  {
-    id: "cabinet-mode",
-    name: "Mode Cabinet / Multi-clients",
-    price: "+250€",
-    period: "TTC / an",
-    icon: Users,
-    description: "Gérez plusieurs organisations clients",
-    status: "coming_v2" as const,
-    href: "/offres/audit-pack-cabinets",
-  },
-  {
-    id: "continuous-governance",
-    name: "Continuous Governance",
-    price: "+150€",
-    period: "TTC / an",
-    icon: RefreshCw,
-    description: "Imports récurrents, suivi temporel",
-    status: "available" as const,
-    href: "/offres/continuous-governance",
-  },
-  {
-    id: "easm-signals",
-    name: "EASM & OSINT Signals",
-    price: "+200€",
-    period: "TTC / an",
-    icon: Globe,
-    description: "Surface d'attaque externe",
-    status: "available" as const,
-    href: "/offres/easm-osint-signals",
-  },
-  {
-    id: "onboarding",
-    name: "Onboarding / Audit Readiness",
-    price: "+300€",
-    period: "one-time",
-    icon: Rocket,
-    description: "Accompagnement initial",
-    status: "available" as const,
-    href: null,
-  },
+/* ─── ROI Calculator ─────────────────────────────────────────────── */
+function RoiBlock() {
+  const [employees, setEmployees] = useState(100);
+  const attackCost = Math.round(employees * 1200);
+  const investPro = 6900;
+  const roi = Math.round((attackCost / investPro) * 10) / 10;
+
+  return (
+    <div className="rounded-2xl border border-primary/20 bg-card/60 backdrop-blur p-6 space-y-5">
+      <div className="flex items-center gap-2">
+        <TrendingUp className="w-4 h-4 text-primary" />
+        <p className="font-bold text-sm text-foreground">Calculateur ROI — quelle est votre exposition ?</p>
+      </div>
+      <div>
+        <label className="text-xs text-muted-foreground block mb-2">
+          Votre effectif : <span className="text-foreground font-bold">{employees} collaborateurs</span>
+        </label>
+        <input type="range" min="20" max="500" step="10" value={employees}
+          onChange={e => setEmployees(Number(e.target.value))}
+          className="w-full accent-primary h-1.5 rounded-full cursor-pointer" />
+        <div className="flex justify-between text-[10px] text-muted-foreground mt-1"><span>20</span><span>500</span></div>
+      </div>
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <div className="p-3 rounded-xl bg-destructive/8 border border-destructive/20">
+          <p className="text-lg font-black font-mono text-destructive">{attackCost.toLocaleString("fr-FR")}€</p>
+          <p className="text-[10px] text-muted-foreground">Coût moyen d'une cyberattaque</p>
+        </div>
+        <div className="p-3 rounded-xl bg-primary/8 border border-primary/20">
+          <p className="text-lg font-black font-mono text-primary">6 900€</p>
+          <p className="text-[10px] text-muted-foreground">Investissement Command / an</p>
+        </div>
+        <div className="p-3 rounded-xl bg-success/8 border border-success/20">
+          <p className="text-lg font-black font-mono text-success">×{roi}</p>
+          <p className="text-[10px] text-muted-foreground">ROI estimé an 1</p>
+        </div>
+      </div>
+      <p className="text-[10px] text-muted-foreground text-center">
+        Estimation ANSSI / Wavestone 2024 · à titre indicatif
+      </p>
+    </div>
+  );
+}
+
+/* ─── FAQ ────────────────────────────────────────────────────────── */
+const faqs = [
+  { q: "L'essai gratuit demande-t-il une carte bancaire ?", a: "Oui. L'essai de 14 jours est piloté par Stripe avec saisie de carte. Vous n'êtes débité qu'à J+15, avec annulation libre à tout moment depuis votre espace." },
+  { q: "Puis-je passer d'une offre à l'autre ?", a: "Oui, upgrade ou downgrade en quelques clics depuis les paramètres. Les données restent intégralement conservées." },
+  { q: "Où sont hébergées mes données ?", a: "En France uniquement, sur infrastructure souveraine. Conformité RGPD native. Chiffrement AES-256 au repos, TLS 1.3 en transit." },
+  { q: "Le self-healing est-il vraiment autonome ?", a: "L'automatisation des corrections est déployée en Q2 2026. En attendant, les scripts sont générés et vérifiés par les agents — l'approbation humaine reste requise pour l'exécution." },
+  { q: "Comment fonctionne le support Enterprise ?", a: "Account Manager dédié + accès prioritaire à l'équipe engineering + SLA contractuels 99.99% + canaux privés Slack/Teams." },
 ];
 
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-border rounded-xl overflow-hidden">
+      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/20 transition-colors">
+        <span className="font-medium text-sm text-foreground">{q}</span>
+        {open ? <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+      </button>
+      {open && <p className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">{a}</p>}
+    </div>
+  );
+}
+
+/* ─── Main Component ─────────────────────────────────────────────── */
 const Pricing = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.05 });
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
-  const cta = usePublicCta();
 
-  const hasCheckout = Boolean(cta.checkoutUrls.starter);
-  const hasBooking  = Boolean(cta.bookingUrl);
+  async function handleCheckout(planId: "starter" | "pro") {
+    setCheckoutLoading(planId);
+    trackEvent("cta_stripe_checkout", { source_page: "/pricing", cta_origin: `pricing_${planId}` });
+    try {
+      if (user) {
+        await openCheckout(planId);
+      } else {
+        window.open(PAYMENT_LINKS[planId], "_blank", "noopener,noreferrer");
+      }
+    } catch {
+      toast.error("Erreur checkout. Lien direct ouvert.");
+      window.open(PAYMENT_LINKS[planId], "_blank", "noopener,noreferrer");
+    } finally {
+      setCheckoutLoading(null);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <LandingNav />
-      
-      <main className="pt-32 pb-16">
-        <div className="container px-4">
-          {/* Back link */}
-          <Button
-            variant="ghost"
-            className="mb-8 text-muted-foreground hover:text-foreground"
-            asChild
-          >
-            <Link to="/">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour à l'accueil
-            </Link>
+
+      <main className="pt-28 pb-20" ref={ref}>
+        <div className="container px-4 max-w-7xl mx-auto">
+
+          {/* Back */}
+          <Button variant="ghost" size="sm" className="mb-8 text-muted-foreground" asChild>
+            <Link to="/"><ArrowLeft className="w-4 h-4 mr-1.5" />Retour</Link>
           </Button>
 
-          <div className="max-w-5xl mx-auto">
-            {/* Header */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-center space-y-4 mb-16"
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card border-glow mb-4">
-                <Shield className="w-4 h-4 text-primary" />
-                <span className="text-sm text-muted-foreground">Offre V1 — Lancement</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold">
-                <span className="text-gradient">490€ TTC / an</span>
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Tout ce dont vous avez besoin pour piloter votre cybersécurité 
-                et prouver votre conformité. Sans surprise.
-              </p>
-            </motion.div>
-
-            {/* Main pricing card */}
-            <div className="grid lg:grid-cols-2 gap-12 mb-16">
-              {/* Left: Features */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="space-y-6"
-              >
-                <h2 className="text-2xl font-bold text-foreground">Fonctionnalités clés</h2>
-                <div className="grid gap-4">
-                  {features.map((feature, index) => (
-                    <Card key={index} className="glass-card">
-                      <CardContent className="p-4 flex gap-4">
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <feature.icon className="w-5 h-5 text-primary" />
-                          </div>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-foreground">{feature.title}</h3>
-                          <p className="text-sm text-muted-foreground">{feature.description}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Right: Pricing card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Card className="glass-card border-glow sticky top-32">
-                  <CardHeader className="text-center pb-4">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4 neon-glow">
-                      <Shield className="w-8 h-8 text-primary" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-foreground">SECURIT-E Core</h3>
-                    <p className="text-muted-foreground">Gouvernance cyber complète</p>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-6">
-                    {/* Price */}
-                    <div className="text-center p-6 rounded-xl bg-secondary/50">
-                      <div className="flex items-baseline justify-center gap-2">
-                        <span className="text-5xl font-bold text-primary neon-text">490€</span>
-                        <span className="text-muted-foreground">TTC / an</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Soit seulement <span className="text-foreground font-semibold">40,83€ / mois</span>
-                      </p>
-                    </div>
-
-                    {/* CTAs — fully DB-aware via usePublicCta */}
-                    <div className="space-y-3">
-                      {user ? (
-                        <Button 
-                          size="lg" 
-                          className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
-                          asChild
-                        >
-                          <Link to="/dashboard">
-                            Accéder au cockpit
-                            <ArrowRight className="w-5 h-5 ml-2" />
-                          </Link>
-                        </Button>
-                      ) : (
-                        <Button 
-                          size="lg" 
-                          className="w-full h-14 text-lg font-semibold neon-glow hover:scale-105 transition-transform"
-                          disabled={cta.isLoading}
-                          onClick={() =>
-                            cta.handleCheckout('starter', {
-                              sourcePage: '/pricing',
-                              ctaOrigin: 'pricing_page_starter',
-                              onFallback: () => setDemoDialogOpen(true),
-                            })
-                          }
-                        >
-                          {hasCheckout ? (
-                            <>Commander — 490€ TTC / an <ArrowRight className="w-5 h-5 ml-2" /></>
-                          ) : hasBooking ? (
-                            <>Prendre rendez-vous <ArrowRight className="w-5 h-5 ml-2" /></>
-                          ) : (
-                            <>Demander l'accès <ArrowRight className="w-5 h-5 ml-2" /></>
-                          )}
-                        </Button>
-                      )}
-
-                      {!user && (
-                        <Button
-                          variant="outline"
-                          size="lg"
-                          className="w-full h-12 text-base gap-2"
-                          disabled={cta.isLoading}
-                          onClick={() =>
-                            cta.handleDemoRequest({
-                              sourcePage: '/pricing',
-                              ctaOrigin: 'pricing_page_demo',
-                              onFallback: () => setDemoDialogOpen(true),
-                            })
-                          }
-                        >
-                          <CalendarDays className="w-4 h-4" />
-                          Parler à un expert
-                        </Button>
-                      )}
-                      
-                      {/* Beta disclaimer */}
-                      <div className="p-3 rounded-xl bg-warning/5 border border-warning/30 text-center">
-                        <p className="text-xs text-warning/90 font-medium">
-                          ⚗️ Agents IA en beta — self-healing réel en cours de déploiement Q2 2026
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Trust badges */}
-                    <div className="flex flex-wrap justify-center gap-4 pt-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-success" />
-                        RGPD conforme
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-success" />
-                        Données en France 🇫🇷
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+          {/* ── Hero ─────────────────────────── */}
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6 }} className="text-center space-y-5 mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-widest">
+              <Sparkles className="w-3 h-3" /> Tarification claire · Sans surprise
             </div>
+            <h1 className="text-5xl md:text-6xl font-black tracking-tight">
+              Un RSSI interne coûte <span className="line-through text-destructive/70">120 000€ / an.</span>
+              <br />
+              <span className="text-gradient">SECURIT-E Command : 6 900€.</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Même niveau de pilotage. Disponible 24/7. Sans recrutement. Sans congés.
+              Avec des preuves cryptographiques que votre RSSI ne peut pas générer seul.
+            </p>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />14j gratuits</span>
+              <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />Paiement Stripe sécurisé</span>
+              <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />Satisfait ou remboursé 30j</span>
+              <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />Données 🇫🇷</span>
+            </div>
+          </motion.div>
 
-            {/* Everything included */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="glass-card rounded-2xl p-8 mb-16"
-            >
-              <h2 className="text-2xl font-bold text-foreground mb-8 text-center">
-                Tout est <span className="text-gradient">inclus</span> dans Core
-              </h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {included.map((item, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-success/20 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-success" />
+          {/* ── ROI Calculator ───────────────── */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.1 }} className="mb-14 max-w-3xl mx-auto">
+            <RoiBlock />
+          </motion.div>
+
+          {/* ── Plans Grid ───────────────────── */}
+          <div className="grid md:grid-cols-3 gap-5 items-stretch mb-16">
+            {plans.map((plan, idx) => {
+              const PlanIcon = plan.icon;
+              return (
+                <motion.div
+                  key={plan.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.6, delay: 0.15 + idx * 0.1 }}
+                  className={`relative rounded-2xl flex flex-col p-6 transition-all duration-300 ${
+                    plan.highlight
+                      ? "bg-gradient-to-b from-accent/10 to-card border-2 border-accent/60 shadow-[0_0_40px_hsl(258_90%_66%_/_0.15)]"
+                      : "bg-card border border-border hover:border-primary/30"
+                  }`}
+                >
+                  {plan.highlight && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full bg-accent text-accent-foreground text-xs font-black uppercase tracking-widest shadow-lg whitespace-nowrap">
+                      ★ Le choix des DSI exigeants
                     </div>
-                    <span className="text-foreground">{item}</span>
+                  )}
+
+                  {/* Plan header */}
+                  <div className="flex items-start gap-3 mb-5 mt-2">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${plan.highlight ? "bg-accent/20" : "bg-primary/10"}`}>
+                      <PlanIcon className={`w-5 h-5 ${plan.highlight ? "text-accent" : "text-primary"}`} />
+                    </div>
+                    <div>
+                      <div className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${plan.highlight ? "text-accent" : "text-primary"}`}>{plan.badge}</div>
+                      <h3 className="text-xl font-black text-foreground">{plan.name}</h3>
+                      <p className="text-xs text-muted-foreground">{plan.tagline}</p>
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div className="mb-5 p-4 rounded-xl bg-secondary/40">
+                    <div className="flex items-baseline gap-1">
+                      <span className={`text-4xl font-black font-mono ${plan.highlight ? "text-accent" : "text-foreground"}`}>{plan.price}</span>
+                      <span className="text-sm text-muted-foreground">{plan.period}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">soit {plan.monthly}</p>
+                    <p className="text-xs text-success font-semibold mt-1.5">{plan.roiLabel}</p>
+                    {plan.id !== "sovereign" && (
+                      <p className="text-xs text-success/80 mt-1 flex items-center gap-1"><Clock className="w-3 h-3" />14 jours gratuits inclus</p>
+                    )}
+                  </div>
+
+                  {/* Features */}
+                  <div className="space-y-2 flex-1 mb-6">
+                    {plan.perks.map((perk, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        {perk.available
+                          ? <div className="mt-0.5 w-4 h-4 rounded-full bg-success/15 flex items-center justify-center flex-shrink-0"><Check className="w-2.5 h-2.5 text-success" /></div>
+                          : <div className="mt-0.5 w-4 h-4 rounded-full bg-muted/30 flex items-center justify-center flex-shrink-0"><X className="w-2.5 h-2.5 text-muted-foreground/40" /></div>
+                        }
+                        <span className={`text-sm leading-snug ${perk.available ? "text-foreground/85" : "text-muted-foreground/40 line-through"}`}>{perk.text}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Tension upsell */}
+                  {plan.tension && (
+                    <p className="text-[10px] text-muted-foreground italic mb-3 text-center">{plan.tension}</p>
+                  )}
+
+                  {/* CTA */}
+                  <div className="space-y-2 mt-auto">
+                    {plan.id === "sovereign" ? (
+                      <Button size="lg" variant="outline" className="w-full font-bold gap-2" onClick={() => setDemoDialogOpen(true)}>
+                        <CalendarDays className="w-4 h-4" />{plan.cta}<ArrowRight className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          size="lg"
+                          className={`w-full font-bold gap-2 ${plan.highlight ? "bg-accent hover:bg-accent/90 text-accent-foreground shadow-[0_0_20px_hsl(258_90%_66%_/_0.3)]" : ""}`}
+                          variant={plan.highlight ? "default" : "outline"}
+                          disabled={checkoutLoading === plan.id}
+                          onClick={() => handleCheckout(plan.id as "starter" | "pro")}
+                        >
+                          {checkoutLoading === plan.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                          {plan.cta} — {plan.price}€
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                        <p className="text-[10px] text-center text-muted-foreground">🔒 Stripe · Satisfait remboursé 30j · Annulation libre</p>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* ── Competitor Comparison ────────── */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.5 }} className="mb-16">
+            <h2 className="text-2xl font-bold text-center mb-8">Pourquoi choisir SECURIT-E ?</h2>
+            <div className="overflow-x-auto rounded-2xl border border-border">
+              <table className="w-full text-sm min-w-[640px]">
+                <thead>
+                  <tr className="border-b border-border bg-muted/20">
+                    <th className="text-left p-4 font-semibold text-muted-foreground">Solution</th>
+                    <th className="text-center p-4 font-semibold text-muted-foreground">Coût annuel</th>
+                    <th className="text-center p-4 font-semibold text-muted-foreground">Essai gratuit</th>
+                    <th className="text-center p-4 font-semibold text-muted-foreground">Remédiation auto</th>
+                    <th className="text-center p-4 font-semibold text-muted-foreground">Souverain 🇫🇷</th>
+                    <th className="text-center p-4 font-semibold text-muted-foreground">Support</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {competitors.map((c, i) => (
+                    <tr key={i} className={`border-b border-border last:border-0 ${c.self ? "bg-primary/5" : "hover:bg-muted/10"}`}>
+                      <td className="p-4 font-semibold text-foreground">{c.self && <span className="inline-block w-2 h-2 rounded-full bg-primary mr-2 align-middle" />}{c.name}</td>
+                      <td className={`p-4 text-center font-mono font-bold ${c.self ? "text-primary" : "text-muted-foreground"}`}>{c.price}</td>
+                      <td className="p-4 text-center">{c.trial ? <Check className="w-4 h-4 text-success mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />}</td>
+                      <td className="p-4 text-center">{c.auto ? <Check className="w-4 h-4 text-success mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />}</td>
+                      <td className="p-4 text-center">{c.sovereign ? <Check className="w-4 h-4 text-success mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />}</td>
+                      <td className={`p-4 text-center text-xs ${c.self ? "text-success font-semibold" : "text-muted-foreground"}`}>{c.support}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+
+          {/* ── Retention Value ──────────────── */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.6 }} className="mb-16">
+            <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-8">
+              <h2 className="text-2xl font-bold text-center mb-2">Plus vous l'utilisez, plus vous gagnez</h2>
+              <p className="text-center text-muted-foreground text-sm mb-8">La valeur de SECURIT-E croît avec le temps — et vous protège de plus en plus</p>
+              <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { icon: Lock, title: "Capital de preuves", desc: "Chaque analyse génère une preuve immuable SHA-256. Votre Evidence Vault devient un actif juridique.", color: "text-primary" },
+                  { icon: TrendingUp, title: "Score de risque historique", desc: "Votre trajectoire de réduction des risques sur 12+ mois — prouvable devant votre conseil d'administration.", color: "text-success" },
+                  { icon: Star, title: "Conformité cumulative", desc: "Chaque contrôle NIS2/RGPD documenté s'ajoute à votre dossier de conformité. Aucun audit ne vous prend de court.", color: "text-warning" },
+                  { icon: Building2, title: "Intelligence souveraine", desc: "Vos signaux OSINT, ontologie d'entités et baseline de surface d'attaque — unique à votre organisation.", color: "text-accent" },
+                ].map((item, i) => (
+                  <div key={i} className="p-4 rounded-xl bg-card/60 border border-border/60 space-y-2">
+                    <item.icon className={`w-6 h-6 ${item.color}`} />
+                    <p className="font-bold text-sm text-foreground">{item.title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
+          </motion.div>
 
-            {/* Add-ons section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="mb-16"
-            >
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 mb-4">
-                  <Package className="w-4 h-4 text-primary" />
-                  <span className="text-sm text-primary font-medium">Add-ons optionnels</span>
-                </div>
-                <h2 className="text-2xl font-bold text-foreground">Étendez votre gouvernance</h2>
-                <p className="text-muted-foreground mt-2">En complément du plan Core</p>
-              </div>
+          {/* ── FAQ ──────────────────────────── */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.65 }} className="mb-16 max-w-3xl mx-auto">
+            <h2 className="text-2xl font-bold text-center mb-8">Questions fréquentes</h2>
+            <div className="space-y-3">
+              {faqs.map((faq, i) => <FaqItem key={i} q={faq.q} a={faq.a} />)}
+            </div>
+          </motion.div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                {addons.map((addon, index) => (
-                  <motion.div
-                    key={addon.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-                  >
-                    <Card className="glass-card h-full hover:border-primary/50 transition-colors">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-primary/10">
-                              <addon.icon className="w-5 h-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-foreground">{addon.name}</h3>
-                              <p className="text-sm text-muted-foreground">{addon.description}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between mt-4">
-                          <div>
-                            <span className="text-xl font-bold text-primary">{addon.price}</span>
-                            <span className="text-xs text-muted-foreground ml-1">{addon.period}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {addon.status === "coming_v2" ? (
-                              <Badge variant="outline" className="text-xs">V2</Badge>
-                            ) : (
-                              <Badge className="bg-success/20 text-success border-0 text-xs">Disponible</Badge>
-                            )}
-                            {addon.href && (
-                              <Button variant="ghost" size="sm" asChild>
-                                <Link to={addon.href}>
-                                  Détails
-                                  <ArrowRight className="w-3 h-3 ml-1" />
-                                </Link>
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
+          {/* ── Bottom CTA ───────────────────── */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay: 0.7 }} className="text-center rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 to-primary/5 p-10 space-y-5">
+            <AlertTriangle className="w-8 h-8 text-destructive mx-auto" />
+            <h2 className="text-3xl font-black">Chaque jour sans SECURIT-E est un jour d'exposition.</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">Les cyberattaques n'attendent pas que vous soyez prêt. Votre surface d'attaque existe déjà. La question est : est-ce que quelqu'un la surveille ?</p>
+            <div className="flex justify-center gap-3 flex-wrap">
+              <Button size="lg" className="font-bold gap-2 px-8" onClick={() => handleCheckout("pro")}>
+                <Zap className="w-5 h-5" />Activer Command — 14j gratuits
+              </Button>
+              <Button size="lg" variant="outline" className="font-bold gap-2" onClick={() => setDemoDialogOpen(true)}>
+                <CalendarDays className="w-5 h-5" />Parler à un expert
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Paiement Stripe · Annulation libre · Données souveraines 🇫🇷</p>
+          </motion.div>
         </div>
       </main>
 
       <FooterSection />
-
-      <DemoRequestDialog
-        open={demoDialogOpen}
-        onOpenChange={setDemoDialogOpen}
-        ctaOrigin="pricing_page_cta"
-        sourcePage="/pricing"
-      />
+      <DemoRequestDialog open={demoDialogOpen} onOpenChange={setDemoDialogOpen} ctaOrigin="pricing_page_cta" sourcePage="/pricing" />
     </div>
   );
 };
