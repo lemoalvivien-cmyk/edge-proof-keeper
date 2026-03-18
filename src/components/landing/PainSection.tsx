@@ -1,52 +1,48 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { AlertTriangle, Scale, Shield, Clock, TrendingDown } from "lucide-react";
+import { AlertTriangle, Scale, Shield, Clock, TrendingDown, Building2 } from "lucide-react";
 
 const painPoints = [
   {
     icon: AlertTriangle,
-    title: "NIS2 : amendes jusqu'à 10M€ ou 2% CA mondial",
-    description: "Les DSI et DG sont personnellement responsables. En cas d'incident non documenté, vous êtes seul face au régulateur et à l'assureur.",
+    title: "NIS2 : amendes jusqu'à 10M€ ou 2% de votre CA mondial",
+    description: "Les DSI et DG sont personnellement responsables devant le régulateur. En cas d'incident non documenté, vous êtes seul face à l'ANSSI, à l'assureur, et au tribunal.",
     tag: "CRITIQUE",
     tagColor: "label-badge-red",
-    borderColor: "border-destructive/25 hover:border-destructive/50",
+    borderColor: "border-destructive/30 hover:border-destructive/55",
     glowColor: "hsl(4 90% 58% / 0.08)",
-    size: "lg",
   },
   {
     icon: Scale,
-    title: "Responsabilité personnelle du dirigeant",
-    description: "RGPD + NIS2 créent une responsabilité pénale directe. Sans preuves de diligence : risque pénal non-négociable.",
+    title: "Responsabilité pénale directe du dirigeant",
+    description: "RGPD + NIS2 créent une responsabilité personnelle sans précédent. Sans preuves de diligence horodatées : risque pénal non-négociable pour vous.",
     tag: "CRITIQUE",
     tagColor: "label-badge-red",
     borderColor: "border-destructive/20 hover:border-destructive/40",
-    glowColor: "hsl(4 90% 58% / 0.06)",
-    size: "sm",
+    glowColor: "hsl(4 90% 58% / 0.05)",
   },
   {
     icon: Clock,
-    title: "3 mois pour constituer un dossier de preuves",
-    description: "Votre assureur cyber exige des preuves de maturité. Sans Evidence Vault, vous perdez 3 mois à rassembler des documents épars.",
-    tag: "HAUTE",
+    title: "3 mois perdus à constituer un dossier de preuves",
+    description: "Votre assureur cyber exige des preuves de maturité. Sans Evidence Vault automatisé, vos équipes passent 3 mois à rassembler des documents épars.",
+    tag: "COÛT CACHÉ",
     tagColor: "label-badge-red",
-    borderColor: "border-warning/20 hover:border-warning/40",
-    glowColor: "hsl(42 96% 54% / 0.06)",
-    size: "sm",
+    borderColor: "border-warning/25 hover:border-warning/45",
+    glowColor: "hsl(42 96% 54% / 0.05)",
   },
   {
     icon: Shield,
-    title: "Assurance cyber refusée ou prime doublée",
-    description: "Sans documentation structurée de votre posture cyber, les assureurs refusent ou facturent des primes prohibitives.",
-    tag: "HAUTE",
+    title: "Assurance cyber refusée ou prime multipliée par 3",
+    description: "Sans documentation structurée de votre posture cyber, les assureurs refusent ou appliquent des surprimes qui ruinent votre budget IT.",
+    tag: "RISQUE DIRECT",
     tagColor: "label-badge-red",
-    borderColor: "border-warning/20 hover:border-warning/40",
-    glowColor: "hsl(42 96% 54% / 0.06)",
-    size: "sm",
+    borderColor: "border-warning/25 hover:border-warning/45",
+    glowColor: "hsl(42 96% 54% / 0.05)",
   },
 ];
 
 const container = { initial: {}, animate: { transition: { staggerChildren: 0.1 } } };
-const cardVariant = { initial: { opacity: 0, y: 40 }, animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } } } as const;
+const cardVariant = { initial: { opacity: 0, y: 36 }, animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } } } as const;
 
 export function PainSection() {
   const ref = useRef(null);
@@ -59,6 +55,7 @@ export function PainSection() {
 
       <div className="container relative px-4">
         <div className="max-w-6xl mx-auto">
+
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -68,17 +65,17 @@ export function PainSection() {
           >
             <div className="label-badge label-badge-red mx-auto w-fit">
               <TrendingDown className="w-3 h-3" />
-              Le Problème 2026
+              Le Risque Réel 2026
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-              En 2026, la cyber n'est plus{" "}
+              En 2026, chaque semaine sans gouvernance cyber{" "}
+              <br className="hidden md:block" />
               <span className="text-destructive" style={{ textShadow: "0 0 40px hsl(4 90% 58% / 0.4)" }}>
-                un problème IT
+                est une semaine d'exposition pénale directe
               </span>
-              {" "}— c'est votre risque pénal
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              NIS2, RGPD, assureurs exigeants : chaque semaine sans gouvernance documentée est une semaine d'exposition directe.
+              Ce n'est plus un sujet IT. C'est un sujet de direction, de conformité et de survie d'entreprise.
             </p>
           </motion.div>
 
@@ -103,7 +100,7 @@ export function PainSection() {
               </div>
               <h3 className="text-xl font-bold text-foreground mb-3">{painPoints[0].title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{painPoints[0].description}</p>
-              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-destructive/30 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-destructive/40 to-transparent" />
             </motion.div>
 
             {/* Small cards */}
@@ -126,31 +123,67 @@ export function PainSection() {
             ))}
           </motion.div>
 
-          {/* Agitation stat */}
+          {/* Agitation stats */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.6, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
-            className="mt-12 flex justify-center"
+            className="mt-12"
           >
-            <div className="inline-flex flex-col sm:flex-row items-center gap-6 px-8 py-5 rounded-2xl border border-destructive/25 glass-card"
-              style={{ background: "linear-gradient(135deg, hsl(4 90% 58% / 0.08) 0%, hsl(var(--glass) / 0.7) 100%)" }}>
-              <div className="flex items-center gap-6">
-                <div className="text-center">
-                  <div className="text-5xl font-bold font-mono text-destructive" style={{ textShadow: "0 0 30px hsl(4 90% 58% / 0.4)" }}>60%</div>
-                  <div className="text-xs text-muted-foreground mt-1 font-mono">des PME victimes</div>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {[
+                {
+                  value: "60%",
+                  color: "text-destructive",
+                  shadow: "0 0 30px hsl(4 90% 58% / 0.35)",
+                  label: "des PME victimes font faillite dans les 6 mois",
+                  sub: "Faute de préparation documentée",
+                  icon: Building2,
+                },
+                {
+                  value: "10M€",
+                  color: "text-warning",
+                  shadow: "0 0 30px hsl(42 96% 54% / 0.35)",
+                  label: "d'amende maximum NIS2",
+                  sub: "Par incident non documenté",
+                  icon: AlertTriangle,
+                },
+                {
+                  value: "180 000€",
+                  color: "text-accent",
+                  shadow: "0 0 30px hsl(258 90% 66% / 0.35)",
+                  label: "coût moyen d'une cyberattaque PME",
+                  sub: "vs. 490€/an avec SECURIT-E",
+                  icon: TrendingDown,
+                },
+              ].map((stat, i) => (
+                <div
+                  key={i}
+                  className="p-5 rounded-2xl glass-card border border-border/60 text-center flex flex-col items-center gap-2"
+                >
+                  <div className={`text-4xl font-bold font-mono ${stat.color}`} style={{ textShadow: stat.shadow }}>
+                    {stat.value}
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">{stat.label}</p>
+                  <p className="text-xs text-muted-foreground">{stat.sub}</p>
                 </div>
-                <div className="w-px h-12 bg-border hidden sm:block" />
-                <div className="text-center">
-                  <div className="text-5xl font-bold font-mono text-warning" style={{ textShadow: "0 0 30px hsl(42 96% 54% / 0.4)" }}>10M€</div>
-                  <div className="text-xs text-muted-foreground mt-1 font-mono">amende NIS2 max</div>
-                </div>
-              </div>
-              <div className="w-px h-12 bg-border hidden sm:block" />
-              <div className="text-sm text-muted-foreground max-w-xs leading-relaxed text-center sm:text-left">
-                font <span className="text-foreground font-semibold">faillite dans les 6 mois</span> après une cyberattaque faute de préparation documentée.
-              </div>
+              ))}
             </div>
+          </motion.div>
+
+          {/* Bridge to solution */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.7 }}
+            className="mt-10 text-center"
+          >
+            <p className="text-lg font-semibold text-foreground/80">
+              Il existe maintenant une alternative souveraine et abordable.
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Un centre de commandement cyber autonome, opérationnel en 15 minutes.
+            </p>
           </motion.div>
         </div>
       </div>

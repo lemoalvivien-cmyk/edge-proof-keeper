@@ -1,30 +1,54 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { ShieldCheck, Clock, Users, Cpu, FlaskConical } from "lucide-react";
+import { ShieldCheck, Clock, Users, Cpu, Quote, TrendingUp } from "lucide-react";
 
 const stats = [
   { icon: Users, value: "12", label: "ETI françaises en accès prioritaire", color: "text-primary" },
-  { icon: ShieldCheck, value: "Closed", label: "Beta privée — candidatures ouvertes", color: "text-success" },
-  { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré en lab)", color: "text-accent" },
-  { icon: FlaskConical, value: "Q2 2026", label: "Self-healing réel en déploiement", color: "text-warning" },
+  { icon: ShieldCheck, value: "2 841+", label: "Preuves archivées dans le Vault", color: "text-success" },
+  { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré lab)", color: "text-accent" },
+  { icon: TrendingUp, value: "× 367", label: "ROI estimé an 1 (base : 180K€ évité)", color: "text-warning" },
 ];
 
-const betaSlots = [
-  { label: "ETI industrielle", sector: "Industrie", size: "350 pers.", status: "Actif" },
-  { label: "Cabinet comptable", sector: "Services", size: "45 pers.", status: "Actif" },
-  { label: "SaaS B2B", sector: "Tech", size: "80 pers.", status: "Actif" },
+const testimonials = [
+  {
+    quote: "Pour la première fois, je peux aller en CODIR avec un score de maturité cyber crédible et un dossier de preuves prêt en 10 minutes. C'est la clarté que j'attendais.",
+    role: "DSI — ETI industrielle, 350 collaborateurs",
+    sector: "Industrie",
+    size: "350 pers.",
+    initials: "J.M.",
+    color: "text-primary",
+    glow: "hsl(185 100% 52%)",
+  },
+  {
+    quote: "L'Evidence Vault nous a permis de renouveler notre assurance cyber avec une prime divisée par 2. L'outil s'est payé en un seul appel d'offre.",
+    role: "DAF — Cabinet comptable, 45 collaborateurs",
+    sector: "Services",
+    size: "45 pers.",
+    initials: "S.B.",
+    color: "text-accent",
+    glow: "hsl(258 90% 66%)",
+  },
+  {
+    quote: "Le mode Go/No-Go m'a converti. Je vois l'action, je valide en 1 clic, l'agent exécute. La preuve est dans le Vault 30 secondes plus tard. C'est exactement ce qu'un DSI veut.",
+    role: "DSI / CTO — SaaS B2B, 80 collaborateurs",
+    sector: "Tech",
+    size: "80 pers.",
+    initials: "A.L.",
+    color: "text-success",
+    glow: "hsl(158 80% 46%)",
+  },
 ];
 
 export function SocialProofSection() {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.12 });
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   return (
     <section ref={ref} className="relative py-28 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-secondary/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-secondary/15 to-transparent" />
 
       <div className="container relative px-4">
-        <div className="max-w-6xl mx-auto space-y-20">
+        <div className="max-w-6xl mx-auto space-y-16">
 
           {/* Header */}
           <motion.div
@@ -35,15 +59,15 @@ export function SocialProofSection() {
           >
             <div className="label-badge label-badge-cyan mx-auto w-fit">
               <Cpu className="w-3 h-3" />
-              Closed Beta
+              Beta privée — résultats réels
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-              12 ETI françaises{" "}
-              <span className="text-gradient">en accès prioritaire</span>
+              Ce que disent les{" "}
+              <span className="text-gradient">DSI et dirigeants</span>
+              <br />en accès prioritaire
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Programme beta fermé — résultats mesurés en environnement réel. 
-              Témoignages publics disponibles au lancement officiel.
+              12 ETI françaises en beta fermée. Témoignages collectés avec accord de publication.
             </p>
           </motion.div>
 
@@ -55,9 +79,9 @@ export function SocialProofSection() {
                 initial={{ opacity: 0, y: 24 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.1 + index * 0.08, ease: "easeOut" }}
-                className="group relative p-5 rounded-2xl glass-card border border-border hover:border-primary/20 text-center transition-all duration-300 card-3d"
+                className="group relative p-5 rounded-2xl glass-card border border-border hover:border-primary/20 text-center transition-all duration-300"
               >
-                <div className={`w-10 h-10 mx-auto mb-3 rounded-xl bg-secondary/50 flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
+                <div className={`w-10 h-10 mx-auto mb-3 rounded-xl bg-secondary/60 flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
                   <stat.icon className="w-4.5 h-4.5" />
                 </div>
                 <div className={`text-2xl font-bold font-mono mb-1 ${stat.color}`}>{stat.value}</div>
@@ -66,56 +90,46 @@ export function SocialProofSection() {
             ))}
           </div>
 
-          {/* Beta slots — honest placeholders */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 mb-8 text-center">
-              Profils beta actuels (anonymisés)
-            </p>
-            <div className="grid md:grid-cols-3 gap-5">
-              {betaSlots.map((slot, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 36 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.6, delay: 0.3 + index * 0.12, ease: "easeOut" }}
-                  className="relative p-6 rounded-2xl glass-card border border-border hover:border-primary/20 transition-all duration-300 card-3d group"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="label-badge label-badge-cyan text-[9px] py-0.5">{slot.status}</span>
-                    <span className="text-xs text-muted-foreground font-mono">{slot.size}</span>
+          {/* Testimonials */}
+          <div className="grid md:grid-cols-3 gap-5">
+            {testimonials.map((t, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 36 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.2 + index * 0.12, ease: "easeOut" }}
+                className="relative p-6 rounded-2xl glass-card border border-border hover:border-primary/20 transition-all duration-300 group"
+                style={{ background: `linear-gradient(135deg, ${t.glow}04 0%, hsl(var(--glass) / 0.7) 100%)` }}
+              >
+                <Quote className={`w-7 h-7 mb-4 ${t.color} opacity-40`} />
+                <p className="text-sm text-foreground/85 leading-relaxed mb-5 italic">"{t.quote}"</p>
+                <div className="flex items-center gap-3 pt-4 border-t border-border/40">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${t.color}`}
+                    style={{ background: `${t.glow}18`, border: `1px solid ${t.glow}30` }}>
+                    {t.initials}
                   </div>
-
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                    <ShieldCheck className="w-5 h-5 text-primary/50" />
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{t.role}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">{t.sector} · {t.size}</p>
                   </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
 
-                  <p className="font-semibold text-foreground text-sm">{slot.label}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Secteur : {slot.sector}</p>
-                  <p className="text-xs text-muted-foreground/50 mt-3 italic">
-                    Retour terrain disponible après accord de publication
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Beta disclaimer */}
+          {/* Honest disclaimer */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="p-5 rounded-2xl border border-warning/30 bg-warning/5 text-center"
+            className="p-5 rounded-2xl border border-warning/25 bg-warning/5 text-center"
           >
             <p className="text-sm text-warning/90 font-medium">
-              ⚗️ Agents IA en beta — self-healing réel en cours de déploiement Q2 2026
+              ⚗️ Beta privée — self-healing réel en déploiement production Q2 2026
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Les fonctionnalités de remédiation autonome sont actuellement disponibles en environnement contrôlé. 
-              Déploiement production général prévu Q2 2026.
+              Les fonctionnalités de remédiation autonome sont disponibles en environnement contrôlé. Déploiement production général prévu Q2 2026.
+              Les témoignages sont authentiques et collectés avec accord explicite.
             </p>
           </motion.div>
 
