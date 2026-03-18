@@ -330,7 +330,7 @@ export function HowItWorksSection() {
                   Tester la démo interactive complète
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
-                <p className="text-center text-xs text-muted-foreground mt-2 font-mono">
+              <p className="text-center text-xs text-muted-foreground mt-2 font-mono">
                   Données démo réalistes · Preuves SHA-256 réelles · Aucune installation
                 </p>
               </motion.div>
