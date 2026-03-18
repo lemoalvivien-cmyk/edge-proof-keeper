@@ -6,11 +6,11 @@
  */
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowRight, Lock, Zap, Crown, Shield, TrendingUp } from "lucide-react";
+import { X, ArrowRight, Lock, Zap, Crown, Shield, TrendingUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { openCheckout } from "@/hooks/useSubscription";
-import { Loader2 } from "lucide-react";
+import { trackEvent } from "@/lib/tracking";
 
 export type UpsellFeature =
   | "self_healing"
