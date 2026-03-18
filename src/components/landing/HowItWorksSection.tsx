@@ -29,7 +29,7 @@ const STEPS = [
     glowAlpha: "hsl(258 90% 66% / 0.15)",
     badge: "ANALYSE IA",
     badgeColor: "label-badge-purple",
-    impact: "ROI remédiation : 34× vs exploit",
+    impact: "Analyse risque/impact business",
   },
   {
     time: "23s",
