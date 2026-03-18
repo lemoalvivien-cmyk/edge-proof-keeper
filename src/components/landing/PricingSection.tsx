@@ -70,7 +70,8 @@ const plans = [
       "Swarm Mode fully autonomous",
       "Déploiement on-premise possible",
       "Agents IA personnalisés",
-      "zk-SNARK + lattice crypto avancé",
+      "zk-SNARK + lattice crypto avancé" → supprimé, remplacé:
+      "Preuves cryptographiques avancées (roadmap)",
       "Predictive Causality Engine Pro",
       "SLA 99.99% garanti",
       "Account Manager dédié",
