@@ -231,13 +231,22 @@ export default function Dashboard() {
               {profile?.full_name ? `${profile.full_name} — ` : ''}Centre de commandement souverain · 6 agents actifs
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {(autoSeeding || pipelineRunning) && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-xs font-mono text-primary">
                 <Loader2 className="w-3 h-3 animate-spin" />
                 {autoSeeding ? 'Initialisation…' : 'Analyse en cours…'}
               </div>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 border-warning/30 text-warning hover:bg-warning/10"
+              onClick={() => navigate('/executive')}
+            >
+              <BarChart3 className="w-4 h-4" />
+              Vue Exécutive
+            </Button>
             <Button
               onClick={handleQuickPipeline}
               disabled={!organization?.id || pipelineRunning || autoSeeding}
