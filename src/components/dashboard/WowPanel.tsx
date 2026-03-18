@@ -461,7 +461,7 @@ export function WowPanel({
                   </div>
                   <div>
                     <p className="text-xs font-bold text-foreground">{vaultCount.toLocaleString('fr-FR')} preuves archivées</p>
-                    <p className="text-[10px] text-muted-foreground font-mono">Chaîne immuable SHA-256 · Post-quantique</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">Chaîne immuable SHA-256 · Vault souverain</p>
                   </div>
                 </div>
                 <Badge variant="outline" className="text-[10px] text-primary border-primary/30 bg-primary/5 font-mono">
