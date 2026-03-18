@@ -61,7 +61,7 @@ const faqCategories = [
     questions: [
       {
         q: "Qu'est-ce que l'Evidence Vault ?",
-        a: "L'Evidence Vault utilise une chaîne de hashes SHA-256 enchaînés (Merkle Chain). Chaque action est horodatée, hashée et liée à la précédente : toute modification invalide la chaîne. Le résultat est une piste d'audit immuable, vérifiable indépendamment, présentable à un auditeur NIS2/RGPD. La technologie utilisée est SHA-256 — une architecture post-quantique (CRYSTALS-Dilithium) est sur notre roadmap.",
+        a: "L'Evidence Vault utilise une chaîne de hashes SHA-256 enchaînés (Merkle Chain). Chaque action est horodatée, hashée et liée à la précédente : toute modification invalide la chaîne. Le résultat est une piste d'audit immuable, vérifiable indépendamment, présentable à un auditeur NIS2/RGPD. Technologie actuelle : SHA-256 Merkle Chain. Résistance crypto renforcée : roadmap 2026.",
       },
       {
         q: "Où sont hébergées mes données ?",
