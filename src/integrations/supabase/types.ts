@@ -1310,6 +1310,27 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          function_name: string
+          request_count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          function_name: string
+          request_count?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          function_name?: string
+          request_count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       remediation_actions: {
         Row: {
           action_type: string
@@ -2316,6 +2337,14 @@ export type Database = {
       calculate_risk_score: {
         Args: { confidence_score?: number; severity: string }
         Returns: number
+      }
+      check_rate_limit: {
+        Args: {
+          p_function_name: string
+          p_max_per_minute?: number
+          p_user_id: string
+        }
+        Returns: boolean
       }
       delete_user_account: { Args: never; Returns: undefined }
       ensure_permanent_authorization: {
