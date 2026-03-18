@@ -62,7 +62,7 @@ const STEPS = [
     agent: "Vault Agent",
     icon: Lock,
     action: "Preuve cryptographique signée dans l'Evidence Vault",
-    detail: "Signature post-quantique CRYSTALS-Dilithium3. Chaîne de hashes SHA-256 immuable. Preuve exportable PDF/JSON pour audit NIS2/CNIL.",
+    detail: "Chaîne de hashes SHA-256 immuable (architecture Merkle Chain). Preuve exportable PDF/JSON pour audit NIS2/CNIL. Architecture résistante aux modifications.",
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
     glowAlpha: "hsl(185 100% 52% / 0.15)",
