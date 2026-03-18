@@ -1,6 +1,6 @@
 /**
  * SECURIT-E — OntologyView Component
- * Visualisation Palantir-style de l'ontologie Assets → Risks → Remediations
+ * Cartographie souveraine des risques : Assets → Risks → Remediations
  */
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
