@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { buildCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 const PRODUCT_TO_PLAN: Record<string, string> = {
   "prod_U9gs4vKy7x89uV": "starter",
@@ -17,9 +13,9 @@ const logStep = (step: string, details?: unknown) => {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+  const corsHeaders = buildCorsHeaders(req);
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -54,7 +50,6 @@ serve(async (req) => {
 
     const customerId = customers.data[0].id;
 
-    // Check active + trialing subscriptions
     const [activeSubs, trialingSubs] = await Promise.all([
       stripe.subscriptions.list({ customer: customerId, status: "active", limit: 1 }),
       stripe.subscriptions.list({ customer: customerId, status: "trialing", limit: 1 }),
