@@ -2,34 +2,11 @@
  * SECURIT-E — sovereign-analyze Edge Function
  *
  * Agent IA souverain français — CISO IA NIS2/GDPR
- * Appelle Gemini 2.5 Flash via Lovable AI Gateway.
- * Prompt système fixe : analyse défensive uniquement, en français.
- *
- * POST /functions/v1/sovereign-analyze
- * Body: { organization_id, entity_type: 'risk'|'signal'|'finding', entity_id, context? }
+ * Rate limiting RÉEL via table rate_limits (DB-backed, stateless-safe).
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
-// ── In-memory rate limiter: 10 req/min per user ────────────────────────────
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-function checkRateLimit(userId: string, maxPerMin = 10): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(userId);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + 60_000 });
-    return true;
-  }
-  if (entry.count >= maxPerMin) return false;
-  entry.count++;
-  return true;
-}
+import { buildCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 const LOVABLE_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-2.5-flash";
@@ -57,31 +34,12 @@ const ANALYSIS_TOOL = {
     parameters: {
       type: "object",
       properties: {
-        titre: {
-          type: "string",
-          description: "Titre court de l'analyse (max 100 caractères)"
-        },
-        niveau_risque: {
-          type: "string",
-          enum: ["critique", "élevé", "moyen", "faible"],
-          description: "Niveau de risque évalué"
-        },
-        analyse_technique: {
-          type: "string",
-          description: "Analyse technique détaillée basée sur les faits"
-        },
-        conformite_nis2: {
-          type: "string",
-          description: "Analyse de conformité NIS2 : articles concernés, obligations, risques de sanction"
-        },
-        conformite_rgpd: {
-          type: "string",
-          description: "Analyse RGPD : données personnelles concernées, base légale, notification CNIL requise"
-        },
-        impact_metier: {
-          type: "string",
-          description: "Impact business concret : disponibilité, réputation, financier"
-        },
+        titre: { type: "string", description: "Titre court de l'analyse (max 100 caractères)" },
+        niveau_risque: { type: "string", enum: ["critique", "élevé", "moyen", "faible"] },
+        analyse_technique: { type: "string" },
+        conformite_nis2: { type: "string" },
+        conformite_rgpd: { type: "string" },
+        impact_metier: { type: "string" },
         actions_prioritaires: {
           type: "array",
           items: {
@@ -95,8 +53,7 @@ const ANALYSIS_TOOL = {
             },
             required: ["ordre", "action", "urgence", "responsable", "effort"],
             additionalProperties: false
-          },
-          description: "Actions classées par priorité décroissante"
+          }
         },
         script_healing: {
           type: "object",
@@ -106,13 +63,9 @@ const ANALYSIS_TOOL = {
             description: { type: "string" }
           },
           required: ["type", "script", "description"],
-          additionalProperties: false,
-          description: "Script de remédiation automatique si applicable"
+          additionalProperties: false
         },
-        limites: {
-          type: "string",
-          description: "Limites de l'analyse et informations manquantes"
-        }
+        limites: { type: "string" }
       },
       required: ["titre", "niveau_risque", "analyse_technique", "conformite_nis2", "conformite_rgpd", "impact_metier", "actions_prioritaires", "script_healing", "limites"],
       additionalProperties: false
@@ -121,10 +74,10 @@ const ANALYSIS_TOOL = {
 };
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResp = handleCors(req);
+  if (corsResp) return corsResp;
 
+  const corsHeaders = buildCorsHeaders(req);
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -158,8 +111,17 @@ Deno.serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
-    // ── Rate limit: 10 appels/min par user ────────────────────────────────────
-    if (!checkRateLimit(userId, 10)) {
+    // ── Rate limit RÉEL via DB (stateless-safe) ───────────────
+    const db = createClient(supabaseUrl, serviceKey);
+    const { data: allowed, error: rlErr } = await db.rpc("check_rate_limit", {
+      p_user_id: userId,
+      p_function_name: "sovereign-analyze",
+      p_max_per_minute: 10,
+    });
+    if (rlErr) {
+      console.error("check_rate_limit error:", rlErr.message);
+    }
+    if (allowed === false) {
       return new Response(
         JSON.stringify({ error: "Limite de 10 appels/min atteinte — réessayez dans un moment" }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "60" } }
@@ -187,8 +149,6 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const db = createClient(supabaseUrl, serviceKey);
 
     // ── Check org access ──────────────────────────────────────
     const { data: hasAccess } = await db.rpc("has_org_access", {
@@ -329,7 +289,6 @@ Génère un script bash/PowerShell de remédiation automatique si la vulnérabil
       entity_type === "risk" &&
       entity_id
     ) {
-      // Find a remediation action for this risk to attach the script to
       const { data: remActions } = await db
         .from("remediation_actions")
         .select("id")
@@ -338,7 +297,6 @@ Génère un script bash/PowerShell de remédiation automatique si la vulnérabil
         .limit(1);
 
       if (remActions && remActions.length > 0) {
-        // Compute a SHA-256 proof hash of the script
         const encoder = new TextEncoder();
         const data = encoder.encode(analysis.script_healing.script);
         const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -378,7 +336,7 @@ Génère un script bash/PowerShell de remédiation automatique si la vulnérabil
     const message = err instanceof Error ? err.message : "Erreur inconnue";
     console.error("sovereign-analyze fatal:", message);
     return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { buildCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });
