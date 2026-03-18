@@ -68,7 +68,7 @@ const STEPS = [
     glowAlpha: "hsl(185 100% 52% / 0.15)",
     badge: "PREUVE ✓",
     badgeColor: "label-badge-cyan",
-    impact: "Evidence NIS2 : certifiée",
+    impact: "Evidence NIS2 : archivée et vérifiable",
   },
 ];
 
