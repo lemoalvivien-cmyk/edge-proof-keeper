@@ -580,11 +580,21 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Proof Pack upsell — after pipeline proof, for non-pro users with data */}
+        {!subscription.subscribed && !subscription.isLoading && (pipelineProof?.runs ?? 0) > 0 && (
+          <UpsellNudge feature="proof_pack" variant="banner" />
+        )}
+
         {/* Ontologie Souveraine */}
         <OntologyView />
 
         {/* Rapport souverain export */}
         <SovereignReportExport />
+
+        {/* CODIR report upsell — for starter plan only */}
+        {subscription.subscribed && subscription.plan === "starter" && (
+          <UpsellNudge feature="codir_report" variant="banner" />
+        )}
 
         {/* Live Agents Demo */}
         <Card className="border-primary/30">
