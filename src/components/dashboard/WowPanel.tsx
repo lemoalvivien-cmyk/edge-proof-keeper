@@ -430,7 +430,7 @@ export function WowPanel({
                   </div>
                   <div>
                     <p className="text-xs font-bold text-foreground">Cycle complet en 47 secondes</p>
-                    <p className="text-[10px] text-muted-foreground font-mono">Zéro intervention humaine · NIS2 · Preuve exportable</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">Délégation supervisée · NIS2 · Preuve exportable</p>
                   </div>
                 </div>
                 <Button
