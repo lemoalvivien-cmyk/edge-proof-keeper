@@ -10,11 +10,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "npx vitest run --reporter=verbose",
-    "test:unit": "npx vitest run",
+    "test:unit": "vitest run",
     "test:smoke": "node scripts/release-gate.mjs --smoke-only",
     "test:release": "node scripts/release-gate.mjs",
-    "test:e2e": "echo \"[MANQUE] Playwright E2E — installer avec: npx playwright install\"",
-    "gate": "node scripts/release-gate.mjs"
+    "test:e2e": "playwright test",
+    "gate": "node scripts/release-gate.mjs",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
