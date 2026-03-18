@@ -57,7 +57,7 @@ const agents = [
     name: "Vault Agent",
     role: "Preuves cryptographiques immuables SHA-256",
     description: "Horodate et enchaîne chaque preuve dans une Merkle Tree SHA-256. Vérifiable indépendamment. Présentable aux régulateurs NIS2, assureurs, et auditeurs.",
-    metric: "2 841+ preuves archivées",
+    metric: "Vault SHA-256 Merkle Chain",
     Icon: Lock,
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
