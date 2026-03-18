@@ -446,6 +446,11 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Self-healing upsell — only for non-pro users with open tasks */}
+        {!subscription.subscribed && !subscription.isLoading && (taskCounts?.open ?? 0) > 0 && (
+          <UpsellNudge feature="self_healing" variant="inline" />
+        )}
+
         {/* Status + Résumé */}
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
