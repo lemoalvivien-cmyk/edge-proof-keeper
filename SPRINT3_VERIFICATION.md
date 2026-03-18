@@ -57,13 +57,13 @@ Un domaine custom n'est pas encore configuré.
 **Problème :** `.env` présent dans le repo avec les clés Supabase (anon key — publique par design, mais la pratique est mauvaise).
 
 **Actions :**
-- `.env` ajouté au `.gitignore`
 - `.env.example` créé avec les variables sans valeurs
+- ⚠️ `.gitignore` est géré par Lovable (fichier en lecture seule) — `.env` y est absent car le projet Lovable gère les secrets via la plateforme, pas via le système de fichiers Git. Les variables d'env Vite sont injectées au build.
 
 **Vérification :**
 ```
-✅ .gitignore → .env ajouté
 ✅ .env.example créé avec VITE_SUPABASE_PROJECT_ID, VITE_SUPABASE_PUBLISHABLE_KEY, VITE_SUPABASE_URL
+ℹ️  .gitignore géré par Lovable — secrets via Lovable Cloud, pas via .env local
 ```
 
 ---
