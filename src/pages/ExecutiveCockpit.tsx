@@ -3,7 +3,8 @@
  * Vue synthétique premium orientée DG / RSSI / COMEX
  * Montrable en rendez-vous commercial, lisible en moins de 30 secondes.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { trackEvent } from '@/lib/tracking';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -158,6 +159,14 @@ export default function ExecutiveCockpit() {
   const { data: taskCounts } = useTaskCounts();
   const subscription = useSubscription();
   const now = new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' });
+  const tracked = useRef(false);
+
+  useEffect(() => {
+    if (!tracked.current) {
+      tracked.current = true;
+      trackEvent('executive_view', { source_page: '/executive', cta_origin: 'cockpit_page_load' });
+    }
+  }, []);
 
   // Compliance
   const { data: complianceStats } = useQuery({

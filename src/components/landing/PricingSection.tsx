@@ -1,5 +1,5 @@
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Check, ArrowRight, Sparkles, CalendarDays, Zap, Crown, Shield, Clock, CreditCard, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,7 +62,7 @@ const plans = [
     price: "29 900€",
     period: "TTC / an",
     monthly: "2 491€ / mois",
-    tagline: "Souveraineté totale · On-prem · Swarm autonome",
+    tagline: "Souveraineté totale · On-prem · Swarm supervisé",
     badge: "ENTERPRISE SOUVERAIN",
     badgeColor: "label-badge-cyan",
     highlight: false,
@@ -136,6 +136,15 @@ export function PricingSection() {
   const { user } = useAuth();
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const tracked = useRef(false);
+
+  // Track pricing section impression once
+  useEffect(() => {
+    if (isInView && !tracked.current) {
+      tracked.current = true;
+      trackEvent('pricing_section_viewed', { source_page: '/', cta_origin: 'pricing_section' });
+    }
+  }, [isInView]);
 
   async function handleStripeCheckout(planId: "starter" | "pro") {
     if (user) {

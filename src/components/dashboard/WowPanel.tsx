@@ -430,7 +430,7 @@ export function WowPanel({
                   </div>
                   <div>
                     <p className="text-xs font-bold text-foreground">Cycle complet en 47 secondes</p>
-                    <p className="text-[10px] text-muted-foreground font-mono">Zéro intervention humaine · NIS2 · Preuve exportable</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">Délégation supervisée · NIS2 · Preuve exportable</p>
                   </div>
                 </div>
                 <Button
@@ -499,8 +499,8 @@ export function WowPanel({
 
               <div className="pt-1 grid grid-cols-3 gap-2 text-center">
                 {[
-                  { label: 'Algorithme', value: 'CRYSTALS-D3' },
-                  { label: 'Standard', value: 'NIST PQC' },
+                  { label: 'Algorithme', value: 'SHA-256' },
+                  { label: 'Structure', value: 'Merkle Chain' },
                   { label: 'Conformité', value: 'NIS2 ✓' },
                 ].map((item, i) => (
                   <div key={i} className="p-2 rounded-lg bg-muted/30 border border-border/40">

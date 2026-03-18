@@ -325,7 +325,7 @@ export default function Onboarding() {
               { icon: "🔍", text: "12 assets démo injectés automatiquement" },
               { icon: "⚡", text: "7 findings réalistes analysés par l'IA" },
               { icon: "🛡️", text: "Evidence Vault initialisé avec preuves SHA-256" },
-              { icon: "🤖", text: "Première analyse autonome lancée en background" },
+              { icon: "🤖", text: "Première analyse assistée lancée en arrière-plan" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>{item.icon}</span>

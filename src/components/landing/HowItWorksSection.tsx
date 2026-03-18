@@ -110,7 +110,7 @@ function AutoPlayTimeline({ isInView }: { isInView: boolean }) {
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
-          SWARM AUTONOME — {active >= STEPS.length ? '✓ CYCLE COMPLET' : `T+${STEPS[Math.min(active, STEPS.length - 1)]?.time ?? '0s'}`}
+          SWARM SUPERVISÉ — {active >= STEPS.length ? '✓ CYCLE COMPLET' : `T+${STEPS[Math.min(active, STEPS.length - 1)]?.time ?? '0s'}`}
         </span>
         {active >= STEPS.length && (
           <button

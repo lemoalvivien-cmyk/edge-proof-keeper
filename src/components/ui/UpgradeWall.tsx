@@ -1,37 +1,110 @@
 /**
- * UpgradeWall — Premium paywall with value-loss framing.
+ * UpgradeWall — Premium paywall with loss-framing and value conversion.
  * Shown when entitled === false. Designed to convert fast.
+ *
+ * Psychology:
+ *   1. Loss framing — what you're already missing
+ *   2. Accumulated value — prove sunk cost
+ *   3. Urgency — business risk is real, delay costs
+ *   4. Easy path — one-click checkout + code fallback
  */
 import {
   Shield, Zap, Lock, ArrowRight, Loader2, Key, ChevronDown, ChevronUp,
-  Crown, AlertTriangle, TrendingDown, Clock, Check, X,
+  Crown, AlertTriangle, TrendingDown, Clock, Check, X, FileText, Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCheckout } from "@/hooks/useSubscription";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AccessCodeActivation } from "@/components/auth/AccessCodeActivation";
 import { useNavigate } from "react-router-dom";
 import { useEntitlement } from "@/hooks/useEntitlement";
 import { motion, AnimatePresence } from "framer-motion";
+import { trackEvent } from "@/lib/tracking";
 
 interface UpgradeWallProps {
   trialActive?: boolean;
   plan?: string | null;
 }
 
-const VALUE_ITEMS = [
-  "Evidence Vault immuable — chaîne SHA-256 Merkle vérifiable",
-  "Score de risque temps réel — 6 agents supervisés actifs",
-  "Conformité RGPD / NIS2 documentée et prouvable",
-  "Remédiation assistée < 4h — votre RSSI virtuel IA 24/7",
-  "Rapports CODIR exportables en 1 clic",
-  "Preuves accumulées = capital juridique défendable",
+const LOCKED_FEATURES = [
+  { icon: Activity, label: "6 Agents IA supervisés 24/7 — détection en continu" },
+  { icon: Lock, label: "Evidence Vault SHA-256 Merkle — preuves immuables exportables" },
+  { icon: Shield, label: "Score de risque temps réel + dashboard Direction" },
+  { icon: FileText, label: "Brief CODIR mensuel généré par votre RSSI Virtuel IA" },
+  { icon: Zap, label: "Remédiation assistée — cible < 4h avec validation Go/No-Go" },
+  { icon: TrendingDown, label: "Conformité RGPD / NIS2 documentée et défendable" },
 ];
 
 const URGENCY_STATS = [
-  { icon: TrendingDown, val: "4h", label: "cible de remédiation assistée" },
-  { icon: Shield, val: "FR 🇫🇷", label: "hébergement souverain France" },
-  { icon: Clock, val: "47s", label: "de la détection à la preuve (lab)" },
+  { icon: TrendingDown, val: "< 4h", label: "cible de remédiation assistée" },
+  { icon: Shield, val: "🇫🇷 France", label: "hébergement souverain garanti" },
+  { icon: Clock, val: "47s", label: "cycle détection → preuve (lab)" },
+];
+
+const PLANS = [
+  {
+    id: "starter" as const,
+    name: "Sentinel",
+    price: "490€",
+    period: "/an",
+    monthly: "40,83€/mois",
+    label: "Démarrage",
+    labelColor: "text-primary",
+    icon: Shield,
+    iconColor: "text-primary",
+    borderClass: "border-border",
+    features: [
+      "Scout Agent — surface d'attaque",
+      "Dashboard Direction + Technique",
+      "Evidence Vault SHA-256",
+      "Conformité RGPD / NIS2 documentée",
+    ],
+    ctaLabel: "Activer Sentinel — 490€",
+    ctaVariant: "outline" as const,
+  },
+  {
+    id: "pro" as const,
+    name: "Command",
+    price: "6 900€",
+    period: "/an",
+    monthly: "575€/mois · 5,75% d'un RSSI",
+    label: "★ Recommandé DSI",
+    labelColor: "text-accent",
+    icon: Zap,
+    iconColor: "text-accent",
+    borderClass: "border-accent/60 border-2",
+    features: [
+      "6 Agents IA Swarm supervisés 24/7",
+      "Remédiation assistée < 4h",
+      "RSSI Virtuel IA — brief CODIR",
+      "Evidence Vault + OSINT continu",
+      "Tout Sentinel inclus",
+    ],
+    ctaLabel: "Activer Command — 6 900€",
+    ctaVariant: "default" as const,
+    featured: true,
+  },
+  {
+    id: "enterprise" as const,
+    name: "Sovereign",
+    price: "29 900€",
+    period: "/an",
+    monthly: "Sur devis · On-premise",
+    label: "Enterprise",
+    labelColor: "text-warning",
+    icon: Crown,
+    iconColor: "text-warning",
+    borderClass: "border-border",
+    features: [
+      "Tout Command inclus",
+      "Déploiement on-premise",
+      "Account Manager CISO dédié",
+      "SLA contractualisé",
+    ],
+    ctaLabel: "Parler à l'équipe",
+    ctaVariant: "outline" as const,
+    contactOnly: true,
+  },
 ];
 
 export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
@@ -40,7 +113,20 @@ export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
   const navigate = useNavigate();
   const { refresh } = useEntitlement();
 
+  // Track upgrade wall impression once on mount
+  useEffect(() => {
+    trackEvent('upgrade_wall_seen', {
+      source_page: window.location.pathname,
+      cta_origin: 'upgrade_wall',
+      metadata: { trial_active: trialActive, current_plan: plan },
+    });
+  }, [trialActive, plan]);
+
   const handleCheckout = async (p: "starter" | "pro") => {
+    trackEvent('upgrade_wall_plan_selected', {
+      source_page: window.location.pathname,
+      cta_origin: `upgrade_wall_${p}`,
+    });
     setLoading(p);
     try {
       await openCheckout(p);
@@ -50,6 +136,7 @@ export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
   };
 
   const handleCodeSuccess = (_accessUntil: string, _grantedPlan: string) => {
+    trackEvent('access_code_activated', { source_page: window.location.pathname, cta_origin: 'upgrade_wall_code' });
     setTimeout(async () => {
       await refresh();
       navigate("/dashboard", { replace: true });
@@ -76,8 +163,8 @@ export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
             {trialActive
-              ? "Pendant votre essai, vos agents ont détecté des risques. Activez votre abonnement pour les traiter avant qu'ils deviennent des incidents."
-              : "Sans surveillance active, chaque heure qui passe est une opportunité pour un attaquant. SECURIT-E vous redonne le contrôle en moins de 47 secondes."}
+              ? "Pendant votre essai, vos agents ont détecté des risques réels. Chaque heure sans surveillance active est une fenêtre d'opportunité pour un attaquant."
+              : "Sans surveillance active, chaque heure qui passe augmente votre exposition. Reprenez le contrôle — votre première ligne de défense vous attend."}
           </p>
         </motion.div>
 
@@ -94,91 +181,94 @@ export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
 
         {/* ── What you're missing ───────────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-card/60 border border-border rounded-2xl p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Ce que vous perdez sans accès actif</p>
-          <div className="grid sm:grid-cols-2 gap-2">
-            {VALUE_ITEMS.map((item, i) => (
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
+            Ce que vous n'avez plus — et ce que ça coûte
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {LOCKED_FEATURES.map((item, i) => (
               <div key={i} className="flex items-center gap-2.5">
-                <div className="w-4 h-4 rounded-full bg-destructive/15 flex items-center justify-center flex-shrink-0">
-                  <X className="w-2.5 h-2.5 text-destructive" />
+                <div className="w-7 h-7 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center justify-center flex-shrink-0">
+                  <X className="w-3.5 h-3.5 text-destructive" />
                 </div>
-                <span className="text-sm text-muted-foreground">{item}</span>
+                <span className="text-sm text-muted-foreground">{item.label}</span>
               </div>
             ))}
+          </div>
+          <div className="mt-4 p-3 rounded-xl bg-destructive/5 border border-destructive/20 text-center">
+            <p className="text-xs text-destructive font-semibold">
+              Coût moyen d'un incident cyber en France (CESIN) : <span className="font-black">≥ 180 000€</span>
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Investissement annuel pour vous en protéger : à partir de <strong>490€/an</strong>
+            </p>
           </div>
         </motion.div>
 
         {/* ── Plans ─────────────────────────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="grid sm:grid-cols-3 gap-4">
-
-          {/* Sentinel */}
-          <div className="rounded-2xl border border-border bg-card p-5 flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <Shield className="w-5 h-5 text-primary" />
-              <span className="font-bold text-foreground">Sentinel</span>
-              <span className="ml-auto text-[10px] font-bold text-primary uppercase">Démarrage</span>
-            </div>
-            <div className="text-3xl font-black mb-0.5">490€<span className="text-sm font-normal text-muted-foreground">/an</span></div>
-            <p className="text-xs text-muted-foreground mb-4">40,83€ / mois</p>
-            <ul className="space-y-1.5 text-xs text-muted-foreground flex-1 mb-5">
-              {["Détection surface d'attaque", "Dashboard Direction + Technique", "Evidence Vault SHA-256", "RGPD / NIS2 documentée"].map((f, i) => (
-                <li key={i} className="flex items-center gap-1.5"><Check className="w-3 h-3 text-success flex-shrink-0" />{f}</li>
-              ))}
-            </ul>
-            <Button className="w-full gap-1.5 font-bold" variant="outline" disabled={loading !== null} onClick={() => handleCheckout("starter")}>
-              {loading === "starter" ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-              Activer — 490€
-            </Button>
-          </div>
-
-          {/* Command — featured */}
-          <div className="relative rounded-2xl border-2 border-accent/60 bg-gradient-to-b from-accent/10 to-card p-5 flex flex-col shadow-[0_0_30px_hsl(258_90%_66%_/_0.15)]">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-accent text-accent-foreground text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
-              ★ Recommandé DSI
-            </div>
-            <div className="flex items-center gap-2 mb-3 mt-1">
-              <Zap className="w-5 h-5 text-accent" />
-              <span className="font-bold text-foreground">Command</span>
-              <span className="ml-auto text-[10px] font-bold text-accent uppercase">Pro</span>
-            </div>
-            <div className="text-3xl font-black mb-0.5">6 900€<span className="text-sm font-normal text-muted-foreground">/an</span></div>
-            <p className="text-xs text-muted-foreground mb-4">575€ / mois · équivaut à 5,75% d'un RSSI</p>
-            <ul className="space-y-1.5 text-xs text-muted-foreground flex-1 mb-5">
-              {["6 Agents IA supervisés 24/7", "Remédiation assistée < 4h", "RSSI Virtuel IA — brief CODIR", "Evidence Vault SHA-256", "OSINT & EASM continu"].map((f, i) => (
-                <li key={i} className="flex items-center gap-1.5"><Check className="w-3 h-3 text-success flex-shrink-0" />{f}</li>
-              ))}
-            </ul>
-            <Button className="w-full gap-1.5 font-bold bg-accent hover:bg-accent/90 text-accent-foreground shadow-[0_0_15px_hsl(258_90%_66%_/_0.3)]" disabled={loading !== null} onClick={() => handleCheckout("pro")}>
-              {loading === "pro" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-              Activer — 6 900€
-            </Button>
-            <p className="text-[10px] text-center text-muted-foreground mt-2">14j gratuits · Stripe · Annulation libre</p>
-          </div>
-
-          {/* Sovereign */}
-          <div className="rounded-2xl border border-border bg-card p-5 flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <Crown className="w-5 h-5 text-warning" />
-              <span className="font-bold text-foreground">Sovereign</span>
-              <span className="ml-auto text-[10px] font-bold text-warning uppercase">Enterprise</span>
-            </div>
-            <div className="text-3xl font-black mb-0.5">29 900€<span className="text-sm font-normal text-muted-foreground">/an</span></div>
-            <p className="text-xs text-muted-foreground mb-4">On-premise · Swarm complet</p>
-            <ul className="space-y-1.5 text-xs text-muted-foreground flex-1 mb-5">
-              {["Tout Command inclus", "Déploiement on-premise", "Account Manager dédié", "SLA renforcé contractualisé", "Formation équipe incluse"].map((f, i) => (
-                <li key={i} className="flex items-center gap-1.5"><Check className="w-3 h-3 text-success flex-shrink-0" />{f}</li>
-              ))}
-            </ul>
-            <Button className="w-full gap-1.5 font-bold" variant="outline" onClick={() => navigate("/pricing")}>
-              <ArrowRight className="w-4 h-4" />
-              Parler à l'équipe
-            </Button>
-          </div>
+          {PLANS.map((p) => {
+            const PIcon = p.icon;
+            return (
+              <div
+                key={p.id}
+                className={`relative rounded-2xl border bg-card p-5 flex flex-col ${p.borderClass} ${
+                  p.featured ? "shadow-[0_0_30px_hsl(258_90%_66%_/_0.15)]" : ""
+                }`}
+              >
+                {p.featured && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-accent text-accent-foreground text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                    ★ Recommandé DSI
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mb-3 mt-1">
+                  <PIcon className={`w-5 h-5 ${p.iconColor}`} />
+                  <span className="font-bold text-foreground">{p.name}</span>
+                  <span className={`ml-auto text-[10px] font-bold ${p.labelColor} uppercase`}>{p.label}</span>
+                </div>
+                <div className="text-3xl font-black mb-0.5">{p.price}<span className="text-sm font-normal text-muted-foreground">{p.period}</span></div>
+                <p className="text-xs text-muted-foreground mb-4">{p.monthly}</p>
+                <ul className="space-y-1.5 text-xs text-muted-foreground flex-1 mb-5">
+                  {p.features.map((f, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <Check className="w-3 h-3 text-success flex-shrink-0 mt-0.5" />{f}
+                    </li>
+                  ))}
+                </ul>
+                {p.contactOnly ? (
+                  <Button className="w-full gap-1.5 font-bold" variant="outline" onClick={() => navigate("/pricing")}>
+                    <ArrowRight className="w-4 h-4" />
+                    Parler à l'équipe
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      className={`w-full gap-1.5 font-bold ${p.featured ? "bg-accent hover:bg-accent/90 text-accent-foreground shadow-[0_0_15px_hsl(258_90%_66%_/_0.3)]" : ""}`}
+                      variant={p.ctaVariant}
+                      disabled={loading !== null}
+                      onClick={() => handleCheckout(p.id as "starter" | "pro")}
+                    >
+                      {loading === p.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                      {p.ctaLabel}
+                    </Button>
+                    <p className="text-[10px] text-center text-muted-foreground mt-2">14j gratuits · Stripe · Annulation libre</p>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </motion.div>
 
         {/* ── Access Code ───────────────────────────────────────── */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="max-w-md mx-auto w-full">
-          <button type="button" onClick={() => setShowCodePanel(v => !v)}
-            className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2 border border-dashed border-border rounded-xl hover:border-primary/40">
+          <button
+            type="button"
+            onClick={() => {
+              const next = !showCodePanel;
+              setShowCodePanel(next);
+              if (next) trackEvent('upgrade_wall_code_opened', { source_page: window.location.pathname, cta_origin: 'upgrade_wall' });
+            }}
+            className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2 border border-dashed border-border rounded-xl hover:border-primary/40"
+          >
             <Key className="w-4 h-4" />
             J'ai un code d'accès premium
             {showCodePanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}

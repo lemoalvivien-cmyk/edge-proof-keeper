@@ -6,11 +6,11 @@
  */
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowRight, Lock, Zap, Crown, Shield, TrendingUp } from "lucide-react";
+import { X, ArrowRight, Lock, Zap, Crown, Shield, TrendingUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { openCheckout } from "@/hooks/useSubscription";
-import { Loader2 } from "lucide-react";
+import { trackEvent } from "@/lib/tracking";
 
 export type UpsellFeature =
   | "self_healing"
@@ -62,7 +62,7 @@ const NUDGE_CONFIGS: Record<UpsellFeature, NudgeConfig> = {
   },
   proof_pack: {
     icon: Lock,
-    title: "Proof Packs certifiés — Plan Command",
+    title: "Proof Packs SHA-256 vérifiables — Plan Command",
     description: "Exportez vos preuves cryptographiques SHA-256 Merkle pour vos audits, assureurs et conseils d'administration.",
     gain: "Réduit le temps de préparation d'un audit de 80%",
     planRequired: "pro",
@@ -128,6 +128,11 @@ export function UpsellNudge({
   const NudgeIcon = config.icon;
 
   const handleUpgrade = async () => {
+    trackEvent('upsell_nudge_click', {
+      source_page: window.location.pathname,
+      cta_origin: `upsell_${feature}`,
+      metadata: { feature, plan: config.planRequired },
+    });
     if (config.planRequired === "enterprise") {
       navigate("/pricing");
       return;

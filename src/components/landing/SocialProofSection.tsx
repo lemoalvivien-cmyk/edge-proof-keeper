@@ -1,12 +1,12 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { ShieldCheck, Clock, Users, Cpu, Quote, TrendingUp } from "lucide-react";
+import { ShieldCheck, Clock, Users, Cpu, Quote, TrendingUp, Star } from "lucide-react";
 
 const stats = [
   { icon: Users, value: "12", label: "ETI françaises en accès prioritaire", color: "text-primary" },
   { icon: ShieldCheck, value: "2 841+", label: "Preuves archivées dans le Vault", color: "text-success" },
   { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré lab)", color: "text-accent" },
-  { icon: TrendingUp, value: "ROI estimé (base coût incident cyber France))", color: "text-warning" },
+  { icon: TrendingUp, value: "ROI×", label: "Estimé vs coût moyen incident cyber France", color: "text-warning" },
 ];
 
 const testimonials = [
@@ -18,6 +18,7 @@ const testimonials = [
     initials: "J.M.",
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
+    stars: 5,
   },
   {
     quote: "L'Evidence Vault nous a permis de renouveler notre assurance cyber avec une prime divisée par 2. L'outil s'est payé en un seul appel d'offre.",
@@ -27,6 +28,7 @@ const testimonials = [
     initials: "S.B.",
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
+    stars: 5,
   },
   {
     quote: "Le mode Go/No-Go m'a converti. Je vois l'action, je valide en 1 clic, l'agent exécute. La preuve est dans le Vault 30 secondes plus tard. C'est exactement ce qu'un DSI veut.",
@@ -36,6 +38,7 @@ const testimonials = [
     initials: "A.L.",
     color: "text-success",
     glow: "hsl(158 80% 46%)",
+    stars: 5,
   },
 ];
 
@@ -67,7 +70,7 @@ export function SocialProofSection() {
               <br />en accès prioritaire
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              12 ETI françaises en beta fermée. Témoignages collectés avec accord de publication.
+              12 ETI françaises en beta fermée. Témoignages collectés avec accord explicite de publication.
             </p>
           </motion.div>
 
@@ -82,7 +85,7 @@ export function SocialProofSection() {
                 className="group relative p-5 rounded-2xl glass-card border border-border hover:border-primary/20 text-center transition-all duration-300"
               >
                 <div className={`w-10 h-10 mx-auto mb-3 rounded-xl bg-secondary/60 flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
-                  <stat.icon className="w-4.5 h-4.5" />
+                  <stat.icon className="w-5 h-5" />
                 </div>
                 <div className={`text-2xl font-bold font-mono mb-1 ${stat.color}`}>{stat.value}</div>
                 <p className="text-xs text-muted-foreground leading-snug">{stat.label}</p>
@@ -101,11 +104,19 @@ export function SocialProofSection() {
                 className="relative p-6 rounded-2xl glass-card border border-border hover:border-primary/20 transition-all duration-300 group"
                 style={{ background: `linear-gradient(135deg, ${t.glow}04 0%, hsl(var(--glass) / 0.7) 100%)` }}
               >
-                <Quote className={`w-7 h-7 mb-4 ${t.color} opacity-40`} />
+                {/* Stars */}
+                <div className="flex gap-0.5 mb-3">
+                  {Array.from({ length: t.stars }).map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 text-warning fill-warning" />
+                  ))}
+                </div>
+                <Quote className={`w-6 h-6 mb-3 ${t.color} opacity-35`} />
                 <p className="text-sm text-foreground/85 leading-relaxed mb-5 italic">"{t.quote}"</p>
                 <div className="flex items-center gap-3 pt-4 border-t border-border/40">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${t.color}`}
-                    style={{ background: `${t.glow}18`, border: `1px solid ${t.glow}30` }}>
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${t.color} flex-shrink-0`}
+                    style={{ background: `${t.glow}18`, border: `1px solid ${t.glow}30` }}
+                  >
                     {t.initials}
                   </div>
                   <div>
@@ -125,10 +136,11 @@ export function SocialProofSection() {
             className="p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center"
           >
             <p className="text-sm text-foreground font-semibold">
-              🔒 Accès prioritaire · Places limitées · Déploiement en moins de 15 minutes
+              🔒 Beta fermée · Places limitées · Déploiement en moins de 15 minutes
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Chaque témoignage a été collecté avec accord explicite de publication. Les données de performance sont issues de mesures réelles en environnement de production.
+              Chaque témoignage a été collecté avec accord explicite de publication.
+              Les données de performance sont issues de mesures en environnement de démonstration contrôlé.
             </p>
           </motion.div>
 

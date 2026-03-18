@@ -210,7 +210,7 @@ export default function Auth() {
               className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium"
             >
               <Zap className="w-3 h-3" aria-hidden="true" />
-              Analyse autonome lancée en &lt; 12s après inscription
+              Analyse assistée démarrée en &lt; 12s après inscription
             </motion.div>
           )}
         </div>
