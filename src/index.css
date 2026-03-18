@@ -1,14 +1,14 @@
+/* @import must precede @tailwind — fixes CSS order warning */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ============================================================
-   SECURIT-E — GOD MODE 2026 DESIGN SYSTEM
-   Ultra-futuristic dark sovereign platform — Armure Cyber Autonome
-   Palantir × Vercel × Linear × Apple Vision Pro
+   SECURIT-E — DESIGN SYSTEM
+   Sovereign dark platform
    ============================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
