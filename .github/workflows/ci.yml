@@ -7,9 +7,9 @@ on:
     branches: [main]
 
 jobs:
-  # ── Job 1: Build + Unit Tests ─────────────────────────────────────────────
+  # ── Job 1: Build + Unit Tests + Release Gate ──────────────────────────────
   build-and-test:
-    name: Build + Unit Tests
+    name: Build + Unit Tests + Release Gate
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -38,9 +38,9 @@ jobs:
       - name: Release gate
         run: npm run test:release
 
-  # ── Job 2: E2E Tests (public routes only, no credentials needed) ──────────
+  # ── Job 2: E2E Tests — Public routes (no credentials needed) ─────────────
   e2e-public:
-    name: E2E Public Routes
+    name: E2E — Public Routes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: build-and-test
@@ -61,7 +61,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run E2E tests (public routes — preview URL)
+      - name: Run E2E tests (public routes)
         run: npm run test:e2e
         env:
           PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL || 'https://id-preview--535f1714-f91a-45af-915d-b9aa9bc9cf0a.lovable.app' }}
@@ -69,6 +69,8 @@ jobs:
           # E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           # E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
           # E2E_ACCESS_CODE: ${{ secrets.E2E_ACCESS_CODE }}
+          # E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          # E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
 
       - name: Upload Playwright report on failure
         if: failure()
@@ -85,3 +87,57 @@ jobs:
           name: playwright-traces
           path: test-results/
           retention-days: 7
+
+  # ── Job 3: E2E Tests — Auth & Business flows (conditional, requires secrets) ──
+  e2e-auth:
+    name: E2E — Auth & Business Flows [conditional]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build-and-test
+    # Only runs if auth credentials are configured
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      vars.E2E_AUTH_ENABLED == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests (auth + business flows)
+        run: npm run test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          E2E_ACCESS_CODE: ${{ secrets.E2E_ACCESS_CODE }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-auth-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-auth-traces
+          path: test-results/
+          retention-days: 14
