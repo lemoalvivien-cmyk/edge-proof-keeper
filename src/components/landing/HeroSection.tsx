@@ -222,9 +222,9 @@ export function HeroSection() {
               <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
                 {[
                   { label: "Self-healing autonome", color: "text-success", bg: "bg-success/10", dot: "bg-success" },
-                  { label: "Evidence post-quantique", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
+                  { label: "Evidence SHA-256 Merkle", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
                   { label: "100% Souverain 🇫🇷", color: "text-accent", bg: "bg-accent/10", dot: "bg-accent" },
-                  { label: "Score Audit 97/100 ✅", color: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
+                  { label: "Audit sécurité continu ✅", color: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
                 ].map((b, i) => (
                   <motion.div
                     key={i}
