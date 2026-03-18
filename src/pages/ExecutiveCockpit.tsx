@@ -535,7 +535,7 @@ export default function ExecutiveCockpit() {
               </Button>
             </div>
             <div className="p-4 space-y-2">
-              {ACTION_TIMELINE.map((item, i) => {
+              {ACTION_TIMELINE_DEMO.map((item, i) => {
                 const Icon = item.icon;
                 return (
                   <motion.div
