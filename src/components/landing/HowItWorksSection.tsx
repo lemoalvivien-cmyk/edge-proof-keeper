@@ -189,7 +189,7 @@ function AutoPlayTimeline({ isInView }: { isInView: boolean }) {
           <Shield className="w-5 h-5 text-success flex-shrink-0" />
           <div>
             <p className="text-xs font-bold text-success">Cycle complet — 47 secondes</p>
-            <p className="text-[10px] text-muted-foreground font-mono">Preuve NIS2 exportable · Zéro intervention humaine</p>
+            <p className="text-[10px] text-muted-foreground font-mono">Preuve NIS2 exportable · Supervision Go/No-Go validée</p>
           </div>
         </motion.div>
       )}
