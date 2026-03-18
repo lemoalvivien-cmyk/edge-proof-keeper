@@ -167,7 +167,7 @@ export function TrialModal({ open, onClose, afterDemo = false }: TrialModalProps
                 onClick={onClose}
                 className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center mt-1"
               >
-                Continuer l'essai gratuit sans carte →
+                Continuer sans passer à un plan payant →
               </button>
             </div>
           </motion.div>
