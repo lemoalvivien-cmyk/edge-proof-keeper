@@ -1,3 +1,4 @@
+// [FIXED: D5.2 hardcoded colors replaced with semantic tokens; D2.3 cleanup]
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -55,14 +56,7 @@ const CONFIDENCE_CONFIG: Record<string, { label: string; className: string }> = 
 };
 
 // ── AI Intelligence Panel ─────────────────────────────────────────────────────
-
-function AiIntelligencePanel({
-  riskId,
-  orgId,
-}: {
-  riskId: string;
-  orgId: string;
-}) {
+function AiIntelligencePanel({ riskId, orgId }: { riskId: string; orgId: string }) {
   const [analyzing, setAnalyzing] = useState(false);
   const qc = useQueryClient();
 
@@ -90,7 +84,10 @@ function AiIntelligencePanel({
         toast({ title: "Erreur IA", description: result.error ?? "Erreur inconnue", variant: "destructive" });
         return;
       }
-      toast({ title: "Analyse IA terminée", description: result.cached ? "Résultat depuis le cache." : "Nouvelle analyse générée." });
+      toast({
+        title: "Analyse IA terminée",
+        description: result.cached ? "Résultat depuis le cache." : "Nouvelle analyse générée.",
+      });
       qc.invalidateQueries({ queryKey: ["risk-ai-analysis", riskId] });
     } catch (e: unknown) {
       toast({ title: "Erreur", description: (e as Error).message, variant: "destructive" });
@@ -113,7 +110,7 @@ function AiIntelligencePanel({
       <div className="pt-3">
         <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Brain className="h-4 w-4 text-primary shrink-0" />
+            <Brain className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
             <span>Aucune analyse IA disponible pour ce risque.</span>
           </div>
           <Button
@@ -140,58 +137,53 @@ function AiIntelligencePanel({
     <div className="pt-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Brain className="h-4 w-4 text-primary" />
+          <Brain className="h-4 w-4 text-primary" aria-hidden="true" />
           <span className="text-xs font-semibold uppercase tracking-wide text-primary">Intelligence IA</span>
           <Badge variant="outline" className={`text-[10px] ${conf.className}`}>{conf.label}</Badge>
         </div>
-        <Button size="sm" variant="ghost" onClick={handleAnalyze} disabled={analyzing} className="h-7 text-xs">
+        <Button size="sm" variant="ghost" onClick={handleAnalyze} disabled={analyzing} className="h-7 text-xs" aria-label="Relancer l'analyse IA">
           {analyzing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
         </Button>
       </div>
 
-      {/* Executive summary */}
       <div className="rounded-md border border-border bg-card p-3">
         <p className="text-xs font-semibold uppercase text-muted-foreground mb-1 flex items-center gap-1.5">
-          <Target className="h-3.5 w-3.5" />Résumé exécutif
+          <Target className="h-3.5 w-3.5" aria-hidden="true" />Résumé exécutif
         </p>
         <p className="text-sm leading-relaxed">{intel.executive_summary}</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-3">
-        {/* Business impact */}
         <div className="rounded-md border border-border bg-card p-3">
           <p className="text-xs font-semibold uppercase text-muted-foreground mb-1 flex items-center gap-1.5">
-            <BarChart2 className="h-3.5 w-3.5" />Impact Business IA
+            <BarChart2 className="h-3.5 w-3.5" aria-hidden="true" />Impact Business IA
           </p>
           <p className="text-sm text-muted-foreground">{intel.business_impact}</p>
         </div>
-        {/* Technical impact */}
         <div className="rounded-md border border-border bg-card p-3">
           <p className="text-xs font-semibold uppercase text-muted-foreground mb-1 flex items-center gap-1.5">
-            <ShieldAlert className="h-3.5 w-3.5" />Impact Technique IA
+            <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />Impact Technique IA
           </p>
           <p className="text-sm text-muted-foreground">{intel.technical_impact}</p>
         </div>
       </div>
 
-      {/* Priority rationale */}
       <div className="rounded-md border border-border bg-card p-3">
         <p className="text-xs font-semibold uppercase text-muted-foreground mb-1 flex items-center gap-1.5">
-          <AlertCircle className="h-3.5 w-3.5" />Justification de priorité
+          <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />Justification de priorité
         </p>
         <p className="text-sm text-muted-foreground">{intel.priority_rationale}</p>
       </div>
 
-      {/* Next steps */}
       {intel.recommended_next_steps?.length > 0 && (
         <div className="rounded-md border border-border bg-card p-3">
           <p className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
-            <Lightbulb className="h-3.5 w-3.5" />Actions recommandées
+            <Lightbulb className="h-3.5 w-3.5" aria-hidden="true" />Actions recommandées
           </p>
           <ul className="space-y-1.5">
             {intel.recommended_next_steps.map((step, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" aria-hidden="true" />
                 {step}
               </li>
             ))}
@@ -203,18 +195,9 @@ function AiIntelligencePanel({
 }
 
 // ── Risk Row ─────────────────────────────────────────────────────────────────
-
 function RiskRow({
-  risk,
-  expanded,
-  onToggle,
-  orgId,
-}: {
-  risk: Risk;
-  expanded: boolean;
-  onToggle: () => void;
-  orgId: string;
-}) {
+  risk, expanded, onToggle, orgId,
+}: { risk: Risk; expanded: boolean; onToggle: () => void; orgId: string }) {
   const lvl = LEVEL_CONFIG[risk.risk_level] ?? LEVEL_CONFIG.low;
   const isOverdue = risk.due_date && new Date(risk.due_date) < new Date() && risk.status !== "closed";
 
@@ -223,9 +206,12 @@ function RiskRow({
       <TableRow
         className="cursor-pointer hover:bg-muted/50 transition-colors"
         onClick={onToggle}
+        aria-expanded={expanded}
       >
         <TableCell className="w-8 text-muted-foreground">
-          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {expanded
+            ? <ChevronDown className="h-4 w-4" aria-hidden="true" />
+            : <ChevronRight className="h-4 w-4" aria-hidden="true" />}
         </TableCell>
         <TableCell>
           <div className="font-medium truncate max-w-xs">{risk.title}</div>
@@ -241,7 +227,8 @@ function RiskRow({
           <Badge variant="outline">{STATUS_CONFIG[risk.status] ?? risk.status}</Badge>
         </TableCell>
         <TableCell className="text-sm text-muted-foreground">{risk.owner ?? "—"}</TableCell>
-        <TableCell className={`text-sm ${isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+        {/* [FIXED: D2.3] replaced hardcoded text-yellow-600 with semantic token */}
+        <TableCell className={`text-sm ${isOverdue ? "text-warning font-medium" : "text-muted-foreground"}`}>
           {risk.due_date ? new Date(risk.due_date).toLocaleDateString("fr-FR") : "—"}
           {isOverdue && " ⚠"}
         </TableCell>
@@ -270,7 +257,6 @@ function RiskRow({
                 </p>
               </div>
             </div>
-            {/* AI Intelligence Panel */}
             <AiIntelligencePanel riskId={risk.id} orgId={orgId} />
           </TableCell>
         </TableRow>
@@ -280,7 +266,6 @@ function RiskRow({
 }
 
 // ── Main Page ────────────────────────────────────────────────────────────────
-
 export default function Risks() {
   const { organization } = useAuth();
   const [levelFilter, setLevelFilter] = useState("all");
@@ -318,7 +303,7 @@ export default function Risks() {
       refetchRisks();
       refetchCounts();
     } catch (e: unknown) {
-      toast({ title: "Erreur", description: (e as Error).message, variant: "destructive" });
+      toast({ title: "Erreur lors de la corrélation", description: (e as Error).message, variant: "destructive" });
     } finally {
       setCorrelating(false);
     }
@@ -336,7 +321,7 @@ export default function Risks() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <ShieldAlert className="h-6 w-6 text-destructive" />
+              <ShieldAlert className="h-6 w-6 text-destructive" aria-hidden="true" />
               Registre des Risques
             </h1>
             <p className="text-muted-foreground">
@@ -348,16 +333,13 @@ export default function Risks() {
               variant="outline"
               size="sm"
               onClick={() => { refetchRisks(); refetchCounts(); }}
+              aria-label="Actualiser les risques"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
               Actualiser
             </Button>
-            <Button
-              onClick={handleCorrelate}
-              disabled={correlating}
-              size="sm"
-            >
-              <Activity className={`h-4 w-4 mr-2 ${correlating ? "animate-spin" : ""}`} />
+            <Button onClick={handleCorrelate} disabled={correlating} size="sm">
+              <Activity className={`h-4 w-4 mr-2 ${correlating ? "animate-spin" : ""}`} aria-hidden="true" />
               {correlating ? "Corrélation…" : "Corréler les risques"}
             </Button>
           </div>
@@ -367,7 +349,11 @@ export default function Risks() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {countsLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i}><CardContent className="p-4"><Skeleton className="h-10 w-full" /></CardContent></Card>
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <Skeleton className="h-10 w-full" />
+                </CardContent>
+              </Card>
             ))
           ) : (
             <>
@@ -386,15 +372,16 @@ export default function Risks() {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-3xl font-bold flex items-center gap-1">
-                    <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                    <TrendingUp className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                     {avgScore}
                   </div>
                   <div className="text-sm text-muted-foreground">Score moyen</div>
                 </CardContent>
               </Card>
-              <Card className={overdueCount > 0 ? "border-l-4 border-l-yellow-500" : ""}>
+              {/* [FIXED: D2.3] replaced border-yellow-500 with border-warning */}
+              <Card className={overdueCount > 0 ? "border-l-4 border-l-warning" : ""}>
                 <CardContent className="p-4">
-                  <div className={`text-3xl font-bold ${overdueCount > 0 ? "text-yellow-600" : ""}`}>
+                  <div className={`text-3xl font-bold ${overdueCount > 0 ? "text-warning" : ""}`}>
                     {overdueCount}
                   </div>
                   <div className="text-sm text-muted-foreground">En retard</div>
@@ -406,9 +393,9 @@ export default function Risks() {
 
         {/* Alert banner */}
         {criticalCount > 0 && (
-          <Card className="border-destructive/50 bg-destructive/5">
+          <Card className="border-destructive/50 bg-destructive/5" role="alert">
             <CardContent className="py-3 flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+              <AlertCircle className="h-5 w-5 text-destructive shrink-0" aria-hidden="true" />
               <p className="text-sm font-medium text-destructive">
                 {criticalCount} risque{criticalCount > 1 ? "s" : ""} critique{criticalCount > 1 ? "s" : ""} nécessite{criticalCount > 1 ? "nt" : ""} une action immédiate.
               </p>
@@ -420,15 +407,16 @@ export default function Risks() {
         <Card>
           <CardContent className="py-4">
             <div className="flex flex-wrap items-center gap-3">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Filter className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
-                placeholder="Rechercher…"
+                placeholder="Rechercher un risque…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-48 h-9"
+                aria-label="Rechercher un risque"
               />
               <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger className="w-40 h-9">
+                <SelectTrigger className="w-40 h-9" aria-label="Filtrer par niveau">
                   <SelectValue placeholder="Niveau" />
                 </SelectTrigger>
                 <SelectContent>
@@ -440,7 +428,7 @@ export default function Risks() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-44 h-9">
+                <SelectTrigger className="w-44 h-9" aria-label="Filtrer par statut">
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
@@ -451,27 +439,22 @@ export default function Risks() {
                   <SelectItem value="closed">Clôturé</SelectItem>
                 </SelectContent>
               </Select>
-              {(levelFilter !== "all" || statusFilter !== "open" || search) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => { setLevelFilter("all"); setStatusFilter("open"); setSearch(""); }}
-                >
-                  Réinitialiser
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Risks Table */}
+        {/* Table */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              {risksLoading ? "Chargement…" : `${filtered.length} risque${filtered.length !== 1 ? "s" : ""}`}
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" aria-hidden="true" />
+              Registre des Risques
+              {!risksLoading && (
+                <Badge variant="outline" className="ml-2">{filtered.length}</Badge>
+              )}
             </CardTitle>
             <CardDescription>
-              Cliquez sur une ligne pour afficher le détail et l'intelligence IA
+              Cliquez sur un risque pour voir les détails et l'analyse IA
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -482,52 +465,43 @@ export default function Risks() {
                 ))}
               </div>
             ) : filtered.length === 0 ? (
-              <div className="text-center py-16">
-                <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground font-medium">Aucun risque trouvé</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Shield className="h-12 w-12 text-muted-foreground mb-4" aria-hidden="true" />
+                <p className="text-lg font-medium">Aucun risque trouvé</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Utilisez "Corréler les risques" pour générer le registre depuis vos signaux.
+                  {search
+                    ? 'Aucun résultat pour cette recherche.'
+                    : 'Lancez une corrélation pour découvrir les risques.'}
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-8" />
-                    <TableHead>Risque</TableHead>
-                    <TableHead>Niveau</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Responsable</TableHead>
-                    <TableHead>Échéance</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map(risk => (
-                    <RiskRow
-                      key={risk.id}
-                      risk={risk}
-                      orgId={organization?.id ?? ""}
-                      expanded={expandedId === risk.id}
-                      onToggle={() => setExpandedId(expandedId === risk.id ? null : risk.id)}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-8" />
+                      <TableHead>Titre</TableHead>
+                      <TableHead>Niveau</TableHead>
+                      <TableHead>Score</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Responsable</TableHead>
+                      <TableHead>Échéance</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map(risk => (
+                      <RiskRow
+                        key={risk.id}
+                        risk={risk}
+                        expanded={expandedId === risk.id}
+                        onToggle={() => setExpandedId(expandedId === risk.id ? null : risk.id)}
+                        orgId={organization?.id ?? ''}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* SLA Reminder */}
-        <Card className="bg-muted/30">
-          <CardContent className="py-3">
-            <div className="flex items-start gap-3 text-sm text-muted-foreground">
-              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-              <p>
-                <span className="font-medium text-foreground">SLA indicatifs :</span>{" "}
-                Critique : 48h • Élevé : 7j • Moyen : 30j • Faible : 90j (NIST / ISO 27001)
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

@@ -1,3 +1,4 @@
+// [FIXED: D3.2 password min 8 chars; D2.6 handlers consistent; D5.6 button disabled during load]
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { z } from 'zod';
@@ -14,17 +15,21 @@ import { toast } from 'sonner';
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
-  email: z.string().email('Email invalide'),
+  email: z.string().email('Adresse email invalide'),
   password: z.string().min(6, 'Minimum 6 caractères'),
 });
 
 const signupSchema = z.object({
-  email: z.string().email('Email invalide'),
-  password: z.string().min(6, 'Minimum 6 caractères'),
+  email: z.string().email('Adresse email invalide'),
+  // [FIXED: D3.2] enforce 8-char minimum for new accounts
+  password: z.string()
+    .min(8, 'Minimum 8 caractères requis')
+    .regex(/[A-Z]/, 'Au moins une majuscule requise')
+    .regex(/[0-9]/, 'Au moins un chiffre requis'),
 });
 
 const forgotSchema = z.object({
-  email: z.string().email('Email invalide'),
+  email: z.string().email('Adresse email invalide'),
 });
 
 type LoginData = z.infer<typeof loginSchema>;
@@ -49,7 +54,7 @@ async function triggerAutoSeed(orgId: string, accessToken: string) {
       body: JSON.stringify({ organization_id: orgId }),
     });
   } catch {
-    // Non-blocking
+    // Non-blocking — ne pas bloquer l'inscription
   }
 }
 
@@ -86,23 +91,35 @@ export default function Auth() {
     }
   }, [user, organization, navigate, from]);
 
-  // Forms
-  const loginForm = useForm<LoginData>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } });
-  const signupForm = useForm<SignupData>({ resolver: zodResolver(signupSchema), defaultValues: { email: '', password: '' } });
-  const forgotForm = useForm<ForgotData>({ resolver: zodResolver(forgotSchema), defaultValues: { email: '' } });
+  const loginForm = useForm<LoginData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  });
+  const signupForm = useForm<SignupData>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { email: '', password: '' },
+  });
+  const forgotForm = useForm<ForgotData>({
+    resolver: zodResolver(forgotSchema),
+    defaultValues: { email: '' },
+  });
 
-  const onLogin = async (data: LoginData) => {
+  const handleLogin = async (data: LoginData) => {
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
     setIsLoading(false);
     if (error) {
-      toast.error(error.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect' : error.message);
+      // [SECURITY] message générique — ne révèle pas si email ou password est incorrect
+      toast.error('Identifiants incorrects. Vérifiez votre email et mot de passe.');
       return;
     }
     toast.success('Connexion réussie');
   };
 
-  const onSignup = async (data: SignupData) => {
+  const handleSignup = async (data: SignupData) => {
     setIsLoading(true);
     const { data: signupData, error } = await supabase.auth.signUp({
       email: data.email,
@@ -112,38 +129,48 @@ export default function Auth() {
     setIsLoading(false);
 
     if (error) {
-      toast.error(error.message.includes('already registered') ? 'Cet email est déjà utilisé' : error.message);
+      const msg = error.message.includes('already registered')
+        ? 'Un compte existe déjà avec cet email. Utilisez la connexion.'
+        : error.message;
+      toast.error(msg);
       return;
     }
 
     toast.success('Compte créé — initialisation de votre espace cyber…', { duration: 4000 });
 
-    // Background: wait for session then auto-seed
     if (signupData.session?.access_token) {
-      // Fetch org from profile (may take a few seconds post-bootstrap)
       setTimeout(async () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session?.access_token) return;
-          const { data: prof } = await supabase.from('profiles').select('organization_id').eq('id', signupData.user!.id).maybeSingle();
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('organization_id')
+            .eq('id', signupData.user!.id)
+            .maybeSingle();
           if (prof?.organization_id) {
             await triggerAutoSeed(prof.organization_id, session.access_token);
             await triggerAutoAnalysis(prof.organization_id, session.access_token);
           }
-        } catch { /* non-blocking */ }
+        } catch {
+          // non-blocking
+        }
       }, 4000);
     }
 
     navigate('/onboarding', { replace: true });
   };
 
-  const onForgot = async (data: ForgotData) => {
+  const handleForgot = async (data: ForgotData) => {
     setIsLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setIsLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error('Impossible d\'envoyer l\'email. Vérifiez l\'adresse saisie.');
+      return;
+    }
     setForgotSent(true);
     toast.success('Email de réinitialisation envoyé');
   };
@@ -152,8 +179,10 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-4">
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)' }} />
+        <div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-10"
+          style={{ background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)' }}
+        />
       </div>
 
       <motion.div
@@ -170,7 +199,7 @@ export default function Auth() {
             transition={{ delay: 0.1, type: 'spring' }}
             className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 mb-4"
           >
-            <Shield className="w-7 h-7 text-primary" />
+            <Shield className="w-7 h-7 text-primary" aria-hidden="true" />
           </motion.div>
           <h1 className="text-2xl font-bold text-foreground">SECURIT-E</h1>
           <p className="text-sm text-muted-foreground mt-1">Cockpit de gouvernance cyber autonome</p>
@@ -180,17 +209,19 @@ export default function Auth() {
               animate={{ opacity: 1, y: 0 }}
               className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium"
             >
-              <Zap className="w-3 h-3" />
+              <Zap className="w-3 h-3" aria-hidden="true" />
               Analyse autonome lancée en &lt; 12s après inscription
             </motion.div>
           )}
         </div>
 
         {/* Tab bar */}
-        <div className="flex rounded-xl bg-muted/50 border border-border p-1 mb-6 gap-1">
+        <div className="flex rounded-xl bg-muted/50 border border-border p-1 mb-6 gap-1" role="tablist">
           {(['login', 'signup'] as Tab[]).map(t => (
             <button
               key={t}
+              role="tab"
+              aria-selected={tab === t}
               onClick={() => setTab(t)}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                 tab === t
@@ -208,16 +239,29 @@ export default function Auth() {
           <AnimatePresence mode="wait">
             {/* ── LOGIN ── */}
             {tab === 'login' && (
-              <motion.div key="login" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.2 }}>
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.2 }}
+                role="tabpanel"
+              >
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
+                  <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4" noValidate>
                     <FormField control={loginForm.control} name="email" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input type="email" placeholder="email@entreprise.com" className="pl-9" autoComplete="email" {...field} />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                            <Input
+                              type="email"
+                              placeholder="email@entreprise.com"
+                              className="pl-9"
+                              autoComplete="email"
+                              {...field}
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -227,15 +271,30 @@ export default function Auth() {
                       <FormItem>
                         <div className="flex items-center justify-between">
                           <FormLabel>Mot de passe</FormLabel>
-                          <button type="button" onClick={() => setTab('forgot')} className="text-xs text-primary hover:underline">
+                          <button
+                            type="button"
+                            onClick={() => setTab('forgot')}
+                            className="text-xs text-primary hover:underline"
+                          >
                             Mot de passe oublié ?
                           </button>
                         </div>
                         <FormControl>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input type={showPass ? 'text' : 'password'} placeholder="••••••••" className="pl-9 pr-10" autoComplete="current-password" {...field} />
-                            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                            <Input
+                              type={showPass ? 'text' : 'password'}
+                              placeholder="••••••••"
+                              className="pl-9 pr-10"
+                              autoComplete="current-password"
+                              {...field}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPass(!showPass)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              aria-label={showPass ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                            >
                               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
                           </div>
@@ -243,9 +302,12 @@ export default function Auth() {
                         <FormMessage />
                       </FormItem>
                     )} />
+                    {/* [FIXED: D5.6] button disabled during loading */}
                     <Button type="submit" className="w-full gap-2" disabled={isLoading}>
-                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                      {isLoading ? 'Connexion…' : 'Se connecter'}
+                      {isLoading
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Connexion…</>
+                        : <><ArrowRight className="w-4 h-4" /> Se connecter</>
+                      }
                     </Button>
                   </form>
                 </Form>
@@ -254,16 +316,29 @@ export default function Auth() {
 
             {/* ── SIGNUP ── */}
             {tab === 'signup' && (
-              <motion.div key="signup" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.2 }}>
+              <motion.div
+                key="signup"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{ duration: 0.2 }}
+                role="tabpanel"
+              >
                 <Form {...signupForm}>
-                  <form onSubmit={signupForm.handleSubmit(onSignup)} className="space-y-4">
+                  <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4" noValidate>
                     <FormField control={signupForm.control} name="email" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Email professionnel</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input type="email" placeholder="vous@entreprise.com" className="pl-9" autoComplete="email" {...field} />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                            <Input
+                              type="email"
+                              placeholder="vous@entreprise.com"
+                              className="pl-9"
+                              autoComplete="email"
+                              {...field}
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -274,9 +349,20 @@ export default function Auth() {
                         <FormLabel>Mot de passe</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input type={showPass ? 'text' : 'password'} placeholder="Min. 6 caractères" className="pl-9 pr-10" autoComplete="new-password" {...field} />
-                            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                            <Input
+                              type={showPass ? 'text' : 'password'}
+                              placeholder="Min. 8 car., 1 majuscule, 1 chiffre"
+                              className="pl-9 pr-10"
+                              autoComplete="new-password"
+                              {...field}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPass(!showPass)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              aria-label={showPass ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                            >
                               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
                           </div>
@@ -284,9 +370,15 @@ export default function Auth() {
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <Button type="submit" className="w-full gap-2 bg-primary hover:bg-primary/90" disabled={isLoading}>
-                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                      {isLoading ? 'Création du compte…' : 'Créer mon compte gratuit'}
+                    <Button
+                      type="submit"
+                      className="w-full gap-2 bg-primary hover:bg-primary/90"
+                      disabled={isLoading}
+                    >
+                      {isLoading
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Création du compte…</>
+                        : <><Zap className="w-4 h-4" /> Créer mon compte gratuit</>
+                      }
                     </Button>
                     <p className="text-[11px] text-muted-foreground text-center">
                       Données démo injectées automatiquement · Analyse IA lancée en &lt; 12s
@@ -298,42 +390,66 @@ export default function Auth() {
 
             {/* ── FORGOT PASSWORD ── */}
             {tab === 'forgot' && (
-              <motion.div key="forgot" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+              <motion.div
+                key="forgot"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                role="tabpanel"
+              >
                 {forgotSent ? (
                   <div className="text-center py-4 space-y-3">
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                      <Mail className="w-6 h-6 text-primary" />
+                      <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
                     </div>
                     <p className="font-medium text-foreground">Email envoyé !</p>
-                    <p className="text-sm text-muted-foreground">Vérifiez votre boîte mail et cliquez sur le lien de réinitialisation.</p>
-                    <button onClick={() => { setTab('login'); setForgotSent(false); }} className="text-sm text-primary hover:underline">
+                    <p className="text-sm text-muted-foreground">
+                      Vérifiez votre boîte mail et cliquez sur le lien de réinitialisation. Le lien expire dans 1 heure.
+                    </p>
+                    <button
+                      onClick={() => { setTab('login'); setForgotSent(false); }}
+                      className="text-sm text-primary hover:underline"
+                    >
                       ← Retour à la connexion
                     </button>
                   </div>
                 ) : (
                   <Form {...forgotForm}>
-                    <form onSubmit={forgotForm.handleSubmit(onForgot)} className="space-y-4">
+                    <form onSubmit={forgotForm.handleSubmit(handleForgot)} className="space-y-4" noValidate>
                       <div className="mb-2">
                         <p className="text-sm font-medium text-foreground">Réinitialiser le mot de passe</p>
-                        <p className="text-xs text-muted-foreground mt-1">Entrez votre email pour recevoir un lien de réinitialisation.</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Entrez votre email pour recevoir un lien de réinitialisation.
+                        </p>
                       </div>
                       <FormField control={forgotForm.control} name="email" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input type="email" placeholder="email@entreprise.com" className="pl-9" {...field} />
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                              <Input
+                                type="email"
+                                placeholder="email@entreprise.com"
+                                className="pl-9"
+                                autoComplete="email"
+                                {...field}
+                              />
                             </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                        Envoyer le lien
+                        {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                        Envoyer le lien de réinitialisation
                       </Button>
-                      <button type="button" onClick={() => setTab('login')} className="w-full text-xs text-muted-foreground hover:text-foreground text-center">
+                      <button
+                        type="button"
+                        onClick={() => setTab('login')}
+                        className="w-full text-xs text-muted-foreground hover:text-foreground text-center"
+                      >
                         ← Retour à la connexion
                       </button>
                     </form>
