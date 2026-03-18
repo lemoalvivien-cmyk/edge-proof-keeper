@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_code_events: {
+        Row: {
+          access_code_id: string | null
+          access_until: string | null
+          code_label: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          plan_granted: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_code_id?: string | null
+          access_until?: string | null
+          code_label?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          plan_granted?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_code_id?: string | null
+          access_until?: string | null
+          code_label?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          plan_granted?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_code_events_access_code_id_fkey"
+            columns: ["access_code_id"]
+            isOneToOne: false
+            referencedRelation: "access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      access_codes: {
+        Row: {
+          code_hash: string
+          code_label: string | null
+          created_at: string
+          created_by: string | null
+          grant_days: number
+          grant_plan: string
+          id: string
+          is_active: boolean
+          max_redemptions: number
+          redeemed_at: string | null
+          redeemed_by: string | null
+          redemptions_count: number
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          code_hash: string
+          code_label?: string | null
+          created_at?: string
+          created_by?: string | null
+          grant_days?: number
+          grant_plan?: string
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redemptions_count?: number
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          code_hash?: string
+          code_label?: string | null
+          created_at?: string
+          created_by?: string | null
+          grant_days?: number
+          grant_plan?: string
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redemptions_count?: number
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       ai_analyses: {
         Row: {
           analysis_type: string
@@ -1207,6 +1305,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          access_code_id: string | null
+          access_grant_end: string | null
+          access_grant_source: string | null
           created_at: string
           email: string
           full_name: string | null
@@ -1219,6 +1320,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_code_id?: string | null
+          access_grant_end?: string | null
+          access_grant_source?: string | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -1231,6 +1335,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_code_id?: string | null
+          access_grant_end?: string | null
+          access_grant_source?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
@@ -1243,6 +1350,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_access_code_id_fkey"
+            columns: ["access_code_id"]
+            isOneToOne: false
+            referencedRelation: "access_codes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_organization_id_fkey"
             columns: ["organization_id"]

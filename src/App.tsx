@@ -73,7 +73,9 @@ const RevenueSettings = lazy(() => import("./pages/RevenueSettings"));
 const PlatformHealth = lazy(() => import("./pages/PlatformHealth"));
 const AdminReadiness = lazy(() => import("./pages/AdminReadiness"));
 const AdminLeads = lazy(() => import("./pages/AdminLeads"));
+const AdminAccessCodes = lazy(() => import("./pages/AdminAccessCodes"));
 const ApiTest = lazy(() => import("./pages/ApiTest"));
+const Activate = lazy(() => import("./pages/Activate"));
 
 const queryClient = new QueryClient();
 
@@ -182,7 +184,11 @@ const App = () => (
                   <Route path="/plans" element={<ProtectedRoute requiredRoles={['admin']}><PlansAddons /></ProtectedRoute>} />
                   <Route path="/admin-readiness" element={<ProtectedRoute requiredRoles={['admin']}><AdminReadiness /></ProtectedRoute>} />
                   <Route path="/admin/leads" element={<ProtectedRoute requiredRoles={['admin']}><AdminLeads /></ProtectedRoute>} />
+                  <Route path="/admin/access-codes" element={<ProtectedRoute requiredRoles={['admin']}><AdminAccessCodes /></ProtectedRoute>} />
                   <Route path="/settings/revenue" element={<ProtectedRoute requiredRoles={['admin']}><RevenueSettings /></ProtectedRoute>} />
+
+                  {/* Activate premium access code — requires auth, no paywall */}
+                  <Route path="/activate" element={<ProtectedRoute><Activate /></ProtectedRoute>} />
 
                   {/* Protected + paywalled app routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><PaywallGate><Dashboard /></PaywallGate></ProtectedRoute>} />
