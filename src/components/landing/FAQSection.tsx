@@ -20,7 +20,7 @@ const faqs = [
   },
   {
     question: "Qu'est-ce que l'Evidence Vault et pourquoi c'est important ?",
-    answer: "Un coffre-fort de preuves basé sur une chaîne SHA-256 Merkle enchaînée. Chaque action est horodatée, hashée et liée à la précédente : toute modification invalide la chaîne. Concrètement : votre dossier NIS2/RGPD est prêt à être présenté à un auditeur. Note : la technologie utilisée est SHA-256, pas CRYSTALS-Dilithium.",
+    answer: "Un coffre-fort de preuves basé sur une chaîne SHA-256 Merkle enchaînée. Chaque action est horodatée, hashée et liée à la précédente : toute modification invalide la chaîne. Concrètement : votre dossier NIS2/RGPD est prêt à être présenté à un auditeur. Technologie actuelle : SHA-256 Merkle Chain — robuste et vérifiable indépendamment.",
   },
   {
     question: "Est-ce vraiment compatible NIS2 et RGPD 2026 ?",

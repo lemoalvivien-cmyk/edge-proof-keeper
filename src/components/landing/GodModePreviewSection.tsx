@@ -307,7 +307,7 @@ export function GodModePreviewSection() {
               <br />en action réelle
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Dashboard Live · 6 Agents IA · Auto-Remédiation · Predictive Causality · Evidence Vault post-quantique.
+              Dashboard Live · 6 Agents IA · Auto-Remédiation · Predictive Causality · Evidence Vault SHA-256.
             </p>
           </motion.div>
 
