@@ -131,3 +131,8 @@ verify_jwt = false
 [functions.stripe-webhook]
 verify_jwt = false
 
+# ─── Access Code Redemption — JWT validated in code ────────────────────────
+[functions.redeem-access-code]
+verify_jwt = false
+
+

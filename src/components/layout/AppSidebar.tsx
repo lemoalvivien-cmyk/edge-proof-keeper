@@ -76,6 +76,7 @@ const adminItems = [
   { title: 'Plans & Add-ons', href: '/plans', icon: CreditCard },
   { title: 'Revenue Settings', href: '/settings/revenue', icon: DollarSign },
   { title: 'Leads', href: '/admin/leads', icon: Users },
+  { title: 'Codes d\'accès', href: '/admin/access-codes', icon: Shield },
   { title: 'Admin Readiness', href: '/admin-readiness', icon: Gauge },
   { title: 'Test API', href: '/api-test', icon: FlaskConical },
 ];
