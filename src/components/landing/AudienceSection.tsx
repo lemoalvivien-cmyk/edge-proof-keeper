@@ -31,7 +31,7 @@ const audiences = [
     title: "DPO · Juridique · Audit",
     benefit: "Votre dossier NIS2 documenté en quelques minutes.",
     description: "Proof Packs exportables, trail complet, conformité documentée automatiquement. Structurés pour être présentés à l'ANSSI, à la CNIL, aux assureurs — le caractère opposable dépend de votre contexte juridique.",
-    quote: "Notre prime d'assurance cyber a été divisée par 2 grâce aux Proof Packs.",
+    quote: "Notre dossier de conformité NIS2 est prêt pour l'auditeur — sans effort manuel.",
     color: "text-success",
     glow: "hsl(158 80% 46%)",
     badge: "DPO · Juridique · Audit",
