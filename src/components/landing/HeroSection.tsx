@@ -264,23 +264,24 @@ export function HeroSection() {
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Score Gouvernance Cyber</div>
-                      <div className="text-4xl font-bold font-mono text-gradient neon-text mt-1">87<span className="text-lg text-muted-foreground">/100</span></div>
+                      <div className="text-4xl font-bold font-mono text-gradient neon-text mt-1">— <span className="text-lg text-muted-foreground font-normal">vos données</span></div>
                     </div>
                     <div className="text-right">
                       <div className="text-[10px] text-muted-foreground">Preuves vault</div>
                       <div className="text-xl font-bold font-mono text-primary"><ThreatCounter /></div>
-                      <div className="text-[9px] text-muted-foreground font-mono">archivées · immuables</div>
+                      <div className="text-[9px] text-muted-foreground font-mono">démo · SHA-256</div>
                     </div>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: "87%" }}
+                      animate={{ width: "60%" }}
                       transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
                       className="h-full rounded-full"
                       style={{ background: "linear-gradient(90deg, hsl(var(--neon-cyan)), hsl(var(--neon-blue)))" }}
                     />
                   </div>
+                  <div className="text-[9px] text-muted-foreground/60 font-mono mt-1.5 text-right">Démo — vos données afficheront votre score réel</div>
                 </div>
 
                 {/* Cycle progression */}
