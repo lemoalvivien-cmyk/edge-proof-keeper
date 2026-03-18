@@ -16,17 +16,17 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 // Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
+(window as Window & typeof globalThis & { ResizeObserver: unknown }).ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
 };
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+(window as Window & typeof globalThis & { IntersectionObserver: unknown }).IntersectionObserver = class IntersectionObserver {
   root = null;
   rootMargin = "";
-  thresholds = [];
+  thresholds: number[] = [];
   observe() {}
   unobserve() {}
   disconnect() {}
@@ -34,11 +34,11 @@ global.IntersectionObserver = class IntersectionObserver {
 };
 
 // Mock crypto.subtle for CryptoProof tests
-Object.defineProperty(global, "crypto", {
+Object.defineProperty(window, "crypto", {
+  writable: true,
   value: {
     subtle: {
-      digest: async (_algorithm: string, data: ArrayBuffer) => {
-        // Simple mock returning 32 bytes
+      digest: async (_algorithm: string, _data: ArrayBuffer) => {
         return new Uint8Array(32).fill(0).buffer;
       },
     },
