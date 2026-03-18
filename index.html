@@ -138,6 +138,32 @@
       ]
     }
     </script>
+
+    <!--
+      ══════════════════════════════════════════════════════════════
+      ANALYTICS RGPD-FRIENDLY — Plausible ou Matomo
+      Décommenter et remplacer "securit-e.com" par le domaine réel
+      une fois le DNS configuré.
+      ══════════════════════════════════════════════════════════════
+
+      Option A — Plausible (recommandé, RGPD, sans cookies) :
+      <script defer data-domain="securit-e.com"
+        src="https://plausible.io/js/script.js"></script>
+
+      Option B — Matomo Cloud / self-hosted :
+      <script>
+        var _paq = window._paq = window._paq || [];
+        _paq.push(['trackPageView']);
+        _paq.push(['enableLinkTracking']);
+        (function() {
+          var u="//matomo.securit-e.com/";
+          _paq.push(['setTrackerUrl', u+'matomo.php']);
+          _paq.push(['setSiteId', '1']);
+          var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+          g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+        })();
+      </script>
+    -->
   </head>
 
   <body>
