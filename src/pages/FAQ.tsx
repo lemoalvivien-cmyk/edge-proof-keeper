@@ -60,8 +60,8 @@ const faqCategories = [
     bg: "bg-success/10",
     questions: [
       {
-        q: "Qu'est-ce que l'Evidence Vault post-quantique ?",
-        a: "L'Evidence Vault utilise CRYSTALS-Dilithium3 (algorithme post-quantique standardisé NIST FIPS 204) pour signer chaque preuve. La chaîne de hash SHA-256 + Merkle Tree garantit l'immutabilité : toute modification d'une preuve invalide toute la chaîne. Aucun ordinateur quantique, même futur, ne peut falsifier les preuves générées. Le bouton 'Vérifier preuve' recalcule la signature en temps réel.",
+        q: "Qu'est-ce que l'Evidence Vault ?",
+        a: "L'Evidence Vault utilise une chaîne de hashes SHA-256 enchaînés (Merkle Chain). Chaque action est horodatée, hashée et liée à la précédente : toute modification invalide la chaîne. Le résultat est une piste d'audit immuable, vérifiable indépendamment, présentable à un auditeur NIS2/RGPD. La technologie utilisée est SHA-256 — une architecture post-quantique (CRYSTALS-Dilithium) est sur notre roadmap.",
       },
       {
         q: "Où sont hébergées mes données ?",
