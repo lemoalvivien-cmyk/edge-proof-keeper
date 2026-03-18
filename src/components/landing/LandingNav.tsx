@@ -49,14 +49,14 @@ export function LandingNav() {
               </span>
               <span className="hidden sm:flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
-                Evidence Vault post-quantique
+                Evidence Vault — preuves SHA-256 Merkle
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
                 🇫🇷 100% Souverain France
               </span>
               <span className="hidden lg:flex items-center gap-1.5 font-semibold">
-                🏆 Palantir-Killer : Ontology + Self-Healing + Preuve Post-Quantique
+                Ontology + Self-Healing + Evidence Vault Souverain
               </span>
             </div>
           </div>

@@ -288,7 +288,7 @@ export function OntologyView() {
             <div className="pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Activity className="h-3 w-3" />
-                Ontologie souveraine — {edges.length} relations cartographiées — 🇫🇷 20× moins cher que Palantir
+                Cartographie souveraine des risques — {edges.length} relations cartographiées — 🇫🇷 Souverain France
               </p>
             </div>
           </div>
