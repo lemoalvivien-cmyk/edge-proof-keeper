@@ -124,3 +124,10 @@ verify_jwt = false
 [functions.run-smoke-test]
 verify_jwt = false
 
+# ─── Paywall & Billing ──────────────────────────────────────────────────────
+[functions.check-entitlement]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+

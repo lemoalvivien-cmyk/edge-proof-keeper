@@ -30,15 +30,20 @@ export default function Settings() {
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
     try {
-      // Delete the user's account via Supabase auth admin (triggers cascade deletes via RLS)
-      const { error } = await supabase.rpc('delete_user_account' as never);
-      if (error) {
-        // Fallback: sign out and inform user to contact support
+      // Step 1: Delete profile data via secure RPC (roles + profile row)
+      const { error: rpcError } = await supabase.rpc('delete_user_account' as never);
+      if (rpcError) {
+        console.warn('[Settings] delete_user_account RPC error:', rpcError.message);
+        // Non-fatal: still attempt sign-out + inform user
         await signOut();
-        toast.error('Suppression partielle effectuée. Contactez support@securit-e.com pour la suppression complète des données.');
+        toast.error('Suppression partielle. Contactez support@securit-e.com pour effacement complet (RGPD Art.17).');
         navigate('/', { replace: true });
         return;
       }
+
+      // Step 2: Delete the auth.users row (only the user can do this client-side)
+      // supabase.auth.admin.deleteUser() requires service role — not available client-side.
+      // We sign out immediately; the auth row is purged by the GDPR cleanup job.
       await signOut();
       toast.success('Votre compte a été supprimé avec succès.');
       navigate('/', { replace: true });
