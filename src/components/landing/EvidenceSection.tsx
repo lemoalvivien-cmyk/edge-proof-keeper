@@ -36,9 +36,9 @@ const vaultFeatures = [
 ];
 
 const liveProofs = [
-  { id: "PK-2841", action: "Port 8443 — fermeture prouvée", algo: "SHA-256 Merkle Chain", ts: "2026-03-13 14:22:47" },
-  { id: "PK-2840", action: "CVE-2025-0041 — patch vérifié", algo: "SHA-256 Merkle Chain", ts: "2026-03-13 09:11:03" },
-  { id: "PK-2839", action: "Rotation credentials — auditée", algo: "SHA-256 Merkle Chain", ts: "2026-03-12 18:44:21" },
+  { id: "PK-XXX", action: "Port exposé — fermeture prouvée", algo: "SHA-256 Merkle Chain", ts: "Démo — données simulées" },
+  { id: "PK-XXX", action: "CVE critique — patch vérifié", algo: "SHA-256 Merkle Chain", ts: "Démo — données simulées" },
+  { id: "PK-XXX", action: "Rotation credentials — auditée", algo: "SHA-256 Merkle Chain", ts: "Démo — données simulées" },
 ];
 
 export function EvidenceSection() {
