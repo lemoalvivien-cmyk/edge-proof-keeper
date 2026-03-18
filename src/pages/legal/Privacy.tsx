@@ -168,7 +168,7 @@ export default function Privacy() {
 
             <div className="mt-8 p-4 rounded-lg bg-muted space-y-1">
               <p className="text-sm text-muted-foreground">
-                <strong>DPO :</strong> <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline">dpo@securit-e.fr</a>
+                <strong>DPO :</strong> <a href="mailto:dpo@securit-e.com" className="text-primary hover:underline">dpo@securit-e.com</a>
               </p>
               <p className="text-sm text-muted-foreground">
                 <strong>Éditeur :</strong> VLM Consulting — SIRET 835 125 089 000 28 — 59170 Croix
