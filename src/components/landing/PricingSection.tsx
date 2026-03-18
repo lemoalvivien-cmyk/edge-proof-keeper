@@ -71,7 +71,7 @@ const plans = [
     features: [
       "Tout Command inclus",
       "Swarm Mode fully autonomous",
-      "Déploiement on-premise certifié SecNumCloud",
+      "Déploiement on-premise objectif SecNumCloud en roadmap",
       "Agents IA personnalisés sur vos process",
       "Preuves cryptographiques avancées",
       "Predictive Causality Engine Pro",
