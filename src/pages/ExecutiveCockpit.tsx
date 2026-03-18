@@ -159,6 +159,14 @@ export default function ExecutiveCockpit() {
   const { data: taskCounts } = useTaskCounts();
   const subscription = useSubscription();
   const now = new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' });
+  const tracked = useRef(false);
+
+  useEffect(() => {
+    if (!tracked.current) {
+      tracked.current = true;
+      trackEvent('executive_view', { source_page: '/executive', cta_origin: 'cockpit_page_load' });
+    }
+  }, []);
 
   // Compliance
   const { data: complianceStats } = useQuery({
