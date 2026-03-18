@@ -200,7 +200,7 @@ export function CryptoProof({
         ) : (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <CheckCircle2 className="h-4 w-4 text-success" />
               <span className="text-sm font-medium text-success">
                 Preuve cryptographique vérifiable
               </span>
