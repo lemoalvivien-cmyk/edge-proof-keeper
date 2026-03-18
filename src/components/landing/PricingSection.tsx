@@ -49,11 +49,11 @@ const plans = [
       "6 Agents IA Swarm Intelligence complets",
       "Self-healing autonome · SLA < 4h",
       "OSINT & EASM Signals — surveillance continue",
-      "Evidence Vault SHA-256 · CRYSTALS-Dilithium",
+      "Evidence Vault SHA-256 Merkle Chain immuable",
       "Predictive Causality Engine · 90j d'horizon",
       "RSSI Virtuel IA — brief CODIR mensuel",
       "DSI Go/No-Go · validation en 1 clic",
-      "SLA 99.9% garanti contractuellement",
+      "SLA < 4h remédiation (cible contractuelle selon offre)",
     ],
   },
   {
