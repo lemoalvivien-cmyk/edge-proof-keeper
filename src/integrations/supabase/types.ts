@@ -1097,6 +1097,8 @@ export type Database = {
           id: string
           name: string
           permanent_authorization_id: string | null
+          sector: string | null
+          size: string | null
           slug: string
           updated_at: string
         }
@@ -1105,6 +1107,8 @@ export type Database = {
           id?: string
           name: string
           permanent_authorization_id?: string | null
+          sector?: string | null
+          size?: string | null
           slug: string
           updated_at?: string
         }
@@ -1113,6 +1117,8 @@ export type Database = {
           id?: string
           name?: string
           permanent_authorization_id?: string | null
+          sector?: string | null
+          size?: string | null
           slug?: string
           updated_at?: string
         }
