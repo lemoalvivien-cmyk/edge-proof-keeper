@@ -151,8 +151,8 @@ export function PricingSection() {
                 {[
                   { name: "SECURIT-E Starter", price: "490 € / an", highlight: true, note: "✓ 14j gratuits" },
                   { name: "SECURIT-E Pro", price: "6 900 € / an", highlight: true, note: "✓ 14j gratuits" },
-                  { name: "Palantir Enterprise", price: "≥ 50 000 € / an", highlight: false, note: "10× plus cher" },
-                  { name: "Capgemini Consulting", price: "≥ 120 000 € / an", highlight: false, note: "Prestation manuelle" },
+                  { name: "Palantir Enterprise", price: "≥ 50 000 € / an", highlight: false, note: "Tarifs entreprise" },
+                  { name: "Capgemini Consulting", price: "≥ 120 000 € / an", highlight: false, note: "Modèle consulting traditionnel" },
                 ].map((c) => (
                   <div key={c.name} className={`rounded-lg p-3 border ${c.highlight ? "border-primary/40 bg-primary/5" : "border-border bg-muted/20"}`}>
                     <p className={`font-bold text-xs mb-1 ${c.highlight ? "text-primary" : "text-foreground"}`}>{c.name}</p>
