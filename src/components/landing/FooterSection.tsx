@@ -121,7 +121,7 @@ export function FooterSection() {
                 Hébergé en France 🇫🇷
               </span>
               <span>100% Souverain</span>
-              <span className="label-badge label-badge-cyan text-[9px] py-0.5">Score Audit 97/100</span>
+              <span className="label-badge label-badge-cyan text-[9px] py-0.5">Audit sécurité continu</span>
               <span className="label-badge label-badge-cyan text-[9px] py-0.5">GOD MODE 2026</span>
             </div>
           </div>
