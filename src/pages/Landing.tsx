@@ -26,7 +26,7 @@ const Landing = () => {
         <HowItWorksSection />
         {/* 5. God Mode Preview — Dashboard Live + Agents + Remédiation + Vault */}
         <GodModePreviewSection />
-        {/* 6. Evidence Vault post-quantique */}
+        {/* 6. Evidence Vault cryptographique SHA-256 */}
         <EvidenceSection />
         {/* 7. Pour qui ? */}
         <AudienceSection />

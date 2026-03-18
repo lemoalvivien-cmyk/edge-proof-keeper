@@ -94,7 +94,7 @@ const plans = [
       { text: "Swarm Mode — autonomie totale 24/7", available: true },
       { text: "Déploiement on-premise certifié", available: true },
       { text: "Agents IA personnalisés sur vos process", available: true },
-      { text: "SLA 99.99% garanti contractuellement", available: true },
+      { text: "SLA 99.99% — objectif contractuel sur devis", available: true },
       { text: "Account Manager dédié CISO-level", available: true },
       { text: "CISO Board-level reports personnalisés", available: true },
       { text: "Intégration SIEM / SOC existant", available: true },
