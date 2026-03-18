@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
     console.log(`build-ontology: org=${organization_id} nodes_created=${nodesCreated} edges_created=${edgesCreated}`);
 
     return new Response(
-      JSON.stringify({ success: true, nodes_upserted: totalNodes, nodes_created: nodesCreated, edges_created: edgesCreated, breakdown: { assets: assets.length, risks: risks.length, remediations: actions.length, signals: signals.length, findings: findings.length }, sovereign_badge: "🧠 Ontologie souveraine construite — Palantir-style à 1/20e du prix" }),
+      JSON.stringify({ success: true, nodes_upserted: totalNodes, nodes_created: nodesCreated, edges_created: edgesCreated, breakdown: { assets: assets.length, risks: risks.length, remediations: actions.length, signals: signals.length, findings: findings.length } }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {

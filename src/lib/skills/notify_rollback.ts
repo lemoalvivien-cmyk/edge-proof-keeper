@@ -171,9 +171,14 @@ async function callEdgeAgent(payload: { skill: string; payload: Record<string, u
   return { ok: true };
 }
 
-async function generateZkProof(data: Record<string, unknown>): Promise<string> {
-  // SHA-256 fingerprint — no zk-SNARK in current implementation
-  return `sha256:${btoa(JSON.stringify(data)).slice(0, 48)}`;
+async function generateSha256Proof(data: Record<string, unknown>): Promise<string> {
+  // SHA-256 fingerprint — verifiable, deterministic
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(JSON.stringify(data));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return `sha256:${hashHex.slice(0, 48)}`;
 }
 
 async function sendSlackNotification(webhookUrl: string | undefined, message: string, severity: string): Promise<void> {
