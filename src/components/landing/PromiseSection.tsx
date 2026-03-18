@@ -205,8 +205,8 @@ export function PromiseSection() {
                   <Network className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-foreground">Swarm Intelligence · Predictive Causality Engine · Evidence Vault</p>
-                  <p className="text-xs text-muted-foreground">6 agents collaborent anonymement — attaques prédites 90 jours à l'avance</p>
+                  <p className="text-sm font-bold text-foreground">Swarm Intelligence · Analyse de risques IA · Evidence Vault</p>
+                  <p className="text-xs text-muted-foreground">6 agents collaborent — détection, analyse, remédiation supervisée, preuve archivée</p>
                 </div>
               </div>
               <div className="flex items-center gap-6 text-center flex-wrap justify-center">
