@@ -148,6 +148,7 @@ export function DemoRequestDialog({
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
   const [loading,   setLoading]   = useState(false);
+  const [honeypot,  setHoneypot]  = useState(''); // Anti-spam honeypot
   const [form, setForm] = useState({
     full_name:     '',
     email:         '',
