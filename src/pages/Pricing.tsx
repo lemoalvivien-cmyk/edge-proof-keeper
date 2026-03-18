@@ -91,8 +91,8 @@ const plans = [
     tension: null,
     perks: [
       { text: "Tout Command inclus", available: true },
-      { text: "Swarm Mode — autonomie totale 24/7", available: true },
-      { text: "Déploiement on-premise certifié", available: true },
+      { text: "Swarm Mode — supervision avancée 24/7", available: true },
+      { text: "Déploiement on-premise (objectif roadmap 2026)", available: true },
       { text: "Agents IA personnalisés sur vos process", available: true },
       { text: "SLA 99.99% — objectif contractuel sur devis", available: true },
       { text: "Account Manager dédié CISO-level", available: true },
