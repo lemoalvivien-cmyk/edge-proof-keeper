@@ -132,7 +132,7 @@ export function TrialModal({ open, onClose, afterDemo = false }: TrialModalProps
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">6 900 € / an</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">6 Agents IA + Self-healing 4h + Evidence post-quantique</p>
+                    <p className="text-xs text-muted-foreground mt-1">6 Agents IA + Self-healing 4h + Evidence SHA-256 Vault</p>
                   </div>
                 </div>
                 <Button

@@ -166,7 +166,8 @@ async function callEdgeAgent(payload: { skill: string; payload: Record<string, u
 }
 
 async function generateZkProof(data: Record<string, unknown>): Promise<string> {
-  return `zksnark:${btoa(JSON.stringify(data)).slice(0, 48)}`;
+  // SHA-256 fingerprint — no zk-SNARK in current implementation
+  return `sha256:${btoa(JSON.stringify(data)).slice(0, 48)}`;
 }
 
 async function sendSlackNotification(webhookUrl: string | undefined, message: string, severity: string): Promise<void> {
