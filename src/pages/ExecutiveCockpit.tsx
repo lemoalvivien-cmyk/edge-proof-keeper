@@ -3,7 +3,8 @@
  * Vue synthétique premium orientée DG / RSSI / COMEX
  * Montrable en rendez-vous commercial, lisible en moins de 30 secondes.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { trackEvent } from '@/lib/tracking';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import {
