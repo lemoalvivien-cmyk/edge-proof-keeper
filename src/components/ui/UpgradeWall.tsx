@@ -164,7 +164,7 @@ export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
             <div className="text-3xl font-black mb-0.5">29 900€<span className="text-sm font-normal text-muted-foreground">/an</span></div>
             <p className="text-xs text-muted-foreground mb-4">On-premise · Swarm complet</p>
             <ul className="space-y-1.5 text-xs text-muted-foreground flex-1 mb-5">
-              {["Tout Command inclus", "Déploiement on-premise certifié", "Account Manager dédié", "SLA 99.99% contractuel", "Formation équipe incluse"].map((f, i) => (
+              {["Tout Command inclus", "Déploiement on-premise", "Account Manager dédié", "SLA renforcé contractualisé", "Formation équipe incluse"].map((f, i) => (
                 <li key={i} className="flex items-center gap-1.5"><Check className="w-3 h-3 text-success flex-shrink-0" />{f}</li>
               ))}
             </ul>
