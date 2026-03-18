@@ -9,7 +9,7 @@ const agents = [
     name: "Scout Agent",
     role: "Surveillance continue · OSINT · EASM",
     description: "Scanne 24/7 votre surface d'attaque externe. Ports exposés, fuites de credentials, CVE actifs — détectés avant les attaquants.",
-    metric: "847 endpoints surveillés",
+    metric: "Surveillance surface d'attaque EASM",
     Icon: Eye,
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
