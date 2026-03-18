@@ -132,9 +132,9 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
     }
   }
 
-  // 4. SHA-256 Merkle proof of rollback + notification
+  // 4. SHA-256 proof of rollback + notification
   const proofHash = input.proof_required
-    ? await generateZkProof({
+    ? await generateSha256Proof({
         action: "rollback_executed",
         action_id: input.action_id,
         target: input.target,
@@ -158,16 +158,27 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
 // ── Internal helpers ──
 
 async function logToVault(entry: Record<string, unknown>): Promise<string> {
-  return `sha3:${btoa(JSON.stringify(entry)).slice(0, 32)}`;
+  // SHA-256 fingerprint of intent entry
+  const encoder = new TextEncoder();
+  const data = encoder.encode(JSON.stringify(entry));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return `sha256:${hashHex.slice(0, 32)}`;
 }
 
 async function callEdgeAgent(payload: { skill: string; payload: Record<string, unknown>; agent_id: string }): Promise<{ ok: boolean }> {
   return { ok: true };
 }
 
-async function generateZkProof(data: Record<string, unknown>): Promise<string> {
-  // SHA-256 fingerprint — no zk-SNARK in current implementation
-  return `sha256:${btoa(JSON.stringify(data)).slice(0, 48)}`;
+async function generateSha256Proof(data: Record<string, unknown>): Promise<string> {
+  // SHA-256 fingerprint — verifiable, deterministic
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(JSON.stringify(data));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return `sha256:${hashHex.slice(0, 48)}`;
 }
 
 async function sendSlackNotification(webhookUrl: string | undefined, message: string, severity: string): Promise<void> {

@@ -182,7 +182,7 @@ export function PricingSection() {
               SECURIT-E Pro : <span className="text-gradient">6 900€/an</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Tout inclus. Sans équipe. Sans surprise. Un essai gratuit de 14 jours pour valider par vous-même.
+              Tout inclus. Sans équipe cyber dédiée. Sans surprise. Un essai gratuit de 14 jours pour valider par vous-même.
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/30 text-success text-sm font-semibold">
               <Clock className="w-4 h-4" />

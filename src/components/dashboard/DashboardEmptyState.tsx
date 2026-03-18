@@ -29,7 +29,7 @@ export function DashboardEmptyState({ onLaunchDemo, onLaunchAnalysis, isLoading,
         </div>
         <Button size="sm" onClick={onLaunchAnalysis} disabled={isLoading} className="gap-2">
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-          Lancer ma première analyse autonome
+          Lancer ma première analyse
         </Button>
       </motion.div>
     );
@@ -62,9 +62,9 @@ export function DashboardEmptyState({ onLaunchDemo, onLaunchAnalysis, isLoading,
         <Zap className="w-8 h-8 text-primary" />
       </div>
       <div>
-        <h3 className="text-lg font-bold text-foreground">Lancez votre première analyse autonome</h3>
+        <h3 className="text-lg font-bold text-foreground">Lancez votre première analyse</h3>
         <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
-          Vos agents IA vont détecter, corréler et planifier la remédiation automatiquement — en moins de 47 secondes.
+          Vos agents IA supervisés vont détecter, corréler et planifier la remédiation — avec votre validation Go/No-Go.
         </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-3 justify-center">

@@ -88,7 +88,7 @@ export default function Activate() {
               </p>
               <ul className="text-muted-foreground space-y-0.5">
                 <li>• Sovereign AI agent</li>
-                <li>• Proof Packs certifiés</li>
+                <li>• Proof Packs SHA-256 (chaîne de preuves)</li>
                 <li>• Tous les modules actifs</li>
                 <li>• Valable 365 jours</li>
               </ul>

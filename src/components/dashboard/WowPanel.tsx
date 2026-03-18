@@ -326,7 +326,7 @@ export function WowPanel({
               })}
 
               <div className="pt-1 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-mono">
+          <span className="text-xs text-muted-foreground font-mono">
                 Agents IA supervisés — validation Go/No-Go requise
               </span>
                 <Button
@@ -354,7 +354,7 @@ export function WowPanel({
               {/* Cycle progress bar */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-mono text-muted-foreground">CYCLE SWARM AUTONOME — DE LA DÉTECTION À LA PREUVE</span>
+                  <span className="font-mono text-muted-foreground">CYCLE SUPERVISÉ — DÉTECTION À LA PREUVE (DÉMO LAB)</span>
                   <div className="flex items-center gap-2">
                     {cycleActive && (
                       <motion.span
