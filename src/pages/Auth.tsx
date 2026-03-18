@@ -136,7 +136,7 @@ export default function Auth() {
       return;
     }
 
-    toast.success('Compte créé — initialisation de votre espace cyber…', { duration: 4000 });
+    toast.success('Compte créé ! Vérifiez votre email pour activer votre compte.', { duration: 6000 });
 
     if (signupData.session?.access_token) {
       setTimeout(async () => {
