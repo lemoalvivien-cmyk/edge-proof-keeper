@@ -87,7 +87,7 @@ const plans = [
     highlight: false,
     icon: Crown,
     color: "primary",
-    roiLabel: "Inclut déploiement on-premise certifié SecNumCloud",
+    roiLabel: "Inclut déploiement on-premise dédié (objectif SecNumCloud — roadmap 2026)",
     tension: null,
     perks: [
       { text: "Tout Command inclus", available: true },
