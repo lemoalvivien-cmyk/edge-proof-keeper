@@ -194,7 +194,7 @@ export default function FAQ() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              490€/an tout inclus · Souverain France 🇫🇷 · Score audit 97/100
+              490€/an tout inclus · Souverain France 🇫🇷 · Essai 14j gratuit
             </p>
           </motion.div>
         </div>
