@@ -20,18 +20,18 @@ interface UpgradeWallProps {
 }
 
 const VALUE_ITEMS = [
-  "Evidence Vault immuable — preuves SHA-256 + post-quantique",
-  "Score de risque temps réel — 6 agents autonomes actifs",
-  "Conformité RGPD / NIS2 automatisée et prouvable",
-  "Self-healing < 4h — votre RSSI virtuel IA 24/7",
+  "Evidence Vault immuable — chaîne SHA-256 Merkle vérifiable",
+  "Score de risque temps réel — 6 agents supervisés actifs",
+  "Conformité RGPD / NIS2 documentée et prouvable",
+  "Remédiation assistée < 4h — votre RSSI virtuel IA 24/7",
   "Rapports CODIR exportables en 1 clic",
   "Preuves accumulées = capital juridique défendable",
 ];
 
 const URGENCY_STATS = [
-  { icon: TrendingDown, val: "4h", label: "délai moyen de détection réduit" },
-  { icon: Shield, val: "99,9%", label: "uptime garanti contractuellement" },
-  { icon: Clock, val: "47s", label: "de la détection à la preuve" },
+  { icon: TrendingDown, val: "4h", label: "cible de remédiation assistée" },
+  { icon: Shield, val: "FR 🇫🇷", label: "hébergement souverain France" },
+  { icon: Clock, val: "47s", label: "de la détection à la preuve (lab)" },
 ];
 
 export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
