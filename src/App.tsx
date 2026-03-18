@@ -45,7 +45,7 @@ import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
 import AuthorizedUse from "./pages/legal/AuthorizedUse";
 import Disclaimer from "./pages/legal/Disclaimer";
-// Offres pages
+// Offres pages (commercial landing pages — linked from footer)
 import ImportsHub from "./pages/offres/ImportsHub";
 import DevsecOpsPack from "./pages/offres/DevsecOpsPack";
 import AuditPackCabinets from "./pages/offres/AuditPackCabinets";
