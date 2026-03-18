@@ -259,7 +259,7 @@ export function CryptoProof({
                 Vérifier preuve
               </Button>
               <Button size="sm" variant="ghost" onClick={handleCopy} className="h-7 text-xs gap-1.5">
-                {copied ? <CheckCircle2 className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                {copied ? <CheckCircle2 className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                 {copied ? "Copié" : "Exporter JSON"}
               </Button>
               <Button size="sm" variant="ghost" onClick={handleGenerateProof} disabled={generating} className="h-7 text-xs gap-1.5">
