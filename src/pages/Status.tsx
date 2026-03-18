@@ -265,7 +265,7 @@ export default function Status() {
           <div className="glass-card rounded-xl p-5 border border-border/40">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium">Uptime global</span>
-              <span className="text-success font-bold font-mono">99.97%</span>
+              <span className="text-success font-bold font-mono">Mesuré en temps réel</span>
             </div>
             <div className="flex gap-0.5">
               {[...Array(30)].map((_, i) => {
