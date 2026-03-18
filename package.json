@@ -10,14 +10,16 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "npx vitest run --reporter=verbose",
-    "test:unit": "npx vitest run",
+    "test:unit": "vitest run",
     "test:smoke": "node scripts/release-gate.mjs --smoke-only",
     "test:release": "node scripts/release-gate.mjs",
-    "test:e2e": "echo \"[MANQUE] Playwright E2E — installer avec: npx playwright install\"",
-    "gate": "node scripts/release-gate.mjs"
+    "test:e2e": "playwright test",
+    "gate": "node scripts/release-gate.mjs",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
+    "@playwright/test": "^1.58.2",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -47,6 +49,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@supabase/supabase-js": "^2.89.0",
     "@tanstack/react-query": "^5.83.0",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@vitejs/plugin-react": "^4.3.4",
     "class-variance-authority": "^0.7.1",
@@ -70,6 +73,7 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
+    "vitest": "^4.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

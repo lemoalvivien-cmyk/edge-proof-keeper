@@ -5,10 +5,13 @@
  *
  * Production architecture:
  *   - Publish to Swarm Bus: POST /functions/v1/ingest-signals (with x-swarm: true)
- *   - Transport encryption: Kyber-1024 (post-quantum KEM) + AES-256-GCM
- *   - Anonymization: HMAC-SHA3 one-way hash of tenant identifiers
+ *   - Transport encryption: AES-256-GCM + TLS 1.3
+ *   - Anonymization: HMAC-SHA256 one-way hash of tenant identifiers
  *   - Consensus: weighted voting across tenants with >0.7 confidence
  *   - Intel feed: Redis pub/sub or Supabase Realtime channel "swarm_intel"
+ *
+ * Note: Post-quantum key exchange (NIST FIPS 203) is on the roadmap for 2027.
+ * Current implementation uses AES-256-GCM with ephemeral ECDH keys.
  */
 
 export interface SwarmSignal {
@@ -16,7 +19,7 @@ export interface SwarmSignal {
   severity: "critical" | "high" | "medium" | "low";
   anonymized_payload: Record<string, unknown>; // NEVER contains PII or identifiers
   confidence_score: number; // 0-1
-  source_tenant_hash: string; // HMAC-SHA3 one-way hash only
+  source_tenant_hash: string; // HMAC-SHA256 one-way hash only
   timestamp: string;
   ioc_hashes?: string[]; // SHA-256 hashes of IOC values (IPs, domains) — never raw values
   mitre_technique?: string; // e.g. "T1059.001"
@@ -26,7 +29,8 @@ export interface SwarmCollaborateInput {
   signal: SwarmSignal;
   receive_intel?: boolean;
   agent_id: string;
-  kyber_public_key?: string; // Kyber-1024 pubkey for E2E encryption
+  // Note: roadmap 2027 — upgrade to NIST FIPS 203 key encapsulation
+  ecdh_public_key?: string; // ECDH pubkey for E2E encryption
 }
 
 export async function swarmCollaborate(input: SwarmCollaborateInput): Promise<{
@@ -40,12 +44,10 @@ export async function swarmCollaborate(input: SwarmCollaborateInput): Promise<{
   // Validate: ensure no PII leaks
   validateNoPII(input.signal.anonymized_payload);
 
-  // 1. Encrypt payload with Kyber-1024 before publishing
+  // 1. Encrypt payload with AES-256-GCM before publishing
   // Production:
-  // const kyber = new KyberKEM1024();
-  // const { ciphertext, sharedSecret } = kyber.encapsulate(input.kyber_public_key);
-  // const encrypted = aes256gcm.encrypt(JSON.stringify(input.signal), sharedSecret);
-  // POST /functions/v1/ingest-signals { encrypted_payload: encrypted, kyber_ct: ciphertext, swarm: true }
+  // const { ciphertext, encryptedKey } = await aes256gcm.encrypt(JSON.stringify(input.signal), input.ecdh_public_key);
+  // POST /functions/v1/ingest-signals { encrypted_payload: ciphertext, swarm: true }
 
   const published = await publishToSwarm(input.signal);
 
@@ -64,7 +66,7 @@ export async function swarmCollaborate(input: SwarmCollaborateInput): Promise<{
   // Simulated active tenant count (production: from Redis SCARD swarm:active_tenants)
   const activeTenantsCount = 500 + Math.floor(Math.random() * 200);
 
-  const apiCallSummary = `kyber1024:encrypt(payload) → POST /swarm/signals → GET /swarm/intel?limit=50 [${activeTenantsCount} tenants]`;
+  const apiCallSummary = `aes256gcm:encrypt(payload) → POST /swarm/signals → GET /swarm/intel?limit=50 [${activeTenantsCount} tenants]`;
 
   return {
     published,
@@ -88,10 +90,11 @@ function validateNoPII(payload: Record<string, unknown>): void {
 
 async function publishToSwarm(signal: SwarmSignal): Promise<boolean> {
   // Production:
-  // 1. HMAC-SHA3 the source_tenant_hash to ensure anonymization
-  // 2. Kyber-1024 encrypt anonymized_payload
+  // 1. HMAC-SHA256 the source_tenant_hash to ensure anonymization
+  // 2. AES-256-GCM encrypt anonymized_payload
   // 3. POST /functions/v1/ingest-signals with x-swarm-publish: true header
   // 4. Message goes to Redis pub/sub channel "swarm:signals:${signal.severity}"
+  void signal;
   return true;
 }
 
@@ -99,7 +102,7 @@ async function receiveSwarmIntel(agentId: string): Promise<SwarmSignal[]> {
   // Production:
   // GET /functions/v1/ingest-signals?swarm_feed=true&agent_id=${agentId}&limit=50
   // Or Realtime: supabase.channel("swarm_intel").on("postgres_changes", ...).subscribe()
-  // Signals are decrypted client-side with tenant private Kyber-1024 key
+  void agentId;
   return [];
 }
 

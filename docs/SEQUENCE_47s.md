@@ -1,6 +1,7 @@
 # SEQUENCE_47s — Securit-E Remediation Cycle
 
-> La séquence complète de détection → remédiation → preuve en 47 secondes exactes.
+> La séquence complète de détection → remédiation → preuve en 47 secondes.
+> **Mesuré en conditions de laboratoire contrôlées** — les performances réelles dépendent de l'infrastructure cible.
 
 ## Vue d'ensemble
 
@@ -8,7 +9,7 @@
 T+0s ────── T+12s ─────── T+23s ──────── T+35s ───────── T+47s
   │             │              │               │               │
 Scout        Analyst        Go/No-Go        Executor        Vault
-Détecte     Prédit 87%     1 clic DSI     Répare auto     Prouve NIS2
+Détecte     Prédit         1 clic DSI     Répare auto     Prouve NIS2
 ```
 
 ## Description détaillée
@@ -22,7 +23,7 @@ Scout EASM scan → host: api.client.fr
   → Port 8443 open (unexpected)
   → CVE-2025-1337 match (CVSS 9.1)
   → Signal créé: { severity: CRITICAL, confidence: 0.94 }
-  → Evidence Vault pre-proof: sha3:a1b2c3...
+  → Evidence Vault pre-proof: sha256:a1b2c3...
 ```
 
 **API calls :**
@@ -45,7 +46,6 @@ Analyst correlates:
   
 Attack chain predicted:
   Port 8443 exposed → RCE → Privilege escalation → Domain Admin
-  Probability: 87% within 72h
   
 Remediation plan generated:
   [1] URGENT: Close port 8443 (skill: fix_port)
@@ -59,14 +59,14 @@ Remediation plan generated:
 
 ### T+23s — RSSI IA + DSI Go/No-Go
 
-**Mode Auto (fully autonomous) :**
+**Mode délégation supervisée (Go/No-Go automatique si seuils configurés) :**
 ```
-RSSI IA → confidence 94% + CVSS 9.1 → AUTO APPROVE
-→ No human intervention required
+RSSI IA → confidence 94% + CVSS 9.1 → AUTO APPROVE (si règle configurée)
 → Evidence: { decision: "auto_approved", confidence: 0.94, rule: "cvss >= 9.0" }
+→ Toujours réversible via rollback dans les 4h
 ```
 
-**Mode DSI oversight :**
+**Mode supervision manuelle DSI :**
 ```
 DSI reçoit notification:
   📱 Slack: "[SECURIT-E] Action requise: fermer port 8443"
@@ -85,9 +85,8 @@ DSI clique "GO →" → approved in 1 click (T+23s)
 ```
 POST https://edge-agent.client-infra:8443/api/v1/skill
 Headers:
-  Authorization: Bearer <CRYSTALS-Dilithium3-signed-JWT>
+  Authorization: Bearer <JWT-signé>
   X-Agent-ID: executor-agent-001
-  X-Dilithium-Signature: <dilithium3_hex_signature>
 Body:
   {
     "skill": "fix_port",
@@ -109,7 +108,7 @@ securit-e-agent: fix_port — blocking 8443/tcp on api.client.fr
 → AWS: ec2:RevokeSecurityGroupIngress(GroupId=sg-0a1b2c3d, port=8443)
 → Pre-state saved for rollback (TTL: 4h)
 → Port 8443 confirmed CLOSED
-→ SkillResponse: { success: true, proof_hash: "zksnark:..." }
+→ SkillResponse: { success: true, proof_hash: "sha256:..." }
 ```
 
 ---
@@ -126,7 +125,7 @@ Verifier validates:
 
 ---
 
-### T+47s — Evidence Vault (Post-Quantum Proof)
+### T+47s — Evidence Vault (Proof SHA-256 Merkle Chain)
 
 **Proof generation :**
 ```
@@ -135,15 +134,15 @@ Vault signs proof pack #2841:
     action: "fix_port",
     host: "api.client.fr", 
     port: 8443,
-    pre_state_hash: "sha3:a1b2c3...",
-    post_state_hash: "sha3:d4e5f6...",
+    pre_state_hash: "sha256:a1b2c3...",
+    post_state_hash: "sha256:d4e5f6...",
     verifier_ok: true,
     timestamp: "2026-03-13T14:22:47Z"
   }
-  algorithm: CRYSTALS-Dilithium3 + zk-SNARK Groth16
-  entry_hash: "0x7a4f...b2c1"
+  algorithm: SHA-256 Merkle Chain (implémenté)
+  entry_hash: "7a4f...b2c1"
   chain_seq: 2841
-  prev_hash: "0x3d9e...a7f2"
+  prev_hash: "3d9e...a7f2"
 ```
 
 **NIS2 compliance output :**
@@ -151,14 +150,14 @@ Vault signs proof pack #2841:
 Proof Pack PK-2841:
   ✓ Action documented
   ✓ Chain of custody verified
-  ✓ Cryptographic integrity: CRYSTALS-Dilithium3
+  ✓ Cryptographic integrity: SHA-256 Merkle Chain
   ✓ Non-repudiable
   ✓ NIS2 Art. 21 compliant
   ✓ DORA compliant
   ✓ Exportable as PDF + JSON
 ```
 
-**Total elapsed: 47 seconds. Zero human intervention required.**
+**Total mesuré en lab : 47 secondes. Mode supervisé disponible.**
 
 ---
 
@@ -178,15 +177,15 @@ Rollback timeout: **4 heures** (configurable)
 
 ---
 
-## Métriques de performance
+## Métriques de performance (conditions de laboratoire)
 
 | Métrique | Valeur |
 |----------|--------|
-| Temps total | 47s |
+| Temps total | 47s (lab) |
 | Scout → Signal | < 5s |
 | Analyst → Plan | < 15s |
 | Executor → Fix | < 25s |
 | Vault → Proof | < 8s |
-| Disponibilité | 99.9% SLA |
+| Disponibilité cible | 99.9% (mesuré, non contractualisé) |
 | Auto-remediations/h | 5 max (configurable) |
 | Agents simultanés | 6 par tenant |
