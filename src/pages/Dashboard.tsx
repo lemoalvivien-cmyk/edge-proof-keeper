@@ -34,6 +34,8 @@ import { LiveAgentDemo } from '@/components/demo/LiveAgentDemo';
 import { GuidedTour } from '@/components/onboarding/GuidedTour';
 import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
 import { WowPanel } from '@/components/dashboard/WowPanel';
+import { PlanValueTracker } from '@/components/dashboard/PlanValueTracker';
+import { UpsellNudge } from '@/components/ui/UpsellNudge';
 import { TrialModal } from '@/components/ui/TrialModal';
 import { useSubscription } from '@/hooks/useSubscription';
 import { OntologyView } from '@/components/ontology/OntologyView';
@@ -254,31 +256,22 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Upgrade banner — only for non-subscribers */}
+        {/* Plan Value Tracker — always shown, adapts to subscription state */}
+        {!subscription.isLoading && (
+          <PlanValueTracker
+            findingsCount={findingCounts?.total ?? 0}
+            runsCount={pipelineProof?.runs ?? 0}
+            proofsCount={pipelineProof?.summaries ?? 0}
+            compliancePercent={complianceStats?.percentage ?? 0}
+            activeDays={Math.max(1, Math.round(((pipelineProof?.runs ?? 0) * 1.5) + 1))}
+            plan={subscription.plan}
+            subscribed={subscription.subscribed}
+          />
+        )}
+
+        {/* Contextual upsell for non-subscribers — EASM teaser */}
         {!subscription.subscribed && !subscription.isLoading && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-accent/25 bg-gradient-to-r from-primary/5 to-accent/5 p-3.5 flex items-center justify-between flex-wrap gap-3"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-accent/15 border border-accent/25 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-accent" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground text-sm">Activez l'accès complet — Essai 14j gratuit</p>
-                <p className="text-xs text-muted-foreground">Starter 490 € / an · Annulation libre · Données souveraines 🇫🇷</p>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              className="gap-2 font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-              onClick={() => setTrialModalOpen(true)}
-            >
-              <CreditCard className="w-4 h-4" />
-              Démarrer — 490 €/an
-            </Button>
-          </motion.div>
+          <UpsellNudge feature="easm" variant="banner" />
         )}
 
         {/* ══ WOW PANEL — Premier écran, moment de vérité ══ */}
@@ -453,6 +446,11 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Self-healing upsell — only for non-pro users with open tasks */}
+        {!subscription.subscribed && !subscription.isLoading && (taskCounts?.open ?? 0) > 0 && (
+          <UpsellNudge feature="self_healing" variant="inline" />
+        )}
+
         {/* Status + Résumé */}
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
@@ -582,11 +580,21 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Proof Pack upsell — after pipeline proof, for non-pro users with data */}
+        {!subscription.subscribed && !subscription.isLoading && (pipelineProof?.runs ?? 0) > 0 && (
+          <UpsellNudge feature="proof_pack" variant="banner" />
+        )}
+
         {/* Ontologie Souveraine */}
         <OntologyView />
 
         {/* Rapport souverain export */}
         <SovereignReportExport />
+
+        {/* CODIR report upsell — for starter plan only */}
+        {subscription.subscribed && subscription.plan === "starter" && (
+          <UpsellNudge feature="codir_report" variant="banner" />
+        )}
 
         {/* Live Agents Demo */}
         <Card className="border-primary/30">
