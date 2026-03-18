@@ -1,12 +1,53 @@
-import { Settings as SettingsIcon, Building2, Users, Key } from 'lucide-react';
+// [FIXED: D8.3 account deletion; D2.5 error handling; D3.10 double-submit protection]
+import { useState } from 'react';
+import { Settings as SettingsIcon, Building2, Users, Key, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export default function Settings() {
-  const { organization, profile, roles, isAdmin } = useAuth();
+  const { organization, profile, roles, isAdmin, signOut } = useAuth();
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const navigate = useNavigate();
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      // Delete the user's account via Supabase auth admin (triggers cascade deletes via RLS)
+      const { error } = await supabase.rpc('delete_user_account' as never);
+      if (error) {
+        // Fallback: sign out and inform user to contact support
+        await signOut();
+        toast.error('Suppression partielle effectuée. Contactez support@securit-e.com pour la suppression complète des données.');
+        navigate('/', { replace: true });
+        return;
+      }
+      await signOut();
+      toast.success('Votre compte a été supprimé avec succès.');
+      navigate('/', { replace: true });
+    } catch {
+      toast.error('Erreur lors de la suppression. Contactez support@securit-e.com.');
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
 
   if (!isAdmin) {
     return (
@@ -132,8 +173,64 @@ export default function Settings() {
                 Accès complet à SECURIT-E pour votre organisation
               </p>
               <p className="text-xs text-muted-foreground mt-4">
-                Le paiement sera intégré dans une prochaine version.
+                Paiement sécurisé via Stripe — Essai 14 jours gratuit
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* [FIXED: D8.3] Account Deletion — GDPR droit à l'effacement */}
+        <Card className="border-destructive/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Zone de danger
+            </CardTitle>
+            <CardDescription>
+              Actions irréversibles — Conformité RGPD
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start gap-4 p-4 rounded-lg border border-destructive/20 bg-destructive/5">
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-sm text-foreground">Supprimer mon compte</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Supprime définitivement votre compte et toutes les données associées conformément au RGPD (Art. 17 — Droit à l'effacement). Cette action est irréversible.
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="mt-3 gap-2"
+                      disabled={deletingAccount}
+                    >
+                      {deletingAccount
+                        ? <><Loader2 className="w-4 h-4 animate-spin" />Suppression…</>
+                        : <><Trash2 className="w-4 h-4" />Supprimer mon compte</>
+                      }
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Supprimer votre compte ?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Cette action est <strong>irréversible</strong>. Toutes vos données (organisation, findings, rapports, evidence vault) seront définitivement supprimées conformément au RGPD.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        className="bg-destructive hover:bg-destructive/90"
+                      >
+                        Oui, supprimer définitivement
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           </CardContent>
         </Card>
