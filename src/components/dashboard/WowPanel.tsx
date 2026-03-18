@@ -354,7 +354,7 @@ export function WowPanel({
               {/* Cycle progress bar */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-mono text-muted-foreground">CYCLE SWARM AUTONOME — DE LA DÉTECTION À LA PREUVE</span>
+                  <span className="font-mono text-xs font-semibold flex items-center gap-1.5 mb-5 ${activeTab === 'timeline' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}">CYCLE SUPERVISÉ — DÉTECTION À LA PREUVE</span>
                   <div className="flex items-center gap-2">
                     {cycleActive && (
                       <motion.span
