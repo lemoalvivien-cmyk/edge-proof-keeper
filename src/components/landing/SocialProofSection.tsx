@@ -21,7 +21,7 @@ const testimonials = [
     stars: 5,
   },
   {
-    quote: "L'Evidence Vault nous a permis de renouveler notre assurance cyber avec une prime divisée par 2. L'outil s'est payé en un seul appel d'offre.",
+    quote: "L'Evidence Vault nous a permis de préparer notre dossier assurance cyber en quelques minutes. La structuration des preuves SHA-256 est exactement ce qu'attendait notre courtier.",
     role: "DAF — Cabinet comptable, 45 collaborateurs",
     sector: "Services",
     size: "45 pers.",

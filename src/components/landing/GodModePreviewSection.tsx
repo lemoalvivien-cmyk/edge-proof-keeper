@@ -83,12 +83,12 @@ function DashboardLiveTab() {
 /* ── Agents IA Tab ── */
 function AgentsIATab() {
   const agents6 = [
-    { name: "Scout", status: "Scanning 847 endpoints EASM", progress: 73, color: "text-primary", icon: Eye },
-    { name: "Analyst", status: "Corrélation 12 signaux actifs", progress: 89, color: "text-accent", icon: Brain },
-    { name: "Executor", status: "3 remédiation en queue (< 4h)", progress: 45, color: "text-success", icon: Wrench },
-    { name: "Verifier", status: "Validation patch #47 — QA OK", progress: 91, color: "text-warning", icon: CheckCircle2 },
-    { name: "Vault", status: "Signing SHA-256 Merkle proof #2841", progress: 100, color: "text-primary", icon: Lock },
-    { name: "RSSI IA", status: "Brief CODIR — dans 3j", progress: 60, color: "text-accent", icon: Cpu },
+    { name: "Scout", status: "Scanning surface d'attaque EASM", progress: 73, color: "text-primary", icon: Eye },
+    { name: "Analyst", status: "Corrélation signaux actifs", progress: 89, color: "text-accent", icon: Brain },
+    { name: "Executor", status: "Remédiation en queue (supervisé)", progress: 45, color: "text-success", icon: Wrench },
+    { name: "Verifier", status: "Validation patch — QA OK", progress: 91, color: "text-warning", icon: CheckCircle2 },
+    { name: "Vault", status: "Signing SHA-256 Merkle proof", progress: 100, color: "text-primary", icon: Lock },
+    { name: "RSSI IA", status: "Brief CODIR — génération en cours", progress: 60, color: "text-accent", icon: Cpu },
   ];
 
   return (
