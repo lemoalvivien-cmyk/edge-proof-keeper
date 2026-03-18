@@ -3,13 +3,17 @@
  * Handles Stripe events: checkout.session.completed,
  * customer.subscription.updated, customer.subscription.deleted,
  * invoice.payment_failed.
- * verify_jwt = false — secured by Stripe webhook signature.
+ *
+ * IMPORTANT: When updating subscription fields, we must NOT overwrite
+ * an active promo code grant ('granted' status) with 'expired' unless
+ * the Stripe subscription is actually replacing it (active/trialing wins).
+ * If a Stripe subscription becomes 'deleted', we only set 'expired' if
+ * the profile doesn't have an active promo grant.
  */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-// Webhook responses don't need CORS (Stripe → server, not browser)
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 const PRODUCT_TO_PLAN: Record<string, string> = {
@@ -18,7 +22,9 @@ const PRODUCT_TO_PLAN: Record<string, string> = {
 };
 
 const log = (step: string, details?: unknown) =>
-  console.log(`[STRIPE-WEBHOOK] ${step}${details ? ` — ${JSON.stringify(details)}` : ""}`);
+  console.log(
+    `[STRIPE-WEBHOOK] ${step}${details ? ` — ${JSON.stringify(details)}` : ""}`
+  );
 
 serve(async (req) => {
   if (req.method !== "POST") {
@@ -32,7 +38,9 @@ serve(async (req) => {
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
   if (!stripeKey || !webhookSecret) {
-    log("ERROR", { reason: "Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET" });
+    log("ERROR", {
+      reason: "Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET",
+    });
     return new Response(JSON.stringify({ error: "Server misconfigured" }), {
       status: 500,
       headers: JSON_HEADERS,
@@ -41,7 +49,6 @@ serve(async (req) => {
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-  // ── Verify Stripe signature ────────────────────────────────────────────────
   const signature = req.headers.get("stripe-signature");
   if (!signature) {
     return new Response(JSON.stringify({ error: "Missing stripe-signature" }), {
@@ -54,13 +61,17 @@ serve(async (req) => {
   let event: Stripe.Event;
 
   try {
-    event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+    event = await stripe.webhooks.constructEventAsync(
+      body,
+      signature,
+      webhookSecret
+    );
   } catch (err) {
     log("Signature verification failed", { error: err.message });
-    return new Response(JSON.stringify({ error: `Webhook signature failed: ${err.message}` }), {
-      status: 400,
-      headers: JSON_HEADERS,
-    });
+    return new Response(
+      JSON.stringify({ error: `Webhook signature failed: ${err.message}` }),
+      { status: 400, headers: JSON_HEADERS }
+    );
   }
 
   log("Received event", { type: event.type, id: event.id });
@@ -73,28 +84,56 @@ serve(async (req) => {
 
   // ── Helper: find profile by Stripe customer email ─────────────────────────
   async function findProfileByCustomer(customerId: string) {
-    const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+    const customer = (await stripe.customers.retrieve(
+      customerId
+    )) as Stripe.Customer;
     if (!customer?.email) return null;
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id")
+      .select("id, subscription_status, subscription_end")
       .eq("email", customer.email)
       .maybeSingle();
 
     return profile;
   }
 
-  // ── Helper: update profile subscription fields ────────────────────────────
-  async function updateProfile(
+  // ── Helper: safe profile update (respects promo grants) ───────────────────
+  // When a Stripe event fires for an active subscription, always update.
+  // When a Stripe event fires for a DELETED subscription, only set 'expired'
+  // if the user doesn't have a currently active promo grant.
+  async function updateProfileStripe(
     userId: string,
     fields: {
       subscription_status: string;
       subscription_plan?: string | null;
       subscription_end?: string | null;
       stripe_customer_id?: string;
-    }
+    },
+    isDestructive: boolean = false
   ) {
+    if (isDestructive) {
+      // Fetch current profile to check for active promo grant
+      const { data: current } = await supabase
+        .from("profiles")
+        .select("subscription_status, subscription_end")
+        .eq("id", userId)
+        .maybeSingle();
+
+      const now = new Date();
+      const hasActiveGrant =
+        current?.subscription_status === "granted" &&
+        current?.subscription_end &&
+        new Date(current.subscription_end) > now;
+
+      if (hasActiveGrant) {
+        log("Skipping destructive Stripe update — active promo grant exists", {
+          userId,
+        });
+        return;
+      }
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update(fields)
@@ -107,7 +146,6 @@ serve(async (req) => {
     }
   }
 
-  // ── Event handlers ─────────────────────────────────────────────────────────
   try {
     switch (event.type) {
       // ── checkout.session.completed ─────────────────────────────────────────
@@ -124,19 +162,23 @@ serve(async (req) => {
           break;
         }
 
-        // Fetch subscription to get status + trial info
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
         const productId = sub.items.data[0]?.price?.product as string;
         const plan = PRODUCT_TO_PLAN[productId] ?? "starter";
         const isTrialing = sub.status === "trialing";
         const subEnd = new Date(sub.current_period_end * 1000).toISOString();
 
-        await updateProfile(profile.id, {
-          subscription_status: isTrialing ? "trialing" : "active",
-          subscription_plan: plan,
-          subscription_end: subEnd,
-          stripe_customer_id: customerId,
-        });
+        // A successful checkout always wins — Stripe active/trialing overrides promo
+        await updateProfileStripe(
+          profile.id,
+          {
+            subscription_status: isTrialing ? "trialing" : "active",
+            subscription_plan: plan,
+            subscription_end: subEnd,
+            stripe_customer_id: customerId,
+          },
+          false // not destructive
+        );
         break;
       }
 
@@ -160,14 +202,19 @@ serve(async (req) => {
         let status: string;
         if (isTrialing) status = "trialing";
         else if (isActive) status = "active";
-        else status = sub.status; // paused, past_due, etc.
+        else status = sub.status;
 
-        await updateProfile(profile.id, {
-          subscription_status: status,
-          subscription_plan: plan,
-          subscription_end: subEnd,
-          stripe_customer_id: customerId,
-        });
+        // Non-destructive: active/trialing Stripe sub always wins
+        await updateProfileStripe(
+          profile.id,
+          {
+            subscription_status: status,
+            subscription_plan: plan,
+            subscription_end: subEnd,
+            stripe_customer_id: customerId,
+          },
+          false
+        );
         break;
       }
 
@@ -182,11 +229,16 @@ serve(async (req) => {
           break;
         }
 
-        await updateProfile(profile.id, {
-          subscription_status: "expired",
-          subscription_plan: null,
-          subscription_end: null,
-        });
+        // DESTRUCTIVE: only set 'expired' if no active promo grant
+        await updateProfileStripe(
+          profile.id,
+          {
+            subscription_status: "expired",
+            subscription_plan: null,
+            subscription_end: null,
+          },
+          true // destructive — will check for promo grant first
+        );
         break;
       }
 
@@ -201,9 +253,12 @@ serve(async (req) => {
           break;
         }
 
-        await updateProfile(profile.id, {
-          subscription_status: "payment_failed",
-        });
+        // DESTRUCTIVE: only if no active promo grant
+        await updateProfileStripe(
+          profile.id,
+          { subscription_status: "payment_failed" },
+          true
+        );
         break;
       }
 
