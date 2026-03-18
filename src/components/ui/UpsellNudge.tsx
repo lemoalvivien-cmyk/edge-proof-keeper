@@ -46,7 +46,7 @@ const NUDGE_CONFIGS: Record<UpsellFeature, NudgeConfig> = {
     icon: Crown,
     title: "Déploiement on-premise — Plan Sovereign",
     description: "Cette fonctionnalité est disponible en mode déployé sur votre infrastructure. Zéro dépendance cloud externe.",
-    gain: "Souveraineté totale · Conformité SecNumCloud",
+    gain: "Souveraineté totale · SecNumCloud objectif roadmap",
     planRequired: "enterprise",
     planName: "Sovereign",
     planPrice: "29 900€/an",
