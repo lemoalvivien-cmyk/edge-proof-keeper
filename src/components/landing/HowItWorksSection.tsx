@@ -359,15 +359,15 @@ export function HowItWorksSection() {
                 </div>
 
                 <div className="p-5">
-                  {/* Top KPIs */}
+                  {/* Top KPIs — données démo illustratives */}
                   <div className="grid grid-cols-3 gap-2 mb-5">
                     {[
-                      { label: "Score", value: "87/100", color: "text-success" },
-                      { label: "Findings", value: "9 open", color: "text-warning" },
-                      { label: "Vault", value: "2 841", color: "text-primary" },
+                      { label: "Score démo", value: "→ vos données", color: "text-success" },
+                      { label: "Findings", value: "démo : 9", color: "text-warning" },
+                      { label: "Vault", value: "démo : 2 841", color: "text-primary" },
                     ].map((kpi, i) => (
                       <div key={i} className="text-center p-2.5 rounded-xl bg-muted/20 border border-border/40">
-                        <div className={`text-lg font-bold font-mono ${kpi.color}`}>{kpi.value}</div>
+                        <div className={`text-sm font-bold font-mono ${kpi.color}`}>{kpi.value}</div>
                         <div className="text-[9px] text-muted-foreground mt-0.5">{kpi.label}</div>
                       </div>
                     ))}
