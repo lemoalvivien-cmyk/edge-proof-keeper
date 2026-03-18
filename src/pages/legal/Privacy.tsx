@@ -27,7 +27,7 @@ export default function Privacy() {
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Politique de Confidentialité</CardTitle>
-            <p className="text-sm text-muted-foreground">Dernière mise à jour : Janvier 2025</p>
+            <p className="text-sm text-muted-foreground">Dernière mise à jour : Mars 2026</p>
           </CardHeader>
           <CardContent className="prose prose-sm dark:prose-invert max-w-none space-y-6">
             <section>
@@ -37,7 +37,7 @@ export default function Privacy() {
                 est responsable du traitement des données personnelles collectées via la plateforme.
               </p>
               <p className="text-muted-foreground mt-2">
-                <strong>Contact DPO :</strong> <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline">dpo@securit-e.fr</a>
+                <strong>Contact DPO :</strong> <a href="mailto:dpo@securit-e.com" className="text-primary hover:underline">dpo@securit-e.com</a>
               </p>
             </section>
 
@@ -130,7 +130,7 @@ export default function Privacy() {
                 <li><strong>Limitation :</strong> restreindre le traitement</li>
               </ul>
               <p className="text-muted-foreground mt-2">
-                Pour exercer ces droits : <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline"><strong>dpo@securit-e.fr</strong></a>
+                Pour exercer ces droits : <a href="mailto:dpo@securit-e.com" className="text-primary hover:underline"><strong>dpo@securit-e.com</strong></a>
               </p>
             </section>
 
@@ -168,7 +168,7 @@ export default function Privacy() {
 
             <div className="mt-8 p-4 rounded-lg bg-muted space-y-1">
               <p className="text-sm text-muted-foreground">
-                <strong>DPO :</strong> <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline">dpo@securit-e.fr</a>
+                <strong>DPO :</strong> <a href="mailto:dpo@securit-e.com" className="text-primary hover:underline">dpo@securit-e.com</a>
               </p>
               <p className="text-sm text-muted-foreground">
                 <strong>Éditeur :</strong> VLM Consulting — SIRET 835 125 089 000 28 — 59170 Croix

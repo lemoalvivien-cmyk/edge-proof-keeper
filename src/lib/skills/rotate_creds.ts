@@ -47,7 +47,7 @@ export async function rotateCreds(input: RotateCredsInput): Promise<{
       // const iam = new IAMClient({ region: "eu-west-3" });
       // const newKey = await iam.send(new CreateAccessKeyCommand({ UserName: input.credential_id }));
       // await iam.send(new DeleteAccessKeyCommand({ UserName: input.credential_id, AccessKeyId: oldKeyId }));
-      // await ssmClient.send(new PutParameterCommand({ Name: `/sentinel/${input.credential_id}/access_key`, Value: newKey.AccessKey.AccessKeyId, Overwrite: true }));
+      // await ssmClient.send(new PutParameterCommand({ Name: `/securit-e/${input.credential_id}/access_key`, Value: newKey.AccessKey.AccessKeyId, Overwrite: true }));
       apiCallSummary = `iam:CreateAccessKey(user=${input.credential_id}) → DeleteAccessKey(old) → ssm:PutParameter(key_ref)`;
       break;
 

@@ -51,7 +51,7 @@ export function FooterSection() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                6 agents IA autonomes. Evidence Vault post-quantique. Souveraineté 100% France.{" "}
+                6 agents IA autonomes. Evidence Vault cryptographique SHA-256. Souveraineté 100% France.{" "}
                 <span className="text-primary font-semibold">490€ TTC/an</span>.
               </p>
               <div className="flex gap-3">
@@ -121,7 +121,7 @@ export function FooterSection() {
                 Hébergé en France 🇫🇷
               </span>
               <span>100% Souverain</span>
-              <span className="label-badge label-badge-cyan text-[9px] py-0.5">Score Audit 97/100</span>
+              <span className="label-badge label-badge-cyan text-[9px] py-0.5">Audit sécurité continu</span>
               <span className="label-badge label-badge-cyan text-[9px] py-0.5">GOD MODE 2026</span>
             </div>
           </div>
