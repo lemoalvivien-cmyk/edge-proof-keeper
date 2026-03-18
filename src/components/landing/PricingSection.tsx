@@ -136,6 +136,15 @@ export function PricingSection() {
   const { user } = useAuth();
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const tracked = useRef(false);
+
+  // Track pricing section impression once
+  useEffect(() => {
+    if (isInView && !tracked.current) {
+      tracked.current = true;
+      trackEvent('pricing_section_viewed', { source_page: '/', cta_origin: 'pricing_section' });
+    }
+  }, [isInView]);
 
   async function handleStripeCheckout(planId: "starter" | "pro") {
     if (user) {
