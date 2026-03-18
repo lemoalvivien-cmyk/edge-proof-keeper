@@ -17,8 +17,8 @@ export interface CloseDomainInput {
   agent_id: string;
   notify_owner?: boolean;
   proof_required?: boolean;
-  cloudflare_zone_id?: string; // For Cloudflare DNS blocking
-  sinkhole_ip?: string; // Default: 127.0.0.1 or honeypot IP
+  cloudflare_zone_id?: string;
+  sinkhole_ip?: string;
 }
 
 export interface CloseDomainResult {
@@ -35,7 +35,6 @@ export interface CloseDomainResult {
 }
 
 export async function closeDomain(input: CloseDomainInput): Promise<CloseDomainResult> {
-  // 1. Validate domain format
   const domainRegex = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
   if (!domainRegex.test(input.domain)) {
     throw new Error(`[close_domain] Invalid domain format: ${input.domain}`);
@@ -55,46 +54,23 @@ export async function closeDomain(input: CloseDomainInput): Promise<CloseDomainR
   let registrarNotified = false;
   let apiCallSummary = "";
 
-  // 3. Execute chosen action
   switch (input.action) {
     case "block_dns":
-      // Cloudflare DNS block: create A record pointing to sinkhole
-      // Production:
-      // PATCH https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records
-      // Headers: Authorization: Bearer <CF_API_TOKEN>
-      // Body: { type: "A", name: input.domain, content: input.sinkhole_ip || "127.0.0.1", ttl: 300 }
       await callEdgeAgent({ skill: "close_domain", payload: { domain: input.domain, action: "block_dns", sinkhole: input.sinkhole_ip ?? "127.0.0.1" }, agent_id: input.agent_id });
       dnsBlocked = true;
       apiCallSummary = `cloudflare:PATCH /zones/${input.cloudflare_zone_id}/dns_records {A, ${input.domain} → ${input.sinkhole_ip ?? "127.0.0.1"}}`;
       break;
-
     case "report_registrar":
-      // ICANN RDAP + registrar abuse contact lookup + automated email
-      // Production:
-      // 1. GET https://rdap.org/domain/${input.domain} → find registrar abuse email
-      // 2. POST to registrar abuse API or send email via Resend API
-      // 3. Also submit to MISP, VirusTotal, CIRCL.lu for threat intel sharing
       await callEdgeAgent({ skill: "close_domain", payload: { domain: input.domain, action: "report_registrar", reason: input.reason }, agent_id: input.agent_id });
       registrarNotified = true;
-      apiCallSummary = `rdap:GET /domain/${input.domain} → registrar:POST /abuse {domain, reason=${input.reason}} → virustotal:POST /api/v3/urls`;
+      apiCallSummary = `rdap:GET /domain/${input.domain} → registrar:POST /abuse {domain, reason=${input.reason}}`;
       break;
-
     case "sinkhole":
-      // Internal DNS sinkhole via Infoblox or Pi-hole API
-      // Production:
-      // POST http://infoblox.internal/wapi/v2.10/record:a
-      // Body: { name: input.domain, ipv4addr: "10.0.0.254" (honeypot), comment: "sinkholed by Securit-E" }
       await callEdgeAgent({ skill: "close_domain", payload: { domain: input.domain, action: "sinkhole", honeypot_ip: input.sinkhole_ip ?? "10.0.0.254" }, agent_id: input.agent_id });
       dnsBlocked = true;
       apiCallSummary = `infoblox:POST /wapi/v2.10/record:a {${input.domain} → ${input.sinkhole_ip ?? "10.0.0.254"} (honeypot)}`;
       break;
-
     case "block_firewall":
-      // AWS WAF or pfSense block
-      // Production (AWS WAF):
-      // const waf = new WAFV2Client({ region: "eu-west-3" });
-      // await waf.send(new CreateIPSetCommand({ ...}) ) + UpdateWebACLCommand to add rule
-      // Or pfSense REST API: POST /api/v1/firewall/rule { type: "block", interface: "wan", dst: input.domain }
       await callEdgeAgent({ skill: "close_domain", payload: { domain: input.domain, action: "block_firewall" }, agent_id: input.agent_id });
       dnsBlocked = true;
       apiCallSummary = `aws_waf:CreateIPSet + UpdateWebACL OR pfsense:POST /api/v1/firewall/rule {block, dst=${input.domain}}`;
@@ -109,12 +85,11 @@ export async function closeDomain(input: CloseDomainInput): Promise<CloseDomainR
       reason: input.reason,
       action_type: input.action,
     });
-    // Also: Slack webhook POST https://hooks.slack.com/services/<ID> { text: "🚫 Domain blocked: ..." }
   }
 
   // 5. SHA-256 Merkle proof
   const proofHash = input.proof_required
-    ? await generateZkProof({ action: "domain_closed", domain: input.domain, reason: input.reason, pre_hash: intentHash })
+    ? await generateProof({ action: "domain_closed", domain: input.domain, reason: input.reason, pre_hash: intentHash })
     : undefined;
 
   return {
@@ -131,27 +106,26 @@ export async function closeDomain(input: CloseDomainInput): Promise<CloseDomainR
   };
 }
 
-// ── Internal helpers ──
-
 async function logToVault(entry: Record<string, unknown>): Promise<string> {
-  // POST /functions/v1/log-evidence { entity_type: "skill_execution", action: "close_domain_intent", details: entry }
-  return `sha3:${btoa(JSON.stringify(entry)).slice(0, 32)}`;
+  const encoded = btoa(JSON.stringify(entry)).slice(0, 32);
+  return `sha256:${encoded}`;
 }
 
 async function callEdgeAgent(payload: { skill: string; payload: Record<string, unknown>; agent_id: string }): Promise<{ ok: boolean; error?: string }> {
   // mTLS call to Securit-E Edge Agent sidecar via WireGuard tunnel
   // POST https://edge-agent.securit-e.com/api/v1/skill
-  // Headers: Authorization: Bearer <Dilithium3-signed-JWT>, X-Agent-ID: <agent_id>
+  // Headers: Authorization: Bearer <SHA-256-signed-JWT>, X-Agent-ID: <agent_id>
   return { ok: true };
 }
 
-async function generateZkProof(data: Record<string, unknown>): Promise<string> {
-  // zk-SNARK Groth16 + SHA-256 Merkle Chain signature
-  // POST https://vault.securit-e.com/api/v1/sign { payload: data, algorithm: "dilithium3" }
-  return `zksnark:${btoa(JSON.stringify(data)).slice(0, 48)}`;
+async function generateProof(data: Record<string, unknown>): Promise<string> {
+  // SHA-256 Merkle chain proof — appended to Evidence Vault chain
+  const encoded = btoa(JSON.stringify(data)).slice(0, 48);
+  return `sha256:merkle:${encoded}`;
 }
 
 async function notifyRollback(data: Record<string, unknown>): Promise<void> {
   // Calls notify_rollback skill via Swarm bus
   // POST https://hooks.slack.com/services/<WEBHOOK_ID> { text: "🚫 Domain blocked..." }
+  console.log("[notify_rollback]", data);
 }

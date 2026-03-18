@@ -1,68 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// Simple in-memory rate limiting
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 5; // exports per minute
-const RATE_WINDOW = 60000;
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(userId);
-  
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_WINDOW });
-    return true;
-  }
-  
-  if (entry.count >= RATE_LIMIT) {
-    return false;
-  }
-  
-  entry.count++;
-  return true;
-}
-
-// Helper to call log-evidence with internal token
-async function logEvidenceInternal(
-  supabaseUrl: string,
-  authHeader: string,
-  internalToken: string,
-  payload: Record<string, unknown>
-): Promise<void> {
-  try {
-    const response = await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": authHeader,
-        "x-internal-token": internalToken,
-      },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      const error = await response.text();
-      console.warn("Failed to log evidence:", error);
-    }
-  } catch (error) {
-    console.warn("Failed to log evidence:", error);
-  }
-}
+import { buildCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsPreflightResponse = handleCors(req);
+  if (corsPreflightResponse) return corsPreflightResponse;
+  const corsHeaders = buildCorsHeaders(req);
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const internalEdgeToken = Deno.env.get("INTERNAL_EDGE_TOKEN")!;
-    
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -77,15 +25,21 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabaseAnon.auth.getUser();
     if (authError || !user) {
-      console.error("Auth error:", authError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!checkRateLimit(user.id)) {
-      console.warn(`Rate limit exceeded for user ${user.id}`);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // DB-backed rate limiting (replaces in-memory)
+    const rateLimitOk = await supabaseAdmin.rpc("check_rate_limit", {
+      p_user_id: user.id,
+      p_function_name: "export-proof-pack",
+      p_max_per_minute: 5,
+    });
+    if (!rateLimitOk.data) {
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -114,9 +68,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Get tool run data
+    // Get tool run or report data
     let toolRun = null;
     let report = null;
     let organizationId: string;
@@ -125,16 +77,11 @@ Deno.serve(async (req) => {
     if (tool_run_id) {
       const { data: tr, error: trError } = await supabaseAdmin
         .from("tool_runs")
-        .select(`
-          *,
-          tool:tools_catalog(name, slug, category),
-          authorization:authorizations(scope)
-        `)
+        .select(`*, tool:tools_catalog(name, slug, category), authorization:authorizations(scope)`)
         .eq("id", tool_run_id)
         .single();
 
       if (trError || !tr) {
-        console.error("Tool run fetch error:", trError);
         return new Response(
           JSON.stringify({ error: "Tool run not found" }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -146,19 +93,11 @@ Deno.serve(async (req) => {
     } else {
       const { data: rp, error: rpError } = await supabaseAdmin
         .from("reports")
-        .select(`
-          *,
-          tool_run:tool_runs(
-            *,
-            tool:tools_catalog(name, slug, category),
-            authorization:authorizations(scope)
-          )
-        `)
+        .select(`*, tool_run:tool_runs(*, tool:tools_catalog(name, slug, category), authorization:authorizations(scope))`)
         .eq("id", report_id)
         .single();
 
       if (rpError || !rp) {
-        console.error("Report fetch error:", rpError);
         return new Response(
           JSON.stringify({ error: "Report not found" }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -175,34 +114,30 @@ Deno.serve(async (req) => {
       _user_id: user.id,
       _org_id: organizationId,
     });
-
     if (accessError || !accessData) {
-      console.error("Access check error:", accessError);
       return new Response(
         JSON.stringify({ error: "Access denied to organization" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // ADMIN-ONLY: Check if user has admin role
+    // ADMIN-ONLY
     const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc("has_role", {
       _user_id: user.id,
       _org_id: organizationId,
       _role: "admin",
     });
-
     if (roleError || !isAdmin) {
-      console.warn(`Admin access denied for user ${user.id} on org ${organizationId}`);
       return new Response(
         JSON.stringify({ error: "Admin access required for proof pack export" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Exporting proof pack for org ${organizationId}, tool_run=${tool_run_id}, report=${report_id} by admin ${user.id}`);
+    console.log(`Exporting proof pack for org ${organizationId} by admin ${user.id}`);
 
     // Get findings summary
-    const { data: findings, error: findingsError } = await supabaseAdmin
+    const { data: findings } = await supabaseAdmin
       .from("findings")
       .select("id, title, severity, status, confidence")
       .eq("tool_run_id", toolRun?.id)
@@ -231,16 +166,14 @@ Deno.serve(async (req) => {
       })) || [],
     };
 
-    // Get evidence slice (last 20 relevant entries)
-    const { data: evidenceSlice, error: evidenceError } = await supabaseAdmin
+    const { data: evidenceSlice } = await supabaseAdmin
       .from("evidence_log")
       .select("seq, action, entity_type, created_at, entry_hash")
       .eq("organization_id", organizationId)
       .order("seq", { ascending: false })
       .limit(20);
 
-    // Verify chain
-    const { data: chainResult, error: chainError } = await supabaseAdmin.rpc("verify_evidence_chain", {
+    const { data: chainResult } = await supabaseAdmin.rpc("verify_evidence_chain", {
       _org_id: organizationId,
     });
 
@@ -250,11 +183,10 @@ Deno.serve(async (req) => {
       head_hash: "GENESIS",
     };
 
-    // Build pack_json
     const packJson = {
       metadata: {
         organization_id: organizationId,
-        scope: scope,
+        scope,
         tool_run_id: toolRun?.id || null,
         tool_slug: toolRun?.tool?.slug || null,
         tool_name: toolRun?.tool?.name || null,
@@ -274,10 +206,7 @@ Deno.serve(async (req) => {
       evidence_slice: {
         entries_shown: evidenceSlice?.length || 0,
         seq_range: evidenceSlice?.length
-          ? {
-              min: evidenceSlice[evidenceSlice.length - 1]?.seq,
-              max: evidenceSlice[0]?.seq,
-            }
+          ? { min: evidenceSlice[evidenceSlice.length - 1]?.seq, max: evidenceSlice[0]?.seq }
           : null,
         head_hash: chainVerification.head_hash,
         last_seq: chainVerification.last_seq,
@@ -293,21 +222,21 @@ Deno.serve(async (req) => {
         verified_at: new Date().toISOString(),
         last_seq: chainVerification.last_seq,
         head_hash: chainVerification.head_hash,
+        algorithm: "SHA-256 Merkle Chain",
       },
       limitations: [
-        "Proof based on import artifacts only",
+        "Proof based on imported scan artifacts only",
         "No active scanning or exploitation performed",
-        "Evidence chain hash-verified but append-only",
+        "Evidence chain is SHA-256 Merkle hash-chained and append-only",
         "External tool output provided as-is",
       ],
     };
 
-    // Insert proof pack - pack_hash computed by DB trigger for determinism
     const { data: proofPack, error: insertError } = await supabaseAdmin
       .from("proof_packs")
       .insert({
         organization_id: organizationId,
-        scope: scope,
+        scope,
         tool_run_id: toolRun?.id || null,
         report_id: report?.id || null,
         status: "ready",
@@ -327,19 +256,27 @@ Deno.serve(async (req) => {
 
     console.log(`Proof pack created: ${proofPack.id} with hash ${proofPack.pack_hash}`);
 
-    // Log evidence using internal endpoint
-    await logEvidenceInternal(supabaseUrl, authHeader, internalEdgeToken, {
-      organization_id: organizationId,
-      action: "export_proof_pack",
-      entity_type: "proof_pack",
-      entity_id: proofPack.id,
-      artifact_hash: proofPack.pack_hash,
-      details: {
-        tool_run_id: toolRun?.id,
-        report_id: report?.id,
-        scope: scope,
-      },
-    });
+    // Log to evidence vault (internal token)
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/log-evidence`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": authHeader,
+          "x-internal-token": internalEdgeToken,
+        },
+        body: JSON.stringify({
+          organization_id: organizationId,
+          action: "export_proof_pack",
+          entity_type: "proof_pack",
+          entity_id: proofPack.id,
+          artifact_hash: proofPack.pack_hash,
+          details: { tool_run_id: toolRun?.id, report_id: report?.id, scope },
+        }),
+      });
+    } catch (logErr) {
+      console.warn("Failed to log evidence:", logErr);
+    }
 
     return new Response(
       JSON.stringify({
