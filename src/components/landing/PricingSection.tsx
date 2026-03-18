@@ -265,7 +265,7 @@ export function PricingSection() {
                       )}
                       {plan.id !== "enterprise" && (
                         <p className="text-[10px] text-center text-muted-foreground">
-                          🔒 Stripe · Satisfait ou remboursé 30j · Aucune carte pendant 14j
+                          🔒 Stripe · Satisfait ou remboursé 30j · Essai 14j — carte requise — annulation libre
                         </p>
                       )}
                     </div>
