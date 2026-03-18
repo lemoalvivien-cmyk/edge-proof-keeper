@@ -90,7 +90,7 @@ const NUDGE_CONFIGS: Record<UpsellFeature, NudgeConfig> = {
   export_pdf: {
     icon: TrendingUp,
     title: "Export PDF premium — Plan Command",
-    description: "Rapports d'audit branded et certifiés, avec hash SHA-256 et signature post-quantique, prêts pour vos parties prenantes.",
+    description: "Rapports d'audit branded avec hash SHA-256, piste d'audit Merkle, prêts pour vos parties prenantes.",
     gain: "Présentation immédiate sans reformatage",
     planRequired: "pro",
     planName: "Command",
