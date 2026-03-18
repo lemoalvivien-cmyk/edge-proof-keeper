@@ -225,9 +225,9 @@ export function HeroSection() {
               {/* Live stats strip */}
               <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
                 {[
-                  { v: "47s", l: "Détection → preuve", c: "text-primary" },
-                  { v: "0", l: "Équipe cyber requise", c: "text-success" },
-                  { v: "10M€", l: "Amende NIS2 max évitée", c: "text-warning" },
+                  { v: "47s", l: "Cycle lab démontré", c: "text-primary" },
+                  { v: "6", l: "Agents supervisés IA", c: "text-success" },
+                  { v: "10M€", l: "Amende NIS2 max", c: "text-warning" },
                 ].map((s, i) => (
                   <div key={i} className="text-center p-3 rounded-xl glass-card border border-border/60">
                     <div className={`text-xl font-bold font-mono ${s.c}`}>{s.v}</div>
