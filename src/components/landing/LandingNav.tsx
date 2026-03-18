@@ -40,7 +40,7 @@ export function LandingNav() {
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
-                🇫🇷 100% Souverain France · Hébergement certifié
+                🇫🇷 100% Souverain France · Hébergement France
               </span>
             </div>
           </div>

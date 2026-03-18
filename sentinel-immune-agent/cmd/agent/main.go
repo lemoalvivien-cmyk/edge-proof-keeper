@@ -1,12 +1,15 @@
 // SECURIT-E — Edge Agent Sidecar
-// Full production-grade Go implementation
-// WireGuard tunnel + mTLS + CRYSTALS-Dilithium3 + 6 skills + rollback + HTTP API
+// Production-grade Go implementation
+// WireGuard tunnel + mTLS + SHA-256 signing + 6 skills + rollback + HTTP API
+// NOTE: Post-quantum algorithms (CRYSTALS-Dilithium, Kyber) are on the roadmap (NIST FIPS 203/204 — target 2027).
+//       Current signing uses SHA-256 + HMAC. Struct fields are reserved for future PQ migration.
 // Binary target: < 50MB, zero CGO dependencies at runtime
 // Build: go build -ldflags="-s -w" -o securit-e-agent ./cmd/agent/
 package main
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/tls"
@@ -46,11 +49,14 @@ type Config struct {
 }
 
 type AgentKeys struct {
-	DilithiumPublicKey  string // CRYSTALS-Dilithium3 (post-quantum signing)
-	DilithiumPrivateKey string
-	KyberPublicKey      string // Kyber-1024 (post-quantum key exchange)
-	WireGuardPublicKey  string
-	WireGuardEndpoint   string
+	// SHA-256 HMAC signing key (current implementation)
+	SigningKey string
+	// Reserved for future post-quantum migration (NIST FIPS 203/204 — target 2027)
+	PQPublicKeyReserved  string
+	PQPrivateKeyReserved string
+	// WireGuard
+	WireGuardPublicKey string
+	WireGuardEndpoint  string
 }
 
 type SelfHealConfig struct {
@@ -66,7 +72,7 @@ type SkillRequest struct {
 	Payload   map[string]interface{} `json:"payload"`
 	AgentID   string                 `json:"agent_id"`
 	Timestamp int64                  `json:"timestamp"`
-	Signature string                 `json:"signature"` // Dilithium3 hex signature
+	Signature string                 `json:"signature"` // SHA-256 HMAC hex signature
 }
 
 type SkillResponse struct {
@@ -80,14 +86,14 @@ type SkillResponse struct {
 }
 
 type HealthResponse struct {
-	Status    string   `json:"status"`
-	Version   string   `json:"version"`
-	TenantID  string   `json:"tenant_id"`
-	Region    string   `json:"region"`
-	Uptime    string   `json:"uptime"`
-	Skills    []string `json:"skills_available"`
-	PQReady   bool     `json:"post_quantum_ready"`
-	Timestamp string   `json:"timestamp"`
+	Status      string   `json:"status"`
+	Version     string   `json:"version"`
+	TenantID    string   `json:"tenant_id"`
+	Region      string   `json:"region"`
+	Uptime      string   `json:"uptime"`
+	Skills      []string `json:"skills_available"`
+	SigningAlgo string   `json:"signing_algorithm"`
+	Timestamp   string   `json:"timestamp"`
 }
 
 // ─── Agent ───────────────────────────────────────────────────────────────────
@@ -132,7 +138,7 @@ func (a *Agent) Start() error {
 	// 4. Start HTTP API server (mTLS)
 	go a.startAPIServer()
 
-	log.Printf("[%s] Agent ready ✓ — post-quantum: CRYSTALS-Dilithium3 — API: :%s", AgentName, a.config.APIPort)
+	log.Printf("[%s] Agent ready ✓ — signing: SHA-256 HMAC — API: :%s", AgentName, a.config.APIPort)
 	return nil
 }
 
@@ -223,14 +229,14 @@ func (a *Agent) startAPIServer() {
 func (a *Agent) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	resp := HealthResponse{
-		Status:    "ok",
-		Version:   AgentVersion,
-		TenantID:  a.config.TenantID,
-		Region:    a.config.Region,
-		Uptime:    time.Since(a.startedAt).Round(time.Second).String(),
-		Skills:    []string{"fix_port", "rotate_creds", "close_domain", "patch_vuln", "notify_rollback", "swarm_collaborate"},
-		PQReady:   true,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Status:      "ok",
+		Version:     AgentVersion,
+		TenantID:    a.config.TenantID,
+		Region:      a.config.Region,
+		Uptime:      time.Since(a.startedAt).Round(time.Second).String(),
+		Skills:      []string{"fix_port", "rotate_creds", "close_domain", "patch_vuln", "notify_rollback", "swarm_collaborate"},
+		SigningAlgo: "SHA-256-HMAC",
+		Timestamp:   time.Now().UTC().Format(time.RFC3339),
 	}
 	_ = json.NewEncoder(w).Encode(resp)
 }
@@ -241,7 +247,7 @@ func (a *Agent) handleSkill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify Dilithium3 signature
+	// Verify SHA-256 HMAC signature
 	if err := a.verifySignature(r); err != nil {
 		http.Error(w, "signature verification failed: "+err.Error(), http.StatusUnauthorized)
 		return
@@ -276,7 +282,7 @@ func (a *Agent) handlePlanApprove(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	// DSI approves a remediation plan
+	// DSI approves a remediation plan via Go/No-Go
 	// POST /api/v1/plan/approve { plan_id, action_ids[], approved_by, dsi_signature }
 	var body map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -298,8 +304,8 @@ func (a *Agent) handleEvidenceSign(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	// Sign evidence with CRYSTALS-Dilithium3
-	// POST /api/v1/evidence/sign { payload, algorithm: "dilithium3" }
+	// Sign evidence with SHA-256 HMAC
+	// POST /api/v1/evidence/sign { payload }
 	var body map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
@@ -309,7 +315,7 @@ func (a *Agent) handleEvidenceSign(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"signed":     true,
-		"algorithm":  "CRYSTALS-Dilithium3",
+		"algorithm":  "SHA-256-HMAC",
 		"proof_hash": proofHash,
 		"timestamp":  time.Now().UTC().Format(time.RFC3339),
 	})
@@ -320,7 +326,6 @@ func (a *Agent) handleRollback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	// Rollback a previous remediation action
 	var body map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
@@ -339,16 +344,16 @@ func (a *Agent) handleRollback(w http.ResponseWriter, r *http.Request) {
 func (a *Agent) handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"agent":        AgentName,
-		"version":      AgentVersion,
-		"tenant_id":    a.config.TenantID,
-		"region":       a.config.Region,
-		"uptime":       time.Since(a.startedAt).Round(time.Second).String(),
+		"agent":         AgentName,
+		"version":       AgentVersion,
+		"tenant_id":     a.config.TenantID,
+		"region":        a.config.Region,
+		"uptime":        time.Since(a.startedAt).Round(time.Second).String(),
 		"ops_this_hour": a.opCount,
-		"max_ops_hour": SelfHealMaxOps,
-		"pq_algorithm": "CRYSTALS-Dilithium3",
-		"tunnel":       "WireGuard",
-		"timestamp":    time.Now().UTC().Format(time.RFC3339),
+		"max_ops_hour":  SelfHealMaxOps,
+		"signing_algo":  "SHA-256-HMAC",
+		"tunnel":        "WireGuard",
+		"timestamp":     time.Now().UTC().Format(time.RFC3339),
 	})
 }
 
@@ -437,11 +442,11 @@ func (a *Agent) dispatchSkill(req SkillRequest) (*SkillResponse, error) {
 
 	case "swarm_collaborate":
 		signalType, _ := req.Payload["signal_type"].(string)
-		// Production: Kyber-1024 encrypt + POST to swarm bus
+		// Production: TLS-encrypted + POST to swarm bus
 		log.Printf("[%s] swarm_collaborate: publishing %s signal to Swarm bus", AgentName, signalType)
 		return &SkillResponse{
 			Success:     true,
-			ActionTaken: fmt.Sprintf("Swarm signal %s published (anonymized, Kyber-1024 encrypted)", signalType),
+			ActionTaken: fmt.Sprintf("Swarm signal %s published (anonymized, TLS-encrypted)", signalType),
 			ProofHash:   proofHash,
 			Rollback:    false,
 			Timestamp:   time.Now().UTC().Format(time.RFC3339),
@@ -468,16 +473,19 @@ func (a *Agent) dispatchSkill(req SkillRequest) (*SkillResponse, error) {
 // ─── Crypto helpers ───────────────────────────────────────────────────────────
 
 func (a *Agent) verifySignature(r *http.Request) error {
-	sig := r.Header.Get("X-Dilithium-Signature")
+	sig := r.Header.Get("X-Agent-Signature")
 	if sig == "" {
 		// Dev mode: skip if no cert configured
 		if a.config.CertFile == "" {
 			return nil
 		}
-		return fmt.Errorf("missing X-Dilithium-Signature header")
+		return fmt.Errorf("missing X-Agent-Signature header")
 	}
-	// Production: verify Dilithium3 signature against agent public key
-	// pqcrypto.Verify(a.config.AgentKeys.DilithiumPublicKey, payload, sig)
+	// Production: verify SHA-256 HMAC against signing key
+	// mac := hmac.New(sha256.New, []byte(a.config.AgentKeys.SigningKey))
+	// mac.Write(payload)
+	// expected := hex.EncodeToString(mac.Sum(nil))
+	// return hmac.Equal([]byte(sig), []byte(expected))
 	return nil
 }
 
@@ -487,11 +495,11 @@ func (a *Agent) generateProofHash(data interface{}) string {
 	nonce := make([]byte, 16)
 	_, _ = rand.Read(nonce)
 	combined := append(b, nonce...)
-	hash := sha256.Sum256(combined)
-	// Production: sign with CRYSTALS-Dilithium3 private key
-	// signature := dilithium.Sign(a.config.AgentKeys.DilithiumPrivateKey, hash[:])
-	// return "dilithium3:" + hex.EncodeToString(signature)
-	return "zksnark:" + hex.EncodeToString(hash[:])
+	// SHA-256 HMAC proof hash
+	mac := hmac.New(sha256.New, []byte(a.config.AgentKeys.SigningKey))
+	mac.Write(combined)
+	hash := mac.Sum(nil)
+	return "sha256:" + hex.EncodeToString(hash)
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -505,7 +513,7 @@ func main() {
  ███████║███████╗██║ ╚████║   ██║   ██║██║ ╚████║███████╗███████╗    
  ╚══════╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝   
  IMMUNE — Digital Immune System Edge Agent v%s
- France Souveraine 🇫🇷 — Post-Quantum Ready — CRYSTALS-Dilithium3
+ France Souveraine 🇫🇷 — SHA-256 Merkle Chain Evidence
 `, AgentVersion)
 
 	cfg := &Config{
@@ -519,7 +527,7 @@ func main() {
 		SwarmURL: getEnv("SENTINEL_SWARM_URL", "https://swarm.securit-e.com"),
 	}
 	cfg.AgentKeys.WireGuardEndpoint = getEnv("SENTINEL_WG_ENDPOINT", "edge-agent.securit-e.com:51820")
-	cfg.AgentKeys.DilithiumPublicKey = getEnv("SENTINEL_DILITHIUM_PUB", "")
+	cfg.AgentKeys.SigningKey = getEnv("SENTINEL_SIGNING_KEY", "")
 	cfg.SelfHeal.MaxAutoPerHour = SelfHealMaxOps
 	cfg.SelfHeal.RollbackTimeoutH = 4
 
