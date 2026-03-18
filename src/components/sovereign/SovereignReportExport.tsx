@@ -206,7 +206,7 @@ export function SovereignReportExport({ compact = false }: SovereignReportExport
             💡 Pour exporter en PDF : ouvrez le HTML dans votre navigateur → Fichier → Imprimer → Enregistrer en PDF
           </p>
           <p className="text-[10px] text-muted-foreground font-mono">
-            🔐 Watermark : SECURIT-E — Souverain France — Preuve post-quantique
+            🔐 Watermark : SECURIT-E — Souverain France — Evidence SHA-256 Merkle Chain
           </p>
         </div>
       )}

@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
     },
     category_scores: categoryScores,
     tests: results,
-    watermark: "SECURIT-E — Souverain France — Preuve post-quantique — Score Audit " + rawScore + "/100",
+    watermark: "SECURIT-E — Souverain France — Evidence SHA-256 Merkle Chain — Score Audit " + rawScore + "/100",
   };
 
   // Log to evidence

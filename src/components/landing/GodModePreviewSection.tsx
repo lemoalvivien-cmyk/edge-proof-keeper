@@ -97,7 +97,7 @@ function AgentsIATab() {
         <span className="text-xs font-mono text-muted-foreground">SWARM INTELLIGENCE — 6/6 AGENTS ACTIFS</span>
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-          <span className="text-[10px] text-success font-mono">FULLY AUTONOMOUS</span>
+          <span className="text-[10px] text-success font-mono">SWARM SUPERVISÉ</span>
         </div>
       </div>
       <div className="grid md:grid-cols-2 gap-3">
@@ -307,7 +307,7 @@ export function GodModePreviewSection() {
               <br />en action réelle
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Dashboard Live · 6 Agents IA · Auto-Remédiation · Predictive Causality · Evidence Vault post-quantique.
+              Dashboard Live · 6 Agents IA · Auto-Remédiation · Predictive Causality · Evidence Vault SHA-256.
             </p>
           </motion.div>
 

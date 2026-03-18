@@ -55,13 +55,13 @@ const agents = [
   {
     id: "05",
     name: "Vault Agent",
-    role: "Preuves post-quantiques immuables",
+    role: "Preuves cryptographiques immuables SHA-256",
     description: "Horodate et enchaîne chaque preuve dans une Merkle Tree SHA-256. Vérifiable indépendamment. Présentable aux régulateurs NIS2, assureurs, et auditeurs.",
     metric: "2 841+ preuves archivées",
     Icon: Lock,
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
-    badge: "Post-Quantum",
+    badge: "Vault SHA-256",
     badgeColor: "label-badge-cyan",
   },
   {
