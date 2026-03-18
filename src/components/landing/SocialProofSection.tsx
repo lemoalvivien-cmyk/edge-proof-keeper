@@ -6,7 +6,7 @@ const stats = [
   { icon: Users, value: "12", label: "ETI françaises en accès prioritaire", color: "text-primary" },
   { icon: ShieldCheck, value: "2 841+", label: "Preuves archivées dans le Vault", color: "text-success" },
   { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré lab)", color: "text-accent" },
-  { icon: TrendingUp, value: "× 367", label: "ROI estimé an 1 (base : 180K€ évité)", color: "text-warning" },
+  { icon: TrendingUp, value: "ROI estimé (base coût incident cyber France))", color: "text-warning" },
 ];
 
 const testimonials = [

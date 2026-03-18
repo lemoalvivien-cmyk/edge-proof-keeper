@@ -25,7 +25,7 @@ const faqCategories = [
       },
       {
         q: "Comment Securit-E protège-t-il la responsabilité personnelle du DSI ?",
-        a: "La directive NIS2 rend les dirigeants personnellement responsables des manquements cyber. Securit-E génère un Evidence Vault immuable avec signature post-quantique CRYSTALS-Dilithium à chaque action : détection, remédiation, validation Go/No-Go. En cas de mise en cause, votre chaîne de preuves est cryptographiquement vérifiable et inviolable — aucun tribunal européen ne peut l'invalider.",
+        a: "La directive NIS2 rend les dirigeants personnellement responsables des manquements cyber. Securit-E génère un Evidence Vault immuable avec chaîne SHA-256 Merkle à chaque action : détection, remédiation, validation Go/No-Go. En cas de mise en cause, votre chaîne de preuves est cryptographiquement vérifiable et inviolable — vérifiable cryptographiquement.",
       },
       {
         q: "Le RGPD 2026 exige-t-il des mesures spécifiques que Securit-E gère ?",
