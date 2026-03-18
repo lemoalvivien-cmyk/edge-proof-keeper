@@ -105,10 +105,10 @@ export function PromiseSection() {
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               Votre RSSI interne coûte <span className="text-destructive">120 000€/an</span>.
               <br />
-              <span className="text-gradient">6 agents IA autonomes : 490€.</span>
+              <span className="text-gradient">6 agents IA supervisés : 490€.</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Chaque agent opère 24/7 avec supervision humaine. Ensemble, ils forment le premier système immunitaire cyber souverain conçu pour les dirigeants, pas pour les techniciens.
+              Chaque agent opère 24/7 avec supervision humaine et validation Go/No-Go. Ensemble, ils forment un système immunitaire cyber souverain conçu pour les dirigeants.
             </p>
           </motion.div>
 
