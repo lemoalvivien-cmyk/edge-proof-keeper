@@ -286,10 +286,10 @@ export function PricingSection() {
                           onClick={() => handleStripeCheckout(plan.id as "starter" | "pro")}
                         >
                           {checkoutLoading === plan.id
-                            ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
-                            : <CreditCard className="w-4 h-4 mr-1.5" />}
-                          {plan.id === "starter" ? `Activer Starter — ${plan.price}` : `Activer Pro — ${plan.price}`}
-                          <ArrowRight className="w-4 h-4 ml-1" />
+                             ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
+                             : <CreditCard className="w-4 h-4 mr-1.5" />}
+                           {plan.id === "starter" ? `Activer Sentinel — ${plan.price}` : `Activer Command — ${plan.price}`}
+                           <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       ) : (
                         <Button
