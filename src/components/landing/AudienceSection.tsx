@@ -1,40 +1,48 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Building2, Monitor, Scale, Sparkles, Cpu } from "lucide-react";
+import { Building2, Monitor, Scale, Sparkles, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const audiences = [
   {
     icon: Building2,
-    title: "Direction Générale",
-    benefit: "Pilotage sans jargon",
-    description: "Brief exécutif mensuel par le RSSI Virtuel IA. Score de maturité, risques critiques, ROI cyber. Validez les décisions critiques en 1 clic.",
+    title: "Direction Générale · DG · CEO",
+    benefit: "Un seul chiffre. Une seule décision.",
+    description: "Score de maturité 0–100, risques critiques en langage business, ROI cyber prouvé. Validez les décisions stratégiques en 1 clic — sans jamais ouvrir un rapport technique.",
+    quote: "Enfin un outil que je comprends en 30 secondes.",
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
     badge: "CEO · DG · DAF",
+    badgeColor: "label-badge-cyan",
   },
   {
     icon: Monitor,
-    title: "DSI / RSSI",
-    benefit: "Mode fully autonomous ou Go/No-Go",
-    description: "Choisissez : les agents opèrent seuls ou vous validez chaque action en 1 clic. Visibilité technique totale avec Evidence Vault post-quantique.",
+    title: "DSI · RSSI · CTO",
+    benefit: "Mode autonomous ou Go/No-Go : vous choisissez.",
+    description: "Visibilité technique totale sur 847 endpoints. Validez chaque remédiation en 1 clic, ou laissez le Swarm opérer seul. Evidence Vault post-quantique pour chaque action.",
+    quote: "Je valide en 1 clic. L'agent exécute. La preuve est dans le Vault 30s plus tard.",
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
     badge: "DSI · RSSI · CTO",
+    badgeColor: "label-badge-purple",
   },
   {
     icon: Scale,
-    title: "Juridique / DPO",
-    benefit: "Preuves NIS2 + RGPD prêtes",
-    description: "Proof Packs exportables, trail complet, conformité documentée. Votre dossier est prêt pour n'importe quel audit en 10 minutes.",
+    title: "DPO · Juridique · Audit",
+    benefit: "Votre dossier NIS2 prêt en 10 minutes.",
+    description: "Proof Packs exportables, trail complet, conformité documentée automatiquement. Opposable à l'ANSSI, à la CNIL, aux assureurs et aux tribunaux — sans effort manuel.",
+    quote: "Notre prime d'assurance cyber a été divisée par 2 grâce aux Proof Packs.",
     color: "text-success",
     glow: "hsl(158 80% 46%)",
     badge: "DPO · Juridique · Audit",
+    badgeColor: "label-badge-green",
   },
 ];
 
 export function AudienceSection() {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const isInView = useInView(ref, { once: true, amount: 0.18 });
+  const navigate = useNavigate();
 
   return (
     <section ref={ref} className="relative py-28 overflow-hidden">
@@ -51,11 +59,12 @@ export function AudienceSection() {
               Pour qui ?
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-              Un système immunitaire pour{" "}
-              <span className="text-gradient">toute l'entreprise</span>
+              Conçu pour ceux qui décident,
+              <br />
+              <span className="text-gradient">pas pour ceux qui scriptent</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Direction, DSI, DPO : chaque rôle trouve sa valeur. Une vision unifiée, des preuves partagées.
+              Direction, DSI, DPO : chaque rôle trouve sa valeur immédiate. Une vision unifiée, des preuves partagées, zéro traduction technique.
             </p>
           </motion.div>
 
@@ -68,50 +77,58 @@ export function AudienceSection() {
                   initial={{ opacity: 0, y: 40 }}
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
                   transition={{ duration: 0.6, delay: index * 0.12, ease: "easeOut" }}
-                  className="group relative p-6 rounded-2xl glass-card border border-border hover:border-primary/20 transition-all duration-500 card-3d overflow-hidden"
+                  className="group relative p-6 rounded-2xl glass-card border border-border hover:border-primary/25 transition-all duration-500 overflow-hidden flex flex-col"
                 >
                   <div
                     className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ background: `radial-gradient(circle at 30% 20%, ${audience.glow}10 0%, transparent 60%)` }}
+                    style={{ background: `radial-gradient(circle at 30% 20%, ${audience.glow}08 0%, transparent 60%)` }}
                   />
 
-                  <div className="relative space-y-4">
+                  <div className="relative space-y-4 flex-1">
                     <div className="flex items-center justify-between">
                       <div
                         className={`w-12 h-12 rounded-xl flex items-center justify-center ${audience.color} group-hover:scale-110 transition-transform duration-300`}
-                        style={{ background: `${audience.glow}18`, border: `1px solid ${audience.glow}25` }}
+                        style={{ background: `${audience.glow}18`, border: `1px solid ${audience.glow}28` }}
                       >
                         <AudienceIcon className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] text-muted-foreground/60 font-mono bg-secondary/50 px-2 py-1 rounded-full">
-                        {audience.badge}
-                      </span>
+                      <span className={`label-badge ${audience.badgeColor} text-[10px]`}>{audience.badge}</span>
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-foreground">{audience.title}</h3>
-                      <p className={`text-sm font-semibold mt-0.5 ${audience.color}`}>{audience.benefit}</p>
+                      <h3 className="text-lg font-bold text-foreground leading-tight">{audience.title}</h3>
+                      <p className={`text-sm font-semibold mt-1 ${audience.color}`}>{audience.benefit}</p>
                     </div>
 
                     <p className="text-sm text-muted-foreground leading-relaxed">{audience.description}</p>
+                  </div>
+
+                  {/* Quote */}
+                  <div className="relative mt-4 pt-4 border-t border-border/40">
+                    <p className="text-xs text-foreground/70 italic">"{audience.quote}"</p>
                   </div>
                 </motion.div>
               );
             })}
           </div>
 
-          {/* Swarm visual summary */}
+          {/* Bottom CTA */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="mt-10 p-5 rounded-2xl glass-card border border-primary/15 text-center"
+            className="mt-10 p-6 rounded-2xl glass-card border border-primary/15 flex flex-col sm:flex-row items-center justify-between gap-4"
           >
-            <Cpu className="w-6 h-6 text-primary mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
-              <span className="text-foreground font-semibold">Securit-E</span> est la première armure de gouvernance cyber autonome souveraine française.{" "}
-              20 ans d'avance sur vos concurrents. Zéro équipe cyber. 100% autonome.
-            </p>
+            <div>
+              <p className="text-base font-bold text-foreground">SECURIT-E est le premier système immunitaire cyber souverain français.</p>
+              <p className="text-sm text-muted-foreground">Opérationnel en 15 minutes. Aucune équipe RSSI requise. ROI dès le premier incident évité.</p>
+            </div>
+            <button
+              onClick={() => navigate('/auth?tab=signup')}
+              className="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold neon-glow hover:scale-[1.02] transition-transform whitespace-nowrap"
+            >
+              Démarrer maintenant <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </motion.div>
         </div>
       </div>
