@@ -29,7 +29,7 @@ export function DashboardEmptyState({ onLaunchDemo, onLaunchAnalysis, isLoading,
         </div>
         <Button size="sm" onClick={onLaunchAnalysis} disabled={isLoading} className="gap-2">
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-          Lancer ma première analyse autonome
+          Lancer ma première analyse
         </Button>
       </motion.div>
     );
