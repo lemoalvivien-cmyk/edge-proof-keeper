@@ -81,7 +81,7 @@ const faqCategories = [
       },
       {
         q: "Puis-je tester avant de payer ?",
-        a: "Oui. L'essai gratuit 14 jours donne accès à la totalité des fonctionnalités Pro : 6 agents IA, Evidence Vault, rapports, self-healing, ontologie et export Proof Pack. Aucune carte bancaire requise. À la fin de l'essai, vous choisissez votre plan ou vos données sont conservées 30 jours supplémentaires.",
+        a: "Oui. L'essai 14 jours donne accès à la totalité des fonctionnalités. Une carte bancaire est requise pour activer l'essai Stripe — annulation libre à tout moment avant la fin des 14 jours. À la fin de l'essai, si vous ne souhaitez pas continuer, vous pouvez annuler et vos données sont conservées 30 jours supplémentaires.",
       },
     ],
   },
@@ -172,7 +172,7 @@ export default function FAQ() {
             <ShieldCheck className="w-10 h-10 text-primary mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-2">Prêt pour la conformité NIS2 2026 ?</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Démarrez votre essai gratuit 14 jours — aucune carte bancaire requise. Votre dossier NIS2 prêt en 47 secondes.
+              Démarrez votre essai 14 jours — carte requise, annulation libre. Votre dossier NIS2 prêt en 47 secondes.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button

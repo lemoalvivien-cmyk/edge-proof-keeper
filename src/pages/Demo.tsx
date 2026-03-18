@@ -484,7 +484,7 @@ export default function Demo() {
                   <p className="font-bold text-foreground">Votre essai 14 jours est prêt !</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Activez votre compte gratuit maintenant — aucune carte requise pendant 14 jours.
+                   Activez votre compte maintenant — essai 14 jours, carte requise, annulation libre.
                   Starter 490 € / an · Pro 6 900 € / an · Satisfait ou remboursé 30j.
                 </p>
                 <div className="flex gap-2 flex-wrap">
