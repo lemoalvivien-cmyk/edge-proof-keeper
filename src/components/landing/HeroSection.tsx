@@ -175,14 +175,14 @@ export function HeroSection() {
                   <span className="text-foreground/60 text-2xl md:text-3xl font-semibold block mb-2">Votre entreprise sous cyberattaque dans</span>
                   <span className="text-gradient neon-text block">47 secondes</span>
                   <span className="text-foreground block">de détection</span>
-                  <span className="text-foreground block">à preuve certifiée.</span>
+                  <span className="text-foreground block">à preuve cryptographique.</span>
                 </h1>
               </motion.div>
 
               {/* Sub — business-focused */}
               <motion.p variants={fadeUp} className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-md">
-                SECURIT-E est le <span className="text-foreground font-semibold">centre de commandement cyber autonome</span> pour dirigeants et DSI exigeants.{" "}
-                6 agents IA détectent, réparent et prouvent — <span className="text-primary font-semibold">sans équipe RSSI, sans jargon, sans compromis.</span>
+                SECURIT-E est le <span className="text-foreground font-semibold">centre de commandement cyber assisté par IA</span> pour dirigeants et DSI exigeants.{" "}
+                6 agents IA détectent, réparent et prouvent — <span className="text-primary font-semibold">avec supervision humaine, sans jargon, sans compromis.</span>
               </motion.p>
 
               {/* Primary CTAs */}
@@ -196,7 +196,7 @@ export function HeroSection() {
                   }}
                 >
                   <Shield className="w-4 h-4" />
-                  Activer mon armure — 14j gratuit
+                  Activer mon essai — 14j gratuit
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </Button>
 
@@ -218,7 +218,7 @@ export function HeroSection() {
               <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Essai 14j sans engagement</span>
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Annulation libre</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Zéro équipe RSSI requise</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Prise en main guidée</span>
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Déploiement en 15 min</span>
               </motion.div>
 
