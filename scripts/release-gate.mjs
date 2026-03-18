@@ -87,6 +87,8 @@ function scanDir(dir) {
       if (stat.isDirectory()) {
         scanDir(full);
       } else if (SCAN_EXTS.includes(extname(full))) {
+        // Skip test files — they deliberately contain forbidden strings in test assertions
+        if (SKIP_TEST_FILES.some(ext => full.endsWith(ext))) continue;
         const content = readFileSync(full, "utf8");
         const lines = content.split("\n");
         for (const { term, context } of FORBIDDEN) {
