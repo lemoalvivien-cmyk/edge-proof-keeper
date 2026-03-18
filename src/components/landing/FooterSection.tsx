@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
-import { Cpu, Mail, Linkedin, Twitter, ArrowUpRight } from "lucide-react";
+import { Shield, Mail, Linkedin, Twitter, ArrowUpRight } from "lucide-react";
 
 const productLinks = [
   { to: "/pricing", label: "Tarifs" },
   { to: "/demo", label: "Démo agents live (47s)" },
-  { to: "/faq", label: "FAQ NIS2/RGPD" },
+  { to: "/faq", label: "FAQ NIS2 / RGPD" },
   { to: "/status", label: "État des services" },
   { to: "/auth", label: "Connexion" },
-  { to: "/dashboard", label: "Cockpit DSI" },
+  { to: "/auth?tab=signup", label: "Essai gratuit 14j" },
 ];
 
 const offresLinks = [
@@ -39,21 +39,31 @@ export function FooterSection() {
               <div className="flex items-center gap-2.5">
                 <div className="relative">
                   <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
-                    <Cpu className="w-3.5 h-3.5 text-primary" />
+                    <Shield className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div className="absolute inset-0 blur-md bg-primary/20 rounded-lg scale-75" />
                 </div>
-              <div className="flex flex-col leading-none">
+                <div className="flex flex-col leading-none">
                   <span className="text-sm font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                     SECURIT-E
                   </span>
-                  <span className="text-[8px] font-mono text-primary/50 tracking-widest">ARMURE CYBER AUTONOME</span>
+                  <span className="text-[8px] font-mono text-primary/50 tracking-widest">CENTRE DE COMMANDEMENT CYBER</span>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                6 agents IA autonomes. Evidence Vault cryptographique SHA-256. Souveraineté 100% France.{" "}
-                <span className="text-primary font-semibold">490€ TTC/an</span>.
+                6 agents IA autonomes. Evidence Vault post-quantique. Souveraineté 100% France.{" "}
+                <span className="text-primary font-semibold">Dès 490€ TTC/an</span>.
               </p>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
+                  Hébergement certifié SecNumCloud
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
+                  Conforme NIS2 · RGPD · ISO 27001
+                </div>
+              </div>
               <div className="flex gap-3">
                 <a href="#" className="w-8 h-8 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all" aria-label="LinkedIn">
                   <Linkedin className="w-4 h-4" />
@@ -84,7 +94,7 @@ export function FooterSection() {
 
             {/* Offres */}
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Offres</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Offres métier</h4>
               <ul className="space-y-2">
                 {offresLinks.map((link) => (
                   <li key={link.to}>
@@ -114,15 +124,15 @@ export function FooterSection() {
 
           {/* Bottom bar */}
           <div className="pt-6 border-t border-border/40 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground/60">
-            <p>© 2026 SECURIT-E — Armure de gouvernance cyber autonome. Tous droits réservés.</p>
+            <p>© 2026 SECURIT-E — Centre de Commandement Cyber Autonome Souverain. Tous droits réservés.</p>
             <div className="flex items-center gap-4 flex-wrap">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success/60 inline-block animate-pulse" />
                 Hébergé en France 🇫🇷
               </span>
               <span>100% Souverain</span>
-              <span className="label-badge label-badge-cyan text-[9px] py-0.5">Audit sécurité continu</span>
-              <span className="label-badge label-badge-cyan text-[9px] py-0.5">GOD MODE 2026</span>
+              <span className="label-badge label-badge-cyan text-[9px] py-0.5">NIS2 Ready</span>
+              <span className="label-badge label-badge-purple text-[9px] py-0.5">Post-Quantum</span>
             </div>
           </div>
         </div>
