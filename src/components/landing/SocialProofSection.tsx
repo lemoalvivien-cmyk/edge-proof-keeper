@@ -4,7 +4,7 @@ import { ShieldCheck, Clock, Users, Cpu, Quote, TrendingUp, Star } from "lucide-
 
 const stats = [
   { icon: Users, value: "12", label: "ETI françaises en accès prioritaire", color: "text-primary" },
-  { icon: ShieldCheck, value: "2 841+", label: "Preuves archivées dans le Vault", color: "text-success" },
+  { icon: ShieldCheck, value: "Vault", label: "SHA-256 Merkle Chain — preuves archivées", color: "text-success" },
   { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré lab)", color: "text-accent" },
   { icon: TrendingUp, value: "ROI×", label: "Estimé vs coût moyen incident cyber France", color: "text-warning" },
 ];
