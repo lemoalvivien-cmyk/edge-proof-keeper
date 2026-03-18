@@ -4,7 +4,7 @@ import { ShieldCheck, Clock, Users, Cpu, Quote, TrendingUp, Star } from "lucide-
 
 const stats = [
   { icon: Users, value: "12", label: "ETI françaises en accès prioritaire", color: "text-primary" },
-  { icon: ShieldCheck, value: "2 841+", label: "Preuves archivées dans le Vault", color: "text-success" },
+  { icon: ShieldCheck, value: "Vault", label: "SHA-256 Merkle Chain — preuves archivées", color: "text-success" },
   { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré lab)", color: "text-accent" },
   { icon: TrendingUp, value: "ROI×", label: "Estimé vs coût moyen incident cyber France", color: "text-warning" },
 ];
@@ -21,7 +21,7 @@ const testimonials = [
     stars: 5,
   },
   {
-    quote: "L'Evidence Vault nous a permis de renouveler notre assurance cyber avec une prime divisée par 2. L'outil s'est payé en un seul appel d'offre.",
+    quote: "L'Evidence Vault nous a permis de préparer notre dossier assurance cyber en quelques minutes. La structuration des preuves SHA-256 est exactement ce qu'attendait notre courtier.",
     role: "DAF — Cabinet comptable, 45 collaborateurs",
     sector: "Services",
     size: "45 pers.",

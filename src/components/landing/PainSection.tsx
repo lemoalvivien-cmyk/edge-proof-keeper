@@ -182,7 +182,7 @@ export function PainSection() {
               Il existe maintenant une alternative souveraine et abordable.
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Un centre de commandement cyber autonome, opérationnel en 15 minutes.
+              Un centre de commandement cyber supervisé, opérationnel en 15 minutes.
             </p>
           </motion.div>
         </div>

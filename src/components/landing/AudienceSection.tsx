@@ -18,8 +18,8 @@ const audiences = [
   {
     icon: Monitor,
     title: "DSI · RSSI · CTO",
-    benefit: "Mode autonomous ou Go/No-Go : vous choisissez.",
-    description: "Visibilité technique totale sur 847 endpoints. Validez chaque remédiation en 1 clic, ou déléguez au Swarm supervisé. Evidence Vault SHA-256 Merkle Chain pour chaque action.",
+    benefit: "Mode supervisé ou Go/No-Go : vous choisissez.",
+    description: "Visibilité technique totale sur vos actifs. Validez chaque remédiation en 1 clic, ou déléguez au Swarm supervisé. Evidence Vault SHA-256 Merkle Chain pour chaque action.",
     quote: "Je valide en 1 clic. L'agent exécute. La preuve est dans le Vault 30s plus tard.",
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
@@ -29,9 +29,9 @@ const audiences = [
   {
     icon: Scale,
     title: "DPO · Juridique · Audit",
-    benefit: "Votre dossier NIS2 prêt en 10 minutes.",
-    description: "Proof Packs exportables, trail complet, conformité documentée automatiquement. Opposable à l'ANSSI, à la CNIL, aux assureurs et aux tribunaux — sans effort manuel.",
-    quote: "Notre prime d'assurance cyber a été divisée par 2 grâce aux Proof Packs.",
+    benefit: "Votre dossier NIS2 documenté en quelques minutes.",
+    description: "Proof Packs exportables, trail complet, conformité documentée automatiquement. Structurés pour être présentés à l'ANSSI, à la CNIL, aux assureurs — le caractère opposable dépend de votre contexte juridique.",
+    quote: "Notre dossier de conformité NIS2 est prêt pour l'auditeur — sans effort manuel.",
     color: "text-success",
     glow: "hsl(158 80% 46%)",
     badge: "DPO · Juridique · Audit",
@@ -120,8 +120,8 @@ export function AudienceSection() {
             className="mt-10 p-6 rounded-2xl glass-card border border-primary/15 flex flex-col sm:flex-row items-center justify-between gap-4"
           >
             <div>
-              <p className="text-base font-bold text-foreground">SECURIT-E est le premier système immunitaire cyber souverain français.</p>
-              <p className="text-sm text-muted-foreground">Opérationnel en 15 minutes. Aucune équipe RSSI requise. ROI dès le premier incident évité.</p>
+              <p className="text-base font-bold text-foreground">SECURIT-E est votre centre de commandement cyber souverain français.</p>
+              <p className="text-sm text-muted-foreground">Opérationnel en 15 minutes. Accessible sans expertise cyber poussée. Valeur dès le premier incident détecté.</p>
             </div>
             <button
               onClick={() => navigate('/auth?tab=signup')}

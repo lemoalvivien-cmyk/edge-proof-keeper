@@ -359,8 +359,8 @@ export function HeroSection() {
               {[
                 { v: "12", l: "ETI en accès prioritaire", icon: "🏭" },
                 { v: "< 15 min", l: "Déploiement initial", icon: "⚡" },
-                { v: "2 841+", l: "Preuves archivées", icon: "🔐" },
-                { v: "0", l: "Faux positif cette semaine", icon: "✅" },
+                { v: "SHA-256", l: "Merkle Chain — Vault immuable", icon: "🔐" },
+                { v: "47s", l: "Cycle lab démontré", icon: "✅" },
               ].map((s, i) => (
                 <motion.div
                   key={i}
