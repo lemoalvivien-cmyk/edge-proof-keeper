@@ -73,6 +73,7 @@ const RevenueSettings = lazy(() => import("./pages/RevenueSettings"));
 const PlatformHealth = lazy(() => import("./pages/PlatformHealth"));
 const AdminReadiness = lazy(() => import("./pages/AdminReadiness"));
 const AdminLeads = lazy(() => import("./pages/AdminLeads"));
+const ExecutiveCockpit = lazy(() => import("./pages/ExecutiveCockpit"));
 const AdminAccessCodes = lazy(() => import("./pages/AdminAccessCodes"));
 const ApiTest = lazy(() => import("./pages/ApiTest"));
 const Activate = lazy(() => import("./pages/Activate"));
