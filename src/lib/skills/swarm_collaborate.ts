@@ -29,7 +29,8 @@ export interface SwarmCollaborateInput {
   signal: SwarmSignal;
   receive_intel?: boolean;
   agent_id: string;
-  ecdh_public_key?: string; // ECDH pubkey for E2E encryption (post-quantum upgrade planned 2027)
+  // Note: roadmap 2027 — upgrade to NIST FIPS 203 key encapsulation
+  ecdh_public_key?: string; // ECDH pubkey for E2E encryption
 }
 
 export async function swarmCollaborate(input: SwarmCollaborateInput): Promise<{
