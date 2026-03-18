@@ -211,10 +211,10 @@ export function PromiseSection() {
               </div>
               <div className="flex items-center gap-6 text-center flex-wrap justify-center">
                 {[
-                  { v: "47s", l: "Cycle complet", c: "text-gradient" },
-                  { v: "90j", l: "Prédiction attaque", c: "text-accent" },
-                  { v: "× 367", l: "ROI estimé an 1", c: "text-success" },
-                  { v: "0", l: "Équipe RSSI requise", c: "text-primary" },
+                  { v: "47s", l: "Cycle lab démontré", c: "text-gradient" },
+                  { v: "6", l: "Agents supervisés", c: "text-accent" },
+                  { v: "SHA-256", l: "Preuve Merkle Chain", c: "text-success" },
+                  { v: "0", l: "Équipe requise", c: "text-primary" },
                 ].map((s, i) => (
                   <div key={i} className="flex flex-col items-center gap-0.5">
                     <div className={`text-2xl font-bold font-mono ${s.c}`}>{s.v}</div>
