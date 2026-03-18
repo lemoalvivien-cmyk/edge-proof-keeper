@@ -256,31 +256,22 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Upgrade banner — only for non-subscribers */}
+        {/* Plan Value Tracker — always shown, adapts to subscription state */}
+        {!subscription.isLoading && (
+          <PlanValueTracker
+            findingsCount={findingCounts?.total ?? 0}
+            runsCount={pipelineProof?.runs ?? 0}
+            proofsCount={pipelineProof?.summaries ?? 0}
+            compliancePercent={complianceStats?.percentage ?? 0}
+            activeDays={Math.max(1, Math.round(((pipelineProof?.runs ?? 0) * 1.5) + 1))}
+            plan={subscription.plan}
+            subscribed={subscription.subscribed}
+          />
+        )}
+
+        {/* Contextual upsell for non-subscribers — EASM teaser */}
         {!subscription.subscribed && !subscription.isLoading && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-accent/25 bg-gradient-to-r from-primary/5 to-accent/5 p-3.5 flex items-center justify-between flex-wrap gap-3"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-accent/15 border border-accent/25 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-accent" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground text-sm">Activez l'accès complet — Essai 14j gratuit</p>
-                <p className="text-xs text-muted-foreground">Starter 490 € / an · Annulation libre · Données souveraines 🇫🇷</p>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              className="gap-2 font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-              onClick={() => setTrialModalOpen(true)}
-            >
-              <CreditCard className="w-4 h-4" />
-              Démarrer — 490 €/an
-            </Button>
-          </motion.div>
+          <UpsellNudge feature="easm" variant="banner" />
         )}
 
         {/* ══ WOW PANEL — Premier écran, moment de vérité ══ */}
