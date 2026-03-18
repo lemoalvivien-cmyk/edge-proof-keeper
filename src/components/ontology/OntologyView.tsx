@@ -1,6 +1,6 @@
 /**
  * SECURIT-E — OntologyView Component
- * Visualisation Palantir-style de l'ontologie Assets → Risks → Remediations
+ * Cartographie souveraine des risques : Assets → Risks → Remediations
  */
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -164,7 +164,7 @@ export function OntologyView() {
               <Network className="h-5 w-5 text-primary" />
               Ontologie Souveraine
               <Badge variant="outline" className="text-xs border-primary/30 text-primary">
-                🧠 Palantir-style
+                🧠 Cartographie des risques
               </Badge>
             </CardTitle>
             <CardDescription>
@@ -288,7 +288,7 @@ export function OntologyView() {
             <div className="pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Activity className="h-3 w-3" />
-                Ontologie souveraine — {edges.length} relations cartographiées — 🇫🇷 20× moins cher que Palantir
+                Cartographie souveraine des risques — {edges.length} relations cartographiées — 🇫🇷 Souverain France
               </p>
             </div>
           </div>

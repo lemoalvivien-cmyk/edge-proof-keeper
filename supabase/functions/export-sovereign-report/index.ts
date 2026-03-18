@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     }
 
     const reportData = {
-      metadata: { org_name: orgName, report_date: reportDate, generated_at: new Date().toISOString(), report_type, sovereign_watermark: "SECURIT-E — Souverain France — Preuve post-quantique", generated_by: "Agent CISO IA Souverain Français" },
+      metadata: { org_name: orgName, report_date: reportDate, generated_at: new Date().toISOString(), report_type, sovereign_watermark: "SECURIT-E — Souverain France — Preuves SHA-256 Merkle Tree", generated_by: "Agent CISO IA Souverain Français" },
       executive_summary: { total_risks: risks.length, critical_risks: criticalRisks, high_risks: highRisks, open_actions: openActions, completed_actions: completedActions, critical_findings: criticalFindings, high_findings: highFindings, risk_score_avg: risks.length > 0 ? Math.round(risks.reduce((s, r) => s + (r.score ?? 0), 0) / risks.length) : 0, ai_summary_direction: directionSummary, ai_summary_technique: techniqueSummary },
       top_risks: risks.slice(0, 10).map(r => ({ title: r.title, level: r.risk_level, score: r.score, status: r.status, business_impact: r.business_impact })),
       priority_actions: actions.filter(a => a.status === "open").slice(0, 10).map(a => ({ title: a.title, priority: a.priority, type: a.action_type, expected_gain: a.expected_gain })),

@@ -47,7 +47,7 @@ const plans = [
       "6 Agents IA Swarm complets",
       "Self-healing autonome < 4h",
       "OSINT & EASM Signals continus",
-      "Evidence Vault post-quantique",
+      "Evidence Vault cryptographique (SHA-256 Merkle)",
       "Predictive Causality Engine",
       "RSSI Virtuel IA (brief mensuel)",
       "DSI Go/No-Go dashboard",
@@ -70,7 +70,8 @@ const plans = [
       "Swarm Mode fully autonomous",
       "Déploiement on-premise possible",
       "Agents IA personnalisés",
-      "zk-SNARK + lattice crypto avancé",
+      "Preuves cryptographiques avancées (roadmap)",
+      "Preuves cryptographiques avancées (roadmap)",
       "Predictive Causality Engine Pro",
       "SLA 99.99% garanti",
       "Account Manager dédié",
@@ -150,8 +151,8 @@ export function PricingSection() {
                 {[
                   { name: "SECURIT-E Starter", price: "490 € / an", highlight: true, note: "✓ 14j gratuits" },
                   { name: "SECURIT-E Pro", price: "6 900 € / an", highlight: true, note: "✓ 14j gratuits" },
-                  { name: "Palantir Enterprise", price: "≥ 50 000 € / an", highlight: false, note: "10× plus cher" },
-                  { name: "Capgemini Consulting", price: "≥ 120 000 € / an", highlight: false, note: "Prestation manuelle" },
+                  { name: "Palantir Enterprise", price: "≥ 50 000 € / an", highlight: false, note: "Tarifs entreprise" },
+                  { name: "Capgemini Consulting", price: "≥ 120 000 € / an", highlight: false, note: "Modèle consulting traditionnel" },
                 ].map((c) => (
                   <div key={c.name} className={`rounded-lg p-3 border ${c.highlight ? "border-primary/40 bg-primary/5" : "border-border bg-muted/20"}`}>
                     <p className={`font-bold text-xs mb-1 ${c.highlight ? "text-primary" : "text-foreground"}`}>{c.name}</p>
@@ -286,7 +287,7 @@ export function PricingSection() {
             </div>
             <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
               <span className="text-foreground font-semibold">Pourquoi Pro à 6 900€ est sous-évalué ?</span>{" "}
-              6 agents IA autonomes 24/7 + self-healing 4h + Evidence Vault post-quantique = valeur Palantir Enterprise à prix PME.
+              6 agents IA autonomes 24/7 + self-healing 4h + Evidence Vault cryptographique = gouvernance cyber professionnelle à prix PME.
               Une seule cyberattaque coûte en moyenne{" "}
               <span className="text-destructive font-semibold">180 000€</span> à une PME.
               Securit-E Pro à 6 900€/an, c'est votre armure souveraine activée en permanence.

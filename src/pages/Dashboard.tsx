@@ -259,17 +259,12 @@ export default function Dashboard() {
             <Sparkles className="w-3 h-3" />
             Aha Moment en 47s — Analyse autonome immédiate
           </Badge>
-          <Badge variant="outline" className="text-success border-success/30 bg-success/5 gap-1.5">
+          <Badge variant="outline" className="text-muted-foreground border-border gap-1.5">
             <CheckCircle2 className="w-3 h-3" />
-            Pipeline 100% réelle — zéro stub
-          </Badge>
-          {/* Palantir-Killer Badge */}
-          <Badge className="bg-primary/15 text-primary border border-primary/30 gap-1.5 font-semibold">
-            <Network className="w-3 h-3" />
-            🏆 Palantir-Killer : Ontology + Self-Healing + Preuve Post-Quantique
+            Pipeline de démonstration — preuves SHA-256 réelles
           </Badge>
           <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5 gap-1.5">
-            🇫🇷 Souverain Français — 20× moins cher que Palantir
+            🇫🇷 Gouvernance cyber accessible aux PME/ETI
           </Badge>
           {subscription.trialActive && (
             <Badge className="bg-warning/10 text-warning border border-warning/30 gap-1.5">

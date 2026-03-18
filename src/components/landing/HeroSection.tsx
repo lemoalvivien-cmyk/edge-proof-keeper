@@ -185,7 +185,7 @@ export function HeroSection() {
               {/* Sub */}
               <motion.p variants={fadeUp} className="text-base text-muted-foreground leading-relaxed max-w-lg">
                 <span className="text-foreground font-semibold">Détecte · Prédit · Répare seul · Prouve pour toujours.</span>{" "}
-                20 ans d'avance. DSI valide en 1 clic ou mode fully autonomous.{" "}
+                DSI valide en 1 clic ou mode fully autonomous.{" "}
                 <span className="text-primary font-semibold">Zéro équipe. 100% souverain France.</span>
               </motion.p>
 
@@ -222,9 +222,9 @@ export function HeroSection() {
               <motion.div variants={fadeUp} className="flex flex-wrap gap-2">
                 {[
                   { label: "Self-healing autonome", color: "text-success", bg: "bg-success/10", dot: "bg-success" },
-                  { label: "Evidence post-quantique", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
+                  { label: "Evidence SHA-256 Merkle", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
                   { label: "100% Souverain 🇫🇷", color: "text-accent", bg: "bg-accent/10", dot: "bg-accent" },
-                  { label: "Score Audit 97/100 ✅", color: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
+                  { label: "Audit sécurité continu ✅", color: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
                 ].map((b, i) => (
                   <motion.div
                     key={i}
