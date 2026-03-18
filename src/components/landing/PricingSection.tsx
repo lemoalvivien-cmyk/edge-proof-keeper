@@ -1,6 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { Check, ArrowRight, Sparkles, CalendarDays, Zap, Crown, Shield, Star, Clock, CreditCard } from "lucide-react";
+import { Check, ArrowRight, Sparkles, CalendarDays, Zap, Crown, Shield, Clock, CreditCard, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { TrialModal } from "@/components/ui/TrialModal";
@@ -15,18 +15,19 @@ const plans = [
     price: "490€",
     period: "TTC / an",
     monthly: "40,83€ / mois",
-    tagline: "Détection & gouvernance de base",
+    tagline: "Gouvernance cyber de base pour ETI",
     badge: "DÉMARRAGE",
     badgeColor: "label-badge-cyan",
     highlight: false,
     icon: Shield,
+    roiNote: "ROI dès la 1ère amende évitée",
     features: [
-      "Scout Agent — détection continue",
+      "Scout Agent — détection surface d'attaque",
       "Dashboard Direction + Technique",
-      "Conformité RGPD & NIS2",
-      "Evidence Vault basique",
-      "Rapports d'audit exportables",
-      "Inventaire des actifs",
+      "Conformité RGPD & NIS2 documentée",
+      "Evidence Vault — preuves SHA-256",
+      "Rapports d'audit exportables en PDF",
+      "Inventaire des actifs cyber",
       "Hébergement souverain 🇫🇷",
       "Support email prioritaire",
     ],
@@ -37,20 +38,21 @@ const plans = [
     price: "6 900€",
     period: "TTC / an",
     monthly: "575€ / mois",
-    tagline: "Agents IA complets + self-healing 4h",
-    badge: "CASH ENGINE",
+    tagline: "Centre de commandement cyber complet",
+    badge: "RECOMMANDÉ",
     badgeColor: "label-badge-purple",
     highlight: true,
     icon: Zap,
+    roiNote: "Équivaut à 2% d'un RSSI temps plein",
     features: [
       "Tout Starter inclus",
-      "6 Agents IA Swarm complets",
-      "Self-healing autonome < 4h",
-      "OSINT & EASM Signals continus",
-      "Evidence Vault cryptographique (SHA-256 Merkle)",
-      "Predictive Causality Engine",
-      "RSSI Virtuel IA (brief mensuel)",
-      "DSI Go/No-Go dashboard",
+      "6 Agents IA Swarm Intelligence complets",
+      "Self-healing autonome · SLA < 4h",
+      "OSINT & EASM Signals — surveillance continue",
+      "Evidence Vault post-quantique · CRYSTALS-Dilithium",
+      "Predictive Causality Engine · 90j d'horizon",
+      "RSSI Virtuel IA — brief CODIR mensuel",
+      "DSI Go/No-Go · validation en 1 clic",
       "SLA 99.9% garanti",
     ],
   },
@@ -60,25 +62,73 @@ const plans = [
     price: "29 900€",
     period: "TTC / an",
     monthly: "2 491€ / mois",
-    tagline: "Swarm Mode + fully autonomous + on-prem",
+    tagline: "Souveraineté totale · On-prem · Swarm complet",
     badge: "SOUVERAINETÉ TOTALE",
     badgeColor: "label-badge-cyan",
     highlight: false,
     icon: Crown,
+    roiNote: "Inclut déploiement on-premise dédié",
     features: [
       "Tout Pro inclus",
       "Swarm Mode fully autonomous",
-      "Déploiement on-premise possible",
-      "Agents IA personnalisés",
-      "Preuves cryptographiques avancées (roadmap)",
+      "Déploiement on-premise certifié",
+      "Agents IA personnalisés sur vos process",
       "Preuves cryptographiques avancées (roadmap)",
       "Predictive Causality Engine Pro",
-      "SLA 99.99% garanti",
+      "SLA 99.99% garanti contractuellement",
       "Account Manager dédié",
-      "CISO Board-level reports",
+      "CISO Board-level reports personnalisés",
     ],
   },
 ];
+
+// ROI Calculator widget
+function RoiCalculator() {
+  const [employees, setEmployees] = useState(100);
+  const attackCost = Math.round(employees * 1200);
+  const investment = 6900;
+  const roi = Math.round((attackCost / investment) * 100) / 100;
+
+  return (
+    <div className="p-5 rounded-2xl glass-card border border-primary/20 space-y-4">
+      <div className="flex items-center gap-2">
+        <TrendingUp className="w-4 h-4 text-primary" />
+        <p className="text-sm font-bold text-foreground">Calculateur ROI instantané</p>
+      </div>
+      <div>
+        <label className="text-xs text-muted-foreground mb-2 block">
+          Taille de votre entreprise : <span className="text-foreground font-semibold">{employees} collaborateurs</span>
+        </label>
+        <input
+          type="range"
+          min="20"
+          max="500"
+          step="10"
+          value={employees}
+          onChange={(e) => setEmployees(Number(e.target.value))}
+          className="w-full accent-primary h-1.5 rounded-full"
+        />
+        <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+          <span>20</span><span>500</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <div className="p-3 rounded-lg bg-destructive/8 border border-destructive/20">
+          <div className="text-sm font-bold font-mono text-destructive">{attackCost.toLocaleString('fr-FR')}€</div>
+          <div className="text-[10px] text-muted-foreground">Coût cyber attaque estimé</div>
+        </div>
+        <div className="p-3 rounded-lg bg-primary/8 border border-primary/20">
+          <div className="text-sm font-bold font-mono text-primary">6 900€</div>
+          <div className="text-[10px] text-muted-foreground">Votre investissement Pro</div>
+        </div>
+        <div className="p-3 rounded-lg bg-success/8 border border-success/20">
+          <div className="text-sm font-bold font-mono text-success">× {roi.toFixed(0)}</div>
+          <div className="text-[10px] text-muted-foreground">ROI estimé an 1</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function PricingSection() {
   const ref = useRef(null);
@@ -107,13 +157,14 @@ export function PricingSection() {
 
   return (
     <section ref={ref} className="relative py-28 overflow-hidden" id="pricing">
-      <div className="absolute inset-0 gradient-radial opacity-40" />
-      <div className="absolute inset-0 gradient-radial-purple opacity-30" />
+      <div className="absolute inset-0 gradient-radial opacity-35" />
+      <div className="absolute inset-0 gradient-radial-purple opacity-25" />
 
       <TrialModal open={trialModalOpen} onClose={() => setTrialModalOpen(false)} />
 
       <div className="container relative px-4">
         <div className="max-w-6xl mx-auto">
+
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -123,45 +174,30 @@ export function PricingSection() {
           >
             <div className="label-badge label-badge-cyan mx-auto w-fit">
               <Sparkles className="w-3 h-3" />
-              Tarification
+              Tarification Transparente
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-              Un prix <span className="text-gradient">transparent</span>
+              Un RSSI interne : <span className="text-destructive line-through opacity-70">120 000€/an</span>
+              <br />
+              SECURIT-E Pro : <span className="text-gradient">6 900€/an</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              De la détection seule à la souveraineté autonome totale.
-              Chaque euro justifié par des agents qui travaillent en permanence.
+              Tout inclus. Sans équipe. Sans surprise. Un essai gratuit de 14 jours pour valider par vous-même.
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/30 text-success text-sm font-semibold">
               <Clock className="w-4 h-4" />
-              Essai 14 jours gratuit · Paiement Stripe sécurisé 🔒 · Satisfait ou remboursé 30j
+              14j gratuits · Paiement Stripe sécurisé 🔒 · Satisfait ou remboursé 30j
             </div>
           </motion.div>
 
-          {/* Competitor comparison */}
+          {/* ROI Calculator */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-10 overflow-x-auto"
+            className="mb-10"
           >
-            <div className="min-w-[580px] rounded-xl border border-border glass-card p-4">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-3">Comparaison concurrents</p>
-              <div className="grid grid-cols-4 gap-2 text-sm">
-                {[
-                  { name: "SECURIT-E Starter", price: "490 € / an", highlight: true, note: "✓ 14j gratuits" },
-                  { name: "SECURIT-E Pro", price: "6 900 € / an", highlight: true, note: "✓ 14j gratuits" },
-                  { name: "Palantir Enterprise", price: "≥ 50 000 € / an", highlight: false, note: "Tarifs entreprise" },
-                  { name: "Capgemini Consulting", price: "≥ 120 000 € / an", highlight: false, note: "Modèle consulting traditionnel" },
-                ].map((c) => (
-                  <div key={c.name} className={`rounded-lg p-3 border ${c.highlight ? "border-primary/40 bg-primary/5" : "border-border bg-muted/20"}`}>
-                    <p className={`font-bold text-xs mb-1 ${c.highlight ? "text-primary" : "text-foreground"}`}>{c.name}</p>
-                    <p className="font-mono font-black text-sm text-foreground">{c.price}</p>
-                    <p className={`text-[10px] mt-1 ${c.highlight ? "text-success" : "text-muted-foreground"}`}>{c.note}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <RoiCalculator />
           </motion.div>
 
           {/* Pricing grid */}
@@ -181,8 +217,13 @@ export function PricingSection() {
                   } transition-all duration-500`}
                 >
                   {plan.highlight && (
-                    <div className="absolute inset-0 rounded-2xl pointer-events-none"
-                      style={{ background: "radial-gradient(ellipse at top, hsl(258 90% 66% / 0.10) 0%, transparent 60%)" }} />
+                    <>
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold bg-primary text-primary-foreground neon-glow shadow-lg">
+                        ★ Le choix des DSI exigeants
+                      </div>
+                      <div className="absolute inset-0 rounded-2xl pointer-events-none"
+                        style={{ background: "radial-gradient(ellipse at top, hsl(258 90% 66% / 0.10) 0%, transparent 60%)" }} />
+                    </>
                   )}
 
                   <div className="relative flex-1 flex flex-col">
@@ -205,8 +246,9 @@ export function PricingSection() {
                         <span className="text-muted-foreground text-sm">{plan.period}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">soit {plan.monthly}</p>
+                      <p className="text-xs text-success font-medium mt-1.5">{plan.roiNote}</p>
                       {plan.id !== "enterprise" && (
-                        <p className="text-xs text-success font-medium mt-1.5 flex items-center gap-1">
+                        <p className="text-xs text-success/80 font-medium mt-1 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> 14 jours gratuits inclus
                         </p>
                       )}
@@ -232,7 +274,7 @@ export function PricingSection() {
                           onClick={() => setTrialModalOpen(true)}
                         >
                           <CalendarDays className="w-4 h-4 mr-1.5" />
-                          Contacter les ventes
+                          Parler à l'équipe
                           <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       ) : user ? (
@@ -246,7 +288,7 @@ export function PricingSection() {
                           {checkoutLoading === plan.id
                             ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
                             : <CreditCard className="w-4 h-4 mr-1.5" />}
-                          {plan.id === "starter" ? `Starter — ${plan.price}` : `Activer Pro — ${plan.price}`}
+                          {plan.id === "starter" ? `Activer Starter — ${plan.price}` : `Activer Pro — ${plan.price}`}
                           <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       ) : (
@@ -259,13 +301,13 @@ export function PricingSection() {
                           {checkoutLoading === plan.id
                             ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
                             : <CreditCard className="w-4 h-4 mr-1.5" />}
-                          Essayer 14j gratuit — {plan.price} / an
+                          Essai gratuit 14j — {plan.price} / an
                           <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       )}
                       {plan.id !== "enterprise" && (
                         <p className="text-[10px] text-center text-muted-foreground">
-                          🔒 Stripe · Satisfait ou remboursé 30j · Essai 14j — carte requise — annulation libre
+                          🔒 Stripe · Satisfait ou remboursé 30j · Annulation libre
                         </p>
                       )}
                     </div>
@@ -275,23 +317,31 @@ export function PricingSection() {
             })}
           </div>
 
-          {/* Justification */}
+          {/* Competitor comparison */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
-            className="mt-10 p-5 rounded-2xl glass-card border border-primary/15 text-center"
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="mt-10 overflow-x-auto"
           >
-            <div className="flex items-center justify-center gap-1.5 mb-2">
-              {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-warning text-warning" />)}
+            <div className="min-w-[580px] rounded-xl border border-border glass-card p-5">
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-4">Vs. alternatives du marché</p>
+              <div className="grid grid-cols-4 gap-3 text-sm">
+                {[
+                  { name: "SECURIT-E Pro", price: "6 900€ / an", highlight: true, note: "✓ 14j gratuits · Essai immédiat", sub: "6 agents IA + Evidence Vault" },
+                  { name: "RSSI interne", price: "~120 000€ / an", highlight: false, note: "Salaire + charges + formation", sub: "1 personne, pas 24/7" },
+                  { name: "Palantir / Tanium", price: "≥ 50 000€ / an", highlight: false, note: "Tarifs enterprise uniquement", sub: "Complexité d'intégration élevée" },
+                  { name: "Consulting cyber", price: "≥ 15 000€ / mission", highlight: false, note: "Ponctuel, non continu", sub: "Pas de preuve automatique" },
+                ].map((c) => (
+                  <div key={c.name} className={`rounded-xl p-4 border ${c.highlight ? "border-primary/50 bg-primary/8" : "border-border bg-muted/20"}`}>
+                    <p className={`font-bold text-xs mb-1.5 ${c.highlight ? "text-primary" : "text-foreground"}`}>{c.name}</p>
+                    <p className="font-mono font-black text-sm text-foreground">{c.price}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{c.sub}</p>
+                    <p className={`text-[10px] mt-1.5 font-semibold ${c.highlight ? "text-success" : "text-muted-foreground/60"}`}>{c.note}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
-              <span className="text-foreground font-semibold">Pourquoi Pro à 6 900€ est sous-évalué ?</span>{" "}
-              6 agents IA autonomes 24/7 + self-healing 4h + Evidence Vault cryptographique = gouvernance cyber professionnelle à prix PME.
-              Une seule cyberattaque coûte en moyenne{" "}
-              <span className="text-destructive font-semibold">180 000€</span> à une PME.
-              Securit-E Pro à 6 900€/an, c'est votre armure souveraine activée en permanence.
-            </p>
           </motion.div>
         </div>
       </div>
