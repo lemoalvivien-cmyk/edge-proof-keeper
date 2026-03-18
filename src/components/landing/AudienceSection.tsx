@@ -18,8 +18,8 @@ const audiences = [
   {
     icon: Monitor,
     title: "DSI · RSSI · CTO",
-    benefit: "Mode autonomous ou Go/No-Go : vous choisissez.",
-    description: "Visibilité technique totale sur 847 endpoints. Validez chaque remédiation en 1 clic, ou déléguez au Swarm supervisé. Evidence Vault SHA-256 Merkle Chain pour chaque action.",
+    benefit: "Mode supervisé ou Go/No-Go : vous choisissez.",
+    description: "Visibilité technique totale sur vos actifs. Validez chaque remédiation en 1 clic, ou déléguez au Swarm supervisé. Evidence Vault SHA-256 Merkle Chain pour chaque action.",
     quote: "Je valide en 1 clic. L'agent exécute. La preuve est dans le Vault 30s plus tard.",
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
