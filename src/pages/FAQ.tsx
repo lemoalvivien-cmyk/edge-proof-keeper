@@ -60,8 +60,8 @@ const faqCategories = [
     bg: "bg-success/10",
     questions: [
       {
-        q: "Qu'est-ce que l'Evidence Vault post-quantique ?",
-        a: "L'Evidence Vault utilise CRYSTALS-Dilithium3 (algorithme post-quantique standardisé NIST FIPS 204) pour signer chaque preuve. La chaîne de hash SHA-256 + Merkle Tree garantit l'immutabilité : toute modification d'une preuve invalide toute la chaîne. Aucun ordinateur quantique, même futur, ne peut falsifier les preuves générées. Le bouton 'Vérifier preuve' recalcule la signature en temps réel.",
+        q: "Qu'est-ce que l'Evidence Vault ?",
+        a: "L'Evidence Vault utilise une chaîne de hashes SHA-256 enchaînés (Merkle Chain). Chaque action est horodatée, hashée et liée à la précédente : toute modification invalide la chaîne. Le résultat est une piste d'audit immuable, vérifiable indépendamment, présentable à un auditeur NIS2/RGPD. La technologie utilisée est SHA-256 — une architecture post-quantique (CRYSTALS-Dilithium) est sur notre roadmap.",
       },
       {
         q: "Où sont hébergées mes données ?",
@@ -77,7 +77,7 @@ const faqCategories = [
     questions: [
       {
         q: "Y a-t-il des frais cachés dans les plans ?",
-        a: "Non. Starter 490€/an : 6 agents, Evidence Vault, rapports Direction+Technique, conformité NIS2/RGPD, hébergement souverain France. Pro 6 900€/an ajoute EASM/OSINT continu, self-healing autonome < 4h, API dédiée, SLA 99.9%. Enterprise 29 900€/an : souveraineté totale on-premise, agents personnalisés, SLA 99.99%, RSSI IA dédié. Satisfait ou remboursé 30 jours.",
+        a: "Non. Sentinel 490€/an : Evidence Vault SHA-256, rapports Direction+Technique, conformité NIS2/RGPD, hébergement France. Command 6 900€/an ajoute EASM/OSINT continu, remédiation assistée < 4h (cible), API dédiée. Sovereign 29 900€/an : on-premise, agents personnalisés, Account Manager CISO dédié. Essai 14j sans frais.",
       },
       {
         q: "Puis-je tester avant de payer ?",

@@ -265,7 +265,7 @@ export default function Status() {
           <div className="glass-card rounded-xl p-5 border border-border/40">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium">Uptime global</span>
-              <span className="text-success font-bold font-mono">99.97%</span>
+              <span className="text-success font-bold font-mono">Mesuré en temps réel</span>
             </div>
             <div className="flex gap-0.5">
               {[...Array(30)].map((_, i) => {
@@ -291,7 +291,7 @@ export default function Status() {
           <div className="flex items-center justify-center gap-2">
             <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
             <span className="text-xs text-muted-foreground">
-              Hébergement souverain France 🇫🇷 · Certifié SecNumCloud
+              Hébergement souverain France 🇫🇷 · SecNumCloud objectif roadmap 2026
             </span>
           </div>
           <p className="text-xs text-muted-foreground">

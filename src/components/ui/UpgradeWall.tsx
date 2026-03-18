@@ -20,18 +20,18 @@ interface UpgradeWallProps {
 }
 
 const VALUE_ITEMS = [
-  "Evidence Vault immuable — preuves SHA-256 + post-quantique",
-  "Score de risque temps réel — 6 agents autonomes actifs",
-  "Conformité RGPD / NIS2 automatisée et prouvable",
-  "Self-healing < 4h — votre RSSI virtuel IA 24/7",
+  "Evidence Vault immuable — chaîne SHA-256 Merkle vérifiable",
+  "Score de risque temps réel — 6 agents supervisés actifs",
+  "Conformité RGPD / NIS2 documentée et prouvable",
+  "Remédiation assistée < 4h — votre RSSI virtuel IA 24/7",
   "Rapports CODIR exportables en 1 clic",
   "Preuves accumulées = capital juridique défendable",
 ];
 
 const URGENCY_STATS = [
-  { icon: TrendingDown, val: "4h", label: "délai moyen de détection réduit" },
-  { icon: Shield, val: "99,9%", label: "uptime garanti contractuellement" },
-  { icon: Clock, val: "47s", label: "de la détection à la preuve" },
+  { icon: TrendingDown, val: "4h", label: "cible de remédiation assistée" },
+  { icon: Shield, val: "FR 🇫🇷", label: "hébergement souverain France" },
+  { icon: Clock, val: "47s", label: "de la détection à la preuve (lab)" },
 ];
 
 export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
@@ -143,7 +143,7 @@ export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
             <div className="text-3xl font-black mb-0.5">6 900€<span className="text-sm font-normal text-muted-foreground">/an</span></div>
             <p className="text-xs text-muted-foreground mb-4">575€ / mois · équivaut à 5,75% d'un RSSI</p>
             <ul className="space-y-1.5 text-xs text-muted-foreground flex-1 mb-5">
-              {["6 Agents IA autonomes 24/7", "Self-healing < 4h SLA", "RSSI Virtuel IA — brief CODIR", "Evidence post-quantique", "OSINT & EASM continu"].map((f, i) => (
+              {["6 Agents IA supervisés 24/7", "Remédiation assistée < 4h", "RSSI Virtuel IA — brief CODIR", "Evidence Vault SHA-256", "OSINT & EASM continu"].map((f, i) => (
                 <li key={i} className="flex items-center gap-1.5"><Check className="w-3 h-3 text-success flex-shrink-0" />{f}</li>
               ))}
             </ul>
@@ -164,7 +164,7 @@ export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
             <div className="text-3xl font-black mb-0.5">29 900€<span className="text-sm font-normal text-muted-foreground">/an</span></div>
             <p className="text-xs text-muted-foreground mb-4">On-premise · Swarm complet</p>
             <ul className="space-y-1.5 text-xs text-muted-foreground flex-1 mb-5">
-              {["Tout Command inclus", "Déploiement on-premise certifié", "Account Manager dédié", "SLA 99.99% contractuel", "Formation équipe incluse"].map((f, i) => (
+              {["Tout Command inclus", "Déploiement on-premise", "Account Manager dédié", "SLA renforcé contractualisé", "Formation équipe incluse"].map((f, i) => (
                 <li key={i} className="flex items-center gap-1.5"><Check className="w-3 h-3 text-success flex-shrink-0" />{f}</li>
               ))}
             </ul>
