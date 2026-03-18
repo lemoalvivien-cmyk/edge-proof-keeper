@@ -51,7 +51,7 @@ export function FooterSection() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                6 agents IA autonomes. Evidence Vault post-quantique. Souveraineté 100% France.{" "}
+                6 agents IA autonomes. Evidence Vault cryptographique SHA-256. Souveraineté 100% France.{" "}
                 <span className="text-primary font-semibold">490€ TTC/an</span>.
               </p>
               <div className="flex gap-3">

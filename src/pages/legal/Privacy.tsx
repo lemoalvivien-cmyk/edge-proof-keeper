@@ -27,7 +27,7 @@ export default function Privacy() {
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Politique de Confidentialité</CardTitle>
-            <p className="text-sm text-muted-foreground">Dernière mise à jour : Janvier 2025</p>
+            <p className="text-sm text-muted-foreground">Dernière mise à jour : Mars 2026</p>
           </CardHeader>
           <CardContent className="prose prose-sm dark:prose-invert max-w-none space-y-6">
             <section>
