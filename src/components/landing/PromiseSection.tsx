@@ -61,7 +61,7 @@ const agents = [
     Icon: Lock,
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
-    badge: "Post-Quantum",
+    badge: "Vault SHA-256",
     badgeColor: "label-badge-cyan",
   },
   {

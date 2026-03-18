@@ -135,7 +135,7 @@ export function PlanValueTracker({
         <div className="flex items-center justify-between p-3 rounded-xl bg-accent/8 border border-accent/20">
           <div>
             <p className="text-xs font-bold text-foreground">Passez à Command pour 10× plus</p>
-            <p className="text-[10px] text-muted-foreground">Self-healing · RSSI IA · Evidence post-quantique</p>
+            <p className="text-[10px] text-muted-foreground">Self-healing · RSSI IA · Evidence SHA-256 Vault</p>
           </div>
           <Button size="sm" variant="outline" className="border-accent/50 text-accent hover:bg-accent/10 gap-1 flex-shrink-0" onClick={() => navigate("/pricing")}>
             Upgrade <ArrowRight className="w-3 h-3" />

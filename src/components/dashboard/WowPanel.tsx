@@ -464,8 +464,8 @@ export function WowPanel({
                     <p className="text-[10px] text-muted-foreground font-mono">Chaîne immuable SHA-256 · Vault souverain</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="text-[10px] text-primary border-primary/30 bg-primary/5 font-mono">
-                  POST-QUANTUM
+                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30 bg-primary/5 font-mono">
+                  SHA-256 VAULT
                 </Badge>
               </div>
 
