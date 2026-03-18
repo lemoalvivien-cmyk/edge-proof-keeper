@@ -287,12 +287,12 @@ export function HeroSection() {
                 {/* Cycle progression */}
                 <div className="p-3 rounded-xl bg-secondary/20 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-muted-foreground">CYCLE EN COURS — SWARM AUTONOME</span>
+                    <span className="font-mono text-muted-foreground">CYCLE DÉMO — DÉTECTION → PREUVE</span>
                     <motion.span
                       animate={{ opacity: [1, 0.4, 1] }}
                       transition={{ duration: 1, repeat: Infinity }}
                       className="text-primary font-mono font-bold"
-                    >⏱ 47s</motion.span>
+                    >⏱ ~47s lab</motion.span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
                     <motion.div
@@ -311,7 +311,7 @@ export function HeroSection() {
                 {/* ROI bottom strip */}
                 <div className="pt-3 border-t border-border/40">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Coût moyen évité par an</span>
+                    <span className="text-muted-foreground">Coût moyen incident cyber (source CESIN)</span>
                     <span className="font-mono font-bold text-success">≥ 180 000€</span>
                   </div>
                   <div className="flex items-center justify-between text-xs mt-1">
