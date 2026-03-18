@@ -354,7 +354,7 @@ export function HowItWorksSection() {
                   <span className="text-[10px] font-mono text-muted-foreground mx-3">securit-e.com — Swarm Intelligence</span>
                   <div className="ml-auto flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                    <span className="text-[9px] font-mono text-success">AUTONOMOUS · 6/6</span>
+                    <span className="text-[9px] font-mono text-success">DÉMO · 6 AGENTS</span>
                   </div>
                 </div>
 
