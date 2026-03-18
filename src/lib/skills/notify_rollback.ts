@@ -132,9 +132,9 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
     }
   }
 
-  // 4. SHA-256 Merkle proof of rollback + notification
+  // 4. SHA-256 proof of rollback + notification
   const proofHash = input.proof_required
-    ? await generateZkProof({
+    ? await generateSha256Proof({
         action: "rollback_executed",
         action_id: input.action_id,
         target: input.target,
