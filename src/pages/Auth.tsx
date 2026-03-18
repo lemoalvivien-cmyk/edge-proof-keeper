@@ -460,6 +460,19 @@ export default function Auth() {
           </AnimatePresence>
         </div>
 
+        {/* Access code link — discrete CTA below the card */}
+        {tab !== 'forgot' && (
+          <div className="mt-3 text-center">
+            <a
+              href="/activate"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              J'ai un code d'accès premium
+            </a>
+          </div>
+        )}
+
         {/* Trust footer */}
         <p className="mt-4 text-center text-[11px] text-muted-foreground">
           En vous inscrivant, vous acceptez nos{' '}
