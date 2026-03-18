@@ -192,6 +192,7 @@ const App = () => (
                   <Route path="/activate" element={<ProtectedRoute><Activate /></ProtectedRoute>} />
 
                   {/* Protected + paywalled app routes */}
+                  <Route path="/executive" element={<ProtectedRoute><PaywallGate><ExecutiveCockpit /></PaywallGate></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><PaywallGate><Dashboard /></PaywallGate></ProtectedRoute>} />
                   <Route path="/dashboard/technical" element={<ProtectedRoute><PaywallGate><DashboardTechnical /></PaywallGate></ProtectedRoute>} />
                   <Route path="/assets" element={<ProtectedRoute><PaywallGate><Assets /></PaywallGate></ProtectedRoute>} />
