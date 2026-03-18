@@ -185,7 +185,7 @@ export function HeroSection() {
               {/* Sub */}
               <motion.p variants={fadeUp} className="text-base text-muted-foreground leading-relaxed max-w-lg">
                 <span className="text-foreground font-semibold">Détecte · Prédit · Répare seul · Prouve pour toujours.</span>{" "}
-                20 ans d'avance. DSI valide en 1 clic ou mode fully autonomous.{" "}
+                DSI valide en 1 clic ou mode fully autonomous.{" "}
                 <span className="text-primary font-semibold">Zéro équipe. 100% souverain France.</span>
               </motion.p>
 
