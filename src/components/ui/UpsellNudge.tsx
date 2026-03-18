@@ -128,6 +128,11 @@ export function UpsellNudge({
   const NudgeIcon = config.icon;
 
   const handleUpgrade = async () => {
+    trackEvent('upsell_nudge_click', {
+      source_page: window.location.pathname,
+      cta_origin: `upsell_${feature}`,
+      metadata: { feature, plan: config.planRequired },
+    });
     if (config.planRequired === "enterprise") {
       navigate("/pricing");
       return;
