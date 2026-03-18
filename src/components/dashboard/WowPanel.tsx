@@ -326,7 +326,7 @@ export function WowPanel({
 
               <div className="pt-1 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground font-mono">
-                  Agents IA prenant en charge les remédations automatiquement
+                  Agents IA en charge des remédiations automatiquement
                 </span>
                 <Button
                   size="sm"

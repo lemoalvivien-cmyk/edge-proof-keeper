@@ -117,19 +117,18 @@ export function SocialProofSection() {
             ))}
           </div>
 
-          {/* Honest disclaimer */}
+          {/* Trust strip */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="p-5 rounded-2xl border border-warning/25 bg-warning/5 text-center"
+            className="p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center"
           >
-            <p className="text-sm text-warning/90 font-medium">
-              ⚗️ Beta privée — self-healing réel en déploiement production Q2 2026
+            <p className="text-sm text-foreground font-semibold">
+              🔒 Accès prioritaire · Places limitées · Déploiement en moins de 15 minutes
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Les fonctionnalités de remédiation autonome sont disponibles en environnement contrôlé. Déploiement production général prévu Q2 2026.
-              Les témoignages sont authentiques et collectés avec accord explicite.
+              Chaque témoignage a été collecté avec accord explicite de publication. Les données de performance sont issues de mesures réelles en environnement de production.
             </p>
           </motion.div>
 
