@@ -16,17 +16,14 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 // Mock ResizeObserver
-(window as Window & typeof globalThis & { ResizeObserver: unknown }).ResizeObserver = class ResizeObserver {
+(window as unknown as Record<string, unknown>)["ResizeObserver"] = class {
   observe() {}
   unobserve() {}
   disconnect() {}
 };
 
 // Mock IntersectionObserver
-(window as Window & typeof globalThis & { IntersectionObserver: unknown }).IntersectionObserver = class IntersectionObserver {
-  root = null;
-  rootMargin = "";
-  thresholds: number[] = [];
+(window as unknown as Record<string, unknown>)["IntersectionObserver"] = class {
   observe() {}
   unobserve() {}
   disconnect() {}
