@@ -1206,6 +1206,10 @@ export type Database = {
           full_name: string | null
           id: string
           organization_id: string | null
+          stripe_customer_id: string | null
+          subscription_end: string | null
+          subscription_plan: string | null
+          subscription_status: string
           updated_at: string
         }
         Insert: {
@@ -1214,6 +1218,10 @@ export type Database = {
           full_name?: string | null
           id: string
           organization_id?: string | null
+          stripe_customer_id?: string | null
+          subscription_end?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string
           updated_at?: string
         }
         Update: {
@@ -1222,6 +1230,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           organization_id?: string | null
+          stripe_customer_id?: string | null
+          subscription_end?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string
           updated_at?: string
         }
         Relationships: [
@@ -2305,6 +2317,7 @@ export type Database = {
         Args: { confidence_score?: number; severity: string }
         Returns: number
       }
+      delete_user_account: { Args: never; Returns: undefined }
       ensure_permanent_authorization: {
         Args: { _org_id: string; _user_id: string }
         Returns: string
@@ -2317,6 +2330,7 @@ export type Database = {
       get_my_org_id: { Args: never; Returns: string }
       get_platform_health: { Args: { _org_id: string }; Returns: Json }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
+      has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_consent_proof: { Args: { _auth_id: string }; Returns: boolean }
       has_org_access: {
         Args: { _org_id: string; _user_id: string }
