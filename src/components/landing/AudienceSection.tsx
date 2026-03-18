@@ -120,8 +120,8 @@ export function AudienceSection() {
             className="mt-10 p-6 rounded-2xl glass-card border border-primary/15 flex flex-col sm:flex-row items-center justify-between gap-4"
           >
             <div>
-              <p className="text-base font-bold text-foreground">SECURIT-E est le premier système immunitaire cyber souverain français.</p>
-              <p className="text-sm text-muted-foreground">Opérationnel en 15 minutes. Aucune équipe RSSI requise. ROI dès le premier incident évité.</p>
+              <p className="text-base font-bold text-foreground">SECURIT-E est votre centre de commandement cyber souverain français.</p>
+              <p className="text-sm text-muted-foreground">Opérationnel en 15 minutes. Accessible sans expertise cyber poussée. Valeur dès le premier incident détecté.</p>
             </div>
             <button
               onClick={() => navigate('/auth?tab=signup')}
