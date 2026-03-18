@@ -142,7 +142,7 @@ async function callEdgeAgent(payload: {
 }): Promise<{ ok: boolean; error?: string }> {
   // mTLS call to Securit-E Edge Agent sidecar over WireGuard tunnel
   // POST https://edge-agent.securit-e.com/api/v1/skill
-  // Headers: Authorization: Bearer <CRYSTALS-Dilithium-signed-JWT>
+  // Headers: Authorization: Bearer <SHA-256-signed-JWT>
   //          X-Agent-ID: <agent_id>
   //          X-Timestamp: <unix_ms>
   // Body: { skill: "fix_port", payload: { ... } }

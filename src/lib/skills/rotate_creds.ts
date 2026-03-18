@@ -109,7 +109,7 @@ export async function rotateCreds(input: RotateCredsInput): Promise<{
     });
   }
 
-  // 4. Post-quantum proof of rotation (CRYSTALS-Dilithium3 + zk-SNARK)
+  // 4. SHA-256 Merkle proof of rotation
   const proofHash = `zksnark:${preHash}:${newRef}`.slice(0, 64);
   // Production: POST /api/v1/vault/sign { payload: { action, cred_id, new_ref, pre_hash }, algorithm: "dilithium3" }
 

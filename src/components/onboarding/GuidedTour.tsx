@@ -39,7 +39,7 @@ const STEPS = [
     icon: Lock,
     badge: '✓ NIS2 & RGPD',
     title: 'Chaque action est une preuve',
-    desc: 'L\'Evidence Vault post-quantique signe chaque remédiation avec CRYSTALS-Dilithium3. Exportable pour audit CNIL ou contrôleur NIS2.',
+    desc: 'L\'Evidence Vault signe chaque remédiation avec SHA-256 Merkle Chain. Exportable pour audit CNIL ou contrôleur NIS2.',
     highlight: '2 841 preuves déjà archivées — immuables',
     highlightColor: 'text-success',
     cta: 'Commencer !',

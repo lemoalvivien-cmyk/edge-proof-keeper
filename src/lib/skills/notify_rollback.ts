@@ -132,7 +132,7 @@ export async function notifyRollback(input: NotifyRollbackInput): Promise<Notify
     }
   }
 
-  // 4. zk-SNARK proof of rollback + notification
+  // 4. SHA-256 Merkle proof of rollback + notification
   const proofHash = input.proof_required
     ? await generateZkProof({
         action: "rollback_executed",

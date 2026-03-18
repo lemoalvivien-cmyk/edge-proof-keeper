@@ -12,35 +12,35 @@ import {
 const faqs = [
   {
     question: "En combien de temps SECURIT-E est-il opérationnel ?",
-    answer: "15 minutes. Créez votre compte, connectez votre infrastructure (ou importez votre premier fichier de scan), et les 6 agents commencent à opérer immédiatement. Pas de semaine d'intégration, pas de consultant requis.",
+    answer: "En moins de 15 minutes pour une première utilisation. Créez votre compte, importez un premier fichier de scan ou connectez une source, et le tableau de bord commence à fonctionner immédiatement. Pas de semaine d'intégration, pas de consultant requis.",
   },
   {
-    question: "Comment les agents IA opèrent-ils sans intervention humaine ?",
-    answer: "Le Swarm opère en mode 'Fully Autonomous' : Scout détecte, Analyst priorise et prédit, Executor remédie, Verifier valide, Vault prouve — en 47 secondes. Le DSI peut aussi choisir le mode 'Go/No-Go' pour approuver chaque action en 1 clic avant exécution.",
+    question: "Comment les agents IA opèrent-ils ?",
+    answer: "En mode assisté (Go/No-Go) : Scout détecte, Analyst priorise, l'équipe valide, Executor exécute, Vault archive la preuve. Le cycle complet démontrable en laboratoire est de 47 secondes. En mode production, les délais dépendent de votre infrastructure et des validations humaines requises.",
   },
   {
-    question: "Qu'est-ce que l'Evidence Vault post-quantique et pourquoi c'est important ?",
-    answer: "Notre coffre-fort utilise CRYSTALS-Dilithium (algorithme post-quantique standardisé NIST). Chaque preuve est signée, enchaînée et horodatée. Aucun ordinateur quantique ne peut falsifier ces preuves. Concrètement : votre dossier NIS2/RGPD est prêt en 10 minutes, opposable aux régulateurs, assureurs et juges.",
+    question: "Qu'est-ce que l'Evidence Vault et pourquoi c'est important ?",
+    answer: "Un coffre-fort de preuves basé sur une chaîne SHA-256 Merkle enchaînée. Chaque action est horodatée, hashée et liée à la précédente : toute modification invalide la chaîne. Concrètement : votre dossier NIS2/RGPD est prêt à être présenté à un auditeur. Note : la technologie utilisée est SHA-256, pas CRYSTALS-Dilithium.",
   },
   {
     question: "Est-ce vraiment compatible NIS2 et RGPD 2026 ?",
-    answer: "Oui. La plateforme génère automatiquement les preuves de diligence requises par NIS2 et RGPD. Les Proof Packs exportables sont structurés pour les autorités compétentes (ANSSI, CNIL). Votre responsabilité personnelle de dirigeant est couverte documentairement.",
+    answer: "La plateforme génère automatiquement des preuves de diligence documentées. Les Proof Packs exportables sont structurés pour être présentés aux autorités compétentes (ANSSI, CNIL). Votre responsabilité documentaire de dirigeant est couverte. Le caractère « opposable » en toute circonstance dépend de votre contexte juridique spécifique — consultez votre conseil.",
   },
   {
     question: "Combien d'équipe cyber faut-il pour opérer SECURIT-E ?",
-    answer: "Zéro. Les 6 agents opèrent en autonomie complète 24/7. Le RSSI Virtuel IA vous envoie un brief mensuel en langage Direction. Pour les décisions critiques, le DSI reçoit une notification avec un seul bouton : Go ou No-Go.",
+    answer: "Le produit est conçu pour être piloté par une personne sans expertise cyber poussée. Les 6 agents autonomes gèrent la surveillance et les remédiatiosn avec supervision humaine. Le RSSI Virtuel IA vous envoie un brief mensuel en langage Direction. Pour les décisions critiques, le DSI reçoit une notification avec validation Go/No-Go.",
   },
   {
     question: "Que se passe-t-il si l'Executor fait une erreur de remédiation ?",
-    answer: "L'Agent Verifier contrôle systématiquement chaque action de l'Executor. En cas d'anomalie détectée, un rollback automatique est déclenché immédiatement. L'architecture est conçue pour la résilience, pas seulement pour la rapidité.",
+    answer: "L'Agent Verifier contrôle chaque action de l'Executor. En cas d'anomalie détectée, un rollback est déclenché. L'architecture est conçue pour la résilience. Les skills de remédiation (fix_port, rotate_creds, etc.) sont des orchestrateurs supervisés — toute action sensible passe par validation Go/No-Go en production.",
   },
   {
     question: "Y a-t-il des frais cachés ? Le prix est-il tout inclus ?",
-    answer: "Non, aucun frais caché. Starter 490€/an tout inclus : détection, Evidence Vault, rapports, conformité NIS2/RGPD, hébergement souverain France. Pro 6 900€/an ajoute les 6 agents complets, self-healing < 4h, EASM/OSINT continu, RSSI Virtuel IA. Enterprise 29 900€/an pour la souveraineté totale on-premise.",
+    answer: "Non. Sentinel 490€/an : détection, Evidence Vault, rapports, conformité NIS2/RGPD, hébergement France. Command 6 900€/an ajoute les 6 agents complets, remédiation assistée, EASM/OSINT, RSSI Virtuel IA. Sovereign 29 900€/an pour la souveraineté totale on-premise. Essai 14j gratuit sans CB.",
   },
   {
     question: "Mes données restent-elles en France ?",
-    answer: "100% souverain France. Hébergement certifié SecNumCloud, chiffrement bout-en-bout, aucune donnée traitée hors UE. Votre infrastructure reste sous juridiction française — exigence DSI, RSSI et CISO respectée.",
+    answer: "Oui. L'hébergement est en France. Les données sont traitées sous juridiction française et conforme RGPD. Nous ne prétendons pas à une certification SecNumCloud à ce stade — c'est un objectif de roadmap.",
   },
 ];
 
@@ -79,19 +79,17 @@ export function FAQSection() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
           >
-            <Accordion type="single" collapsible className="space-y-3">
+            <Accordion type="single" collapsible className="space-y-2">
               {faqs.map((faq, index) => (
                 <AccordionItem
                   key={index}
                   value={`item-${index}`}
-                  className="glass-card rounded-xl px-5 border border-border data-[state=open]:border-primary/30 data-[state=open]:bg-primary/3 transition-all duration-300"
+                  className="glass-card border border-border rounded-xl px-4 overflow-hidden"
                 >
-                  <AccordionTrigger className="text-left hover:no-underline py-5 group">
-                    <span className="font-medium text-foreground/85 group-hover:text-foreground transition-colors pr-4 text-sm leading-relaxed">
-                      {faq.question}
-                    </span>
+                  <AccordionTrigger className="text-sm font-semibold text-left py-4 hover:no-underline hover:text-primary transition-colors">
+                    {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="pb-5 text-sm text-muted-foreground leading-relaxed">
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -99,39 +97,31 @@ export function FAQSection() {
             </Accordion>
           </motion.div>
 
-          {/* Final conversion CTA */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="mt-14 text-center p-8 rounded-2xl glass-card-premium border border-primary/25"
-            style={{ background: "linear-gradient(135deg, hsl(185 100% 52% / 0.06) 0%, hsl(var(--glass) / 0.8) 100%)" }}
+            transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
+            className="mt-10 p-6 rounded-2xl glass-card-premium border border-primary/15 text-center space-y-4"
           >
-            <Shield className="w-10 h-10 text-primary mx-auto mb-4" style={{ filter: "drop-shadow(0 0 20px hsl(185 100% 52% / 0.4))" }} />
-            <h3 className="text-2xl font-bold mb-2">Prêt à activer votre centre de commandement cyber ?</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-lg mx-auto">
-              Opérationnel en 15 minutes. 14 jours gratuits. Annulation libre.{" "}
-              <span className="text-foreground font-semibold">Starter dès 490€/an</span> — le prix d'un scan ponctuel en consulting.
+            <h3 className="text-lg font-bold">Une autre question ?</h3>
+            <p className="text-sm text-muted-foreground">
+              Notre équipe répond en moins de 24h. Ou réservez une démo pour voir le produit en action.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={() => navigate('/auth?tab=signup')}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold neon-glow hover:scale-[1.02] transition-transform"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold neon-glow hover:scale-[1.02] transition-transform"
               >
                 <Shield className="w-4 h-4" />
-                Activer mon armure — 14j gratuit
-                <ArrowRight className="w-3.5 h-3.5" />
+                Essai 14j gratuit <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <a
-                href="#pricing"
-                className="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all"
+                href="mailto:contact@securit-e.com"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border hover:border-primary/40 text-sm font-medium transition-colors"
               >
-                Voir tous les plans
+                Nous écrire
               </a>
             </div>
-            <p className="text-[11px] text-muted-foreground/60 mt-4">
-              🔒 Paiement sécurisé Stripe · Satisfait ou remboursé 30j · Support inclus
-            </p>
           </motion.div>
         </div>
       </div>

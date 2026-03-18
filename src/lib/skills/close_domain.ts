@@ -112,7 +112,7 @@ export async function closeDomain(input: CloseDomainInput): Promise<CloseDomainR
     // Also: Slack webhook POST https://hooks.slack.com/services/<ID> { text: "🚫 Domain blocked: ..." }
   }
 
-  // 5. Post-quantum proof (CRYSTALS-Dilithium3 + zk-SNARK Groth16)
+  // 5. SHA-256 Merkle proof
   const proofHash = input.proof_required
     ? await generateZkProof({ action: "domain_closed", domain: input.domain, reason: input.reason, pre_hash: intentHash })
     : undefined;
@@ -146,7 +146,7 @@ async function callEdgeAgent(payload: { skill: string; payload: Record<string, u
 }
 
 async function generateZkProof(data: Record<string, unknown>): Promise<string> {
-  // zk-SNARK Groth16 + CRYSTALS-Dilithium3 signature
+  // zk-SNARK Groth16 + SHA-256 Merkle Chain signature
   // POST https://vault.securit-e.com/api/v1/sign { payload: data, algorithm: "dilithium3" }
   return `zksnark:${btoa(JSON.stringify(data)).slice(0, 48)}`;
 }

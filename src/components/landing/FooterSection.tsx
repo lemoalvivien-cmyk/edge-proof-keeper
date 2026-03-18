@@ -51,17 +51,17 @@ export function FooterSection() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                6 agents IA autonomes. Evidence Vault post-quantique. Souveraineté 100% France.{" "}
+                6 agents IA supervisés. Evidence Vault SHA-256. Hébergement France.{" "}
                 <span className="text-primary font-semibold">Dès 490€ TTC/an</span>.
               </p>
               <div className="text-xs text-muted-foreground space-y-1">
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
-                  Hébergement certifié SecNumCloud
+                  Hébergé en France 🇫🇷
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
-                  Conforme NIS2 · RGPD · ISO 27001
+                  Conforme NIS2 · RGPD
                 </div>
               </div>
               <div className="flex gap-3">
@@ -124,15 +124,14 @@ export function FooterSection() {
 
           {/* Bottom bar */}
           <div className="pt-6 border-t border-border/40 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground/60">
-            <p>© 2026 SECURIT-E — Centre de Commandement Cyber Autonome Souverain. Tous droits réservés.</p>
+            <p>© 2026 SECURIT-E — Centre de Commandement Cyber. Tous droits réservés.</p>
             <div className="flex items-center gap-4 flex-wrap">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success/60 inline-block animate-pulse" />
                 Hébergé en France 🇫🇷
               </span>
-              <span>100% Souverain</span>
+              <span>SHA-256 · Merkle Chain</span>
               <span className="label-badge label-badge-cyan text-[9px] py-0.5">NIS2 Ready</span>
-              <span className="label-badge label-badge-purple text-[9px] py-0.5">Post-Quantum</span>
             </div>
           </div>
         </div>

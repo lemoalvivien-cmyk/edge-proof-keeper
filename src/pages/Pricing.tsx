@@ -65,7 +65,7 @@ const plans = [
       { text: "6 Agents IA Swarm Intelligence complets", available: true },
       { text: "Self-healing autonome · SLA < 4h", available: true },
       { text: "OSINT & EASM Signals — surveillance continue", available: true },
-      { text: "Evidence Vault post-quantique (CRYSTALS-Dilithium)", available: true },
+      { text: "Evidence Vault cryptographique (SHA-256 Merkle Chain)", available: true },
       { text: "Predictive Causality Engine · 90j d'horizon", available: true },
       { text: "RSSI Virtuel IA — brief CODIR mensuel", available: true },
       { text: "DSI Go/No-Go · validation en 1 clic", available: true },

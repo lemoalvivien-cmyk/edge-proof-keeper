@@ -19,9 +19,9 @@ const agents = [
   {
     id: "02",
     name: "Analyst Agent",
-    role: "Prédiction d'attaques à 90 jours",
-    description: "Corrèle les signaux, calcule les probabilités d'attaque, génère un plan de remédiation priorisé en langage business — pas en jargon technique.",
-    metric: "Prédiction à 87% de précision",
+    role: "Analyse prédictive de risques",
+    description: "Corrèle les signaux, calcule les probabilités de risque, génère un plan de remédiation priorisé en langage business — pas en jargon technique.",
+    metric: "Priorisation basée sur le risque réel",
     Icon: Brain,
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
@@ -56,7 +56,7 @@ const agents = [
     id: "05",
     name: "Vault Agent",
     role: "Preuves post-quantiques immuables",
-    description: "Horodate et signe chaque preuve avec CRYSTALS-Dilithium. Opposable aux régulateurs NIS2, assureurs, et tribunaux. Pour toujours.",
+    description: "Horodate et enchaîne chaque preuve dans une Merkle Tree SHA-256. Vérifiable indépendamment. Présentable aux régulateurs NIS2, assureurs, et auditeurs.",
     metric: "2 841+ preuves archivées",
     Icon: Lock,
     color: "text-primary",
@@ -205,16 +205,16 @@ export function PromiseSection() {
                   <Network className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-foreground">Swarm Intelligence · Predictive Causality Engine · Evidence Vault</p>
-                  <p className="text-xs text-muted-foreground">6 agents collaborent anonymement — attaques prédites 90 jours à l'avance</p>
+                  <p className="text-sm font-bold text-foreground">Swarm Intelligence · Analyse de risques IA · Evidence Vault</p>
+                  <p className="text-xs text-muted-foreground">6 agents collaborent — détection, analyse, remédiation supervisée, preuve archivée</p>
                 </div>
               </div>
               <div className="flex items-center gap-6 text-center flex-wrap justify-center">
                 {[
-                  { v: "47s", l: "Cycle complet", c: "text-gradient" },
-                  { v: "90j", l: "Prédiction attaque", c: "text-accent" },
-                  { v: "× 367", l: "ROI estimé an 1", c: "text-success" },
-                  { v: "0", l: "Équipe RSSI requise", c: "text-primary" },
+                  { v: "47s", l: "Cycle lab démontré", c: "text-gradient" },
+                  { v: "6", l: "Agents supervisés", c: "text-accent" },
+                  { v: "SHA-256", l: "Preuve Merkle Chain", c: "text-success" },
+                  { v: "0", l: "Équipe requise", c: "text-primary" },
                 ].map((s, i) => (
                   <div key={i} className="flex flex-col items-center gap-0.5">
                     <div className={`text-2xl font-bold font-mono ${s.c}`}>{s.v}</div>

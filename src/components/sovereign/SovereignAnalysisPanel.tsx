@@ -300,7 +300,7 @@ export function SovereignAnalysisPanel({
         {/* Sovereign watermark */}
         <div className="flex items-center gap-2 pt-1">
           <span className="text-[10px] text-muted-foreground font-mono">
-            🇫🇷 Agent CISO IA Souverain · NIS2/RGPD · 20× moins cher que Palantir
+            🇫🇷 Agent CISO IA Souverain · NIS2/RGPD · Surveillance supervisée
           </span>
         </div>
       </div>
