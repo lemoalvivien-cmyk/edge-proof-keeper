@@ -69,7 +69,7 @@ const plans = [
       { text: "Predictive Causality Engine · 90j d'horizon", available: true },
       { text: "RSSI Virtuel IA — brief CODIR mensuel", available: true },
       { text: "DSI Go/No-Go · validation en 1 clic", available: true },
-      { text: "SLA 99.9% garanti contractuellement", available: true },
+      { text: "SLA 99.9% — objectif mesuré (sans garantie contractuelle)", available: true },
       { text: "Déploiement on-premise dédié", available: false },
       { text: "Account Manager dédié", available: false },
     ],
