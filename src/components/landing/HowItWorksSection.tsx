@@ -35,7 +35,7 @@ const STEPS = [
     time: "23s",
     agent: "DSI Dashboard",
     icon: CheckCircle2,
-    action: "Go/No-Go validé en 1 clic — ou mode fully autonomous",
+    action: "Go/No-Go validé en 1 clic — ou délégation supervisée au Swarm",
     detail: "Interface 1-clic : le dirigeant valide ou délègue. Mode autonome disponible pour les patterns répétitifs. Audit trail instantané.",
     color: "text-success",
     glow: "hsl(158 80% 46%)",
