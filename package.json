@@ -8,7 +8,12 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "echo 'No unit tests configured — run test:smoke or test:release'",
+    "test:smoke": "node tests/smoke/critical-routes.test.ts 2>/dev/null || npx tsx tests/smoke/critical-routes.test.ts",
+    "test:release": "node scripts/release-gate.mjs",
+    "test:e2e": "echo 'E2E: Playwright not installed — install with: npx playwright install'",
+    "gate": "node scripts/release-gate.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
