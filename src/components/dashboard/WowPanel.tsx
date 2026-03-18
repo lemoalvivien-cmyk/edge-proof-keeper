@@ -499,8 +499,8 @@ export function WowPanel({
 
               <div className="pt-1 grid grid-cols-3 gap-2 text-center">
                 {[
-                  { label: 'Algorithme', value: 'CRYSTALS-D3' },
-                  { label: 'Standard', value: 'NIST PQC' },
+                  { label: 'Algorithme', value: 'SHA-256' },
+                  { label: 'Structure', value: 'Merkle Chain' },
                   { label: 'Conformité', value: 'NIS2 ✓' },
                 ].map((item, i) => (
                   <div key={i} className="p-2 rounded-lg bg-muted/30 border border-border/40">

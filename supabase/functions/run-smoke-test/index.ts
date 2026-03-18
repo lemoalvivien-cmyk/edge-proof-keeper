@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
   });
 
   // ── TEST 5: Build ontology ────────────────────────────────────────────────
-  await runTest("Ontologie Palantir-style (build-ontology)", "ontology", 10, async () => {
+  await runTest("Ontologie multi-entités (build-ontology)", "ontology", 10, async () => {
     const res = await fetch(`${functionsBase}/build-ontology`, {
       method: "POST",
       headers: {

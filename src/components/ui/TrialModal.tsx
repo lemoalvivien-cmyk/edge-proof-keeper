@@ -72,7 +72,7 @@ export function TrialModal({ open, onClose, afterDemo = false }: TrialModalProps
               </motion.div>
 
               <h2 className="text-2xl font-bold text-foreground">
-                {afterDemo ? "Votre essai 14 jours est activé !" : "Analyse autonome complète !"}
+                {afterDemo ? "Votre essai 14 jours est activé !" : "Analyse assistée complète !"}
               </h2>
               <p className="text-sm text-muted-foreground mt-2">
                 {afterDemo

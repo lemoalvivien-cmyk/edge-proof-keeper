@@ -62,7 +62,7 @@ const plans = [
     price: "29 900€",
     period: "TTC / an",
     monthly: "2 491€ / mois",
-    tagline: "Souveraineté totale · On-prem · Swarm autonome",
+    tagline: "Souveraineté totale · On-prem · Swarm supervisé",
     badge: "ENTERPRISE SOUVERAIN",
     badgeColor: "label-badge-cyan",
     highlight: false,

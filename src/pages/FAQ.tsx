@@ -41,7 +41,7 @@ const faqCategories = [
     questions: [
       {
         q: "Comment fonctionnent les 6 agents IA en mode supervisé ?",
-        a: "Le Swarm opère en pipeline séquentiel : Scout (détection OSINT/EASM) → Analyst (priorisation par score de risque IA) → DSI Go/No-Go (validation 1 clic ou délégation supervisée) → Executor (remédiation via scripts bash/PowerShell) → Verifier (contrôle post-action) → Vault (preuve cryptographique SHA-256). En mode délégation supervisée, zéro intervention humaine sur les patterns validés. En mode DSI Validation, chaque action attend votre approbation via notification push.",
+        a: "Le Swarm opère en pipeline séquentiel : Scout (détection OSINT/EASM) → Analyst (priorisation par score de risque IA) → DSI Go/No-Go (validation 1 clic ou délégation supervisée) → Executor (remédiation via scripts bash/PowerShell) → Verifier (contrôle post-action) → Vault (preuve cryptographique SHA-256). En mode délégation supervisée, les patterns validés sont traités automatiquement sans validation manuelle supplémentaire. En mode DSI Validation, chaque action attend votre approbation via notification push.",
       },
       {
         q: "Que se passe-t-il si l'IA commet une erreur de remédiation ?",

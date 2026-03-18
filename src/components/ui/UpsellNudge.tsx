@@ -62,7 +62,7 @@ const NUDGE_CONFIGS: Record<UpsellFeature, NudgeConfig> = {
   },
   proof_pack: {
     icon: Lock,
-    title: "Proof Packs certifiés — Plan Command",
+    title: "Proof Packs SHA-256 vérifiables — Plan Command",
     description: "Exportez vos preuves cryptographiques SHA-256 Merkle pour vos audits, assureurs et conseils d'administration.",
     gain: "Réduit le temps de préparation d'un audit de 80%",
     planRequired: "pro",
