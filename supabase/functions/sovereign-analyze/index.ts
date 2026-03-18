@@ -336,7 +336,7 @@ Génère un script bash/PowerShell de remédiation automatique si la vulnérabil
     const message = err instanceof Error ? err.message : "Erreur inconnue";
     console.error("sovereign-analyze fatal:", message);
     return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { buildCorsHeaders(req), "Content-Type": "application/json" },
+      status: 500, headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });
