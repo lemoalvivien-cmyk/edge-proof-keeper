@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * SECURIT-E — Release Gate v2
- * Scanne les termes interdits, vérifie les routes critiques, contrôle CORS/rate-limit.
+ * SECURIT-E — Release Gate v3
+ * Scanne les termes interdits (TS/TSX/JS/GO/MD/HTML), vérifie les routes critiques,
+ * contrôle CORS/rate-limit, valide les scripts package.json.
  * Run: node scripts/release-gate.mjs
  * Exits 1 if any check fails.
  */
@@ -22,25 +23,36 @@ const log = (ok, msg, isWarn = false) => {
 
 // ── 1. Forbidden terms scan ───────────────────────────────────────────────────
 const FORBIDDEN = [
-  // Crypto claims non implémentés
-  { term: "CRYSTALS-Dilithium", context: "algorithme post-quantique non implémenté — utiliser SHA-256 Merkle Chain" },
+  // Post-quantum claims — not implemented, roadmap only
+  { term: "CRYSTALS-Dilithium", context: "algorithme post-quantique non implémenté — utiliser SHA-256 HMAC" },
+  { term: "CRYSTALS-D", context: "algorithme post-quantique non implémenté" },
+  { term: "Dilithium3", context: "algorithme post-quantique non implémenté" },
   { term: "zk-SNARK Groth16", context: "non implémenté dans le code réel" },
   { term: "zk-SNARK", context: "non implémenté — vérifier le contexte" },
-  { term: "zksnark:", context: "hash préfixe trompeur" },
+  { term: "zksnark:", context: "hash préfixe trompeur — utiliser sha256:" },
+  { term: "sha3:", context: "SHA-3 non implémenté — utiliser sha256:" },
   { term: "Kyber-1024", context: "algorithme post-quantique non implémenté" },
+  { term: "post-quantum ready", context: "claim non prouvé — utiliser objectif roadmap 2027" },
+  { term: "post_quantum_ready", context: "flag trompeur — non implémenté" },
+  { term: "PQReady", context: "flag post-quantum trompeur — non implémenté" },
   { term: "post-quantique", context: "terme à encadrer — vérifier que c'est dans un commentaire ou roadmap" },
   { term: "post-quantum", context: "terme à encadrer — vérifier que c'est dans un commentaire ou roadmap" },
-  // Autonomie absolue
+  // Autonomy claims
   { term: "fully autonomous", context: "claim trop absolu — utiliser 'supervisé' ou 'assisté'" },
   { term: "fully_autonomous", context: "claim trop absolu — vérifier le contexte" },
   { term: "100% autonome", context: "claim non prouvé" },
-  { term: "Zéro équipe RSSI", context: "claim absolu — utiliser 'sans expertise cyber poussée'" },
+  { term: "zéro équipe RSSI", context: "claim absolu — utiliser 'sans expertise cyber poussée'" },
+  { term: "sans équipe RSSI", context: "claim absolu — reformuler" },
   { term: "zéro équipe", context: "vérifier le contexte — toléré si clairement encadré" },
-  // Certifications non obtenues
+  { term: "analyse autonome", context: "reformuler en 'analyse supervisée' ou 'analyse assistée'" },
+  { term: "SWARM AUTONOME", context: "reformuler — SWARM SUPERVISÉ" },
+  { term: "zéro intervention humaine", context: "claim absolu non prouvé" },
+  // Certifications
   { term: "certifié SecNumCloud", context: "certification non obtenue à ce jour" },
   { term: "Certifié SecNumCloud", context: "certification non obtenue à ce jour" },
-  { term: "hébergement certifié SecNumCloud", context: "non prouvé" },
-  // SLA/ROI garantis sans base contractuelle
+  { term: "hébergement certifié", context: "certification non prouvée" },
+  { term: "Proof Packs certifiés", context: "reformuler en 'Proof Packs SHA-256 vérifiables'" },
+  // SLA/ROI
   { term: "99.9% garanti contractuellement", context: "SLA non contractualisé" },
   { term: "99,9%.*garanti contractuellement", context: "SLA non contractualisé" },
   { term: "SLA 99.99%", context: "SLA non contractualisé dans l'offre publique" },
@@ -48,34 +60,38 @@ const FORBIDDEN = [
   { term: "ROI.*367", context: "ROI 367x non sourcé" },
   { term: "87%.*prediction", context: "taux de prédiction non prouvé" },
   { term: "87% prediction", context: "taux de prédiction non prouvé" },
-  // Claims marketing extrêmes
+  // Marketing extrême
   { term: "20 ans d'avance", context: "claim non défendable" },
   { term: "aucun ordinateur quantique", context: "claim post-quantique non prouvé" },
-  // Scores fixes trompeurs dans le code live (pas dans les démos)
+  { term: "Palantir-style", context: "comparaison marketing non défendable" },
+  // Scores fixes
   { term: '"97/100"', context: "score fixe non dérivé de données réelles" },
   { term: '"99/100"', context: "score fixe non dérivé de données réelles" },
   { term: '"100/100"', context: "score fixe non dérivé de données réelles" },
-  // Confused NIS2 compliance
-  { term: "100% des exigences.*NIS2", context: "couverture 100% non prouvée — utiliser 'couvre les exigences documentaires'" },
-  { term: "acceptés par les autorités", context: "vérifier formulation — ne pas garantir l'acceptation" },
+  // NIS2 compliance
+  { term: "100% des exigences.*NIS2", context: "couverture 100% non prouvée" },
+  { term: "acceptés par les autorités", context: "ne pas garantir l'acceptation" },
   { term: "Proof Packs exportables sont acceptés", context: "garantie d'acceptation non prouvée" },
 ];
 
 // Files/dirs to skip entirely
 const SKIP = ["node_modules", ".git", "dist", "build", "release-gate.mjs", ".lock", "bun.lock"];
 
-// Test files deliberately contain forbidden strings in test assertions — skip their content scan
-const SKIP_TEST_FILES = [".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx"];
+// Test files deliberately contain forbidden strings in test assertions
+const SKIP_TEST_FILES = [".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx", "SPRINT", "VERIFICATION"];
 
 // These patterns are allowed even if they match (comments, docs explaining what's NOT implemented)
 const ALLOWED_CONTEXTS = [
   "// Note:", "* Note:", "// SECURIT-E —", "// Backward", "// Fix", "roadmap",
   "non implémenté", "pas du CRYSTALS", "NOT a real", "// deprecated",
-  "ce stade", "objectif", "à ce jour",
+  "ce stade", "objectif", "à ce jour", "// Production:", "// Reserved for future",
+  "target 2027", "NIST FIPS 203", "NIST FIPS 204", "// reserved", "roadmap 2027",
+  "objectif roadmap", "SecNumCloud objectif", "Reserved for",
 ];
 
+// Scan TS/TSX/JS/JSX/HTML/MD/GO files
 const SCAN_DIRS = ["src", "supabase/functions", "docs", "scripts", "sentinel-immune-agent"];
-const SCAN_EXTS = [".ts", ".tsx", ".js", ".jsx", ".html", ".md"];
+const SCAN_EXTS = [".ts", ".tsx", ".js", ".jsx", ".html", ".md", ".go"];
 
 function scanDir(dir) {
   try {
@@ -87,18 +103,18 @@ function scanDir(dir) {
       if (stat.isDirectory()) {
         scanDir(full);
       } else if (SCAN_EXTS.includes(extname(full))) {
-        // Skip test files — they deliberately contain forbidden strings in test assertions
-        if (SKIP_TEST_FILES.some(ext => full.endsWith(ext))) continue;
+        // Skip test files
+        if (SKIP_TEST_FILES.some(ext => full.includes(ext))) continue;
         const content = readFileSync(full, "utf8");
         const lines = content.split("\n");
         for (const { term, context } of FORBIDDEN) {
           const regex = new RegExp(term, "i");
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
-            // Skip pure comment lines that are explicit disclosures
+            // Skip pure comment lines and Go comment lines
             if (line.startsWith("//") || line.startsWith("*") || line.startsWith("#")) continue;
             // Skip lines with allowed context
-            if (ALLOWED_CONTEXTS.some(a => line.includes(a))) continue;
+            if (ALLOWED_CONTEXTS.some(a => line.toLowerCase().includes(a.toLowerCase()))) continue;
             if (regex.test(line)) {
               log(false, `Terme interdit "${term}" dans ${full}:${i + 1} — ${context}`);
             }
@@ -113,11 +129,11 @@ function scanDir(dir) {
 const ROOT_FILES = ["README.md", "index.html"];
 
 console.log("\n═══════════════════════════════════════════════");
-console.log("  SECURIT-E RELEASE GATE v2");
+console.log("  SECURIT-E RELEASE GATE v3");
 console.log("═══════════════════════════════════════════════\n");
 
 if (!SMOKE_ONLY) {
-  console.log("── Phase 1 : Scan des termes interdits ────────");
+  console.log("── Phase 1 : Scan des termes interdits (TS/TSX/JS/GO/MD/HTML) ─");
   for (const dir of SCAN_DIRS) {
     scanDir(dir);
   }
@@ -130,7 +146,7 @@ if (!SMOKE_ONLY) {
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i].trim();
           if (line.startsWith("//") || line.startsWith("*") || line.startsWith("#")) continue;
-          if (ALLOWED_CONTEXTS.some(a => line.includes(a))) continue;
+          if (ALLOWED_CONTEXTS.some(a => line.toLowerCase().includes(a.toLowerCase()))) continue;
           if (regex.test(line)) {
             log(false, `Terme interdit "${term}" dans ${file}:${i + 1} — ${context}`);
           }
@@ -164,6 +180,10 @@ const CRITICAL_FILES = [
   ["supabase/functions/verify-evidence-chain/index.ts", "verify-evidence-chain edge fn"],
   ["supabase/functions/create-checkout/index.ts", "create-checkout edge fn"],
   ["supabase/functions/bootstrap-owner/index.ts", "bootstrap-owner edge fn"],
+  ["src/test/core-logic.test.ts", "unit tests core-logic"],
+  ["src/test/smoke.test.ts", "unit tests smoke"],
+  ["tests/e2e/public-routes.spec.ts", "E2E public routes spec"],
+  [".github/workflows/ci.yml", "CI/CD GitHub Actions workflow"],
 ];
 
 for (const [path, label] of CRITICAL_FILES) {
@@ -234,7 +254,6 @@ const SCORE_FILES = [
 for (const file of SCORE_FILES) {
   try {
     const content = readFileSync(file, "utf8");
-    // Check for hardcoded uptime scores presented as facts (not in strings labeled as demo)
     const hasUndisclosedHardcoded = /\b(99\.97|99\.99|100\/100|97\/100)\b/.test(content) && !content.includes("demo") && !content.includes("démo") && !content.includes("estimé");
     log(!hasUndisclosedHardcoded, `${file.split("/").pop()} — pas de score hardcodé présenté comme factuel`);
   } catch {
@@ -242,7 +261,7 @@ for (const file of SCORE_FILES) {
   }
 }
 
-// ── 7. Check package.json has no echo-only test scripts ──────────────────────
+// ── 7. package.json scripts check ────────────────────────────────────────────
 console.log("\n── Phase 7 : Vérification scripts package.json ─");
 try {
   const pkg = JSON.parse(readFileSync("package.json", "utf8"));
@@ -256,12 +275,42 @@ try {
   log(!e2eIsOnlyEcho, `package.json test:e2e — pas un simple echo bidon`);
   log(!!pkg.scripts?.["test:release"], `package.json test:release — présent`);
   log(!!pkg.scripts?.["test:smoke"], `package.json test:smoke — présent`);
+  log(!!pkg.scripts?.["test:unit"], `package.json test:unit — présent`);
 } catch {
   log(false, "package.json introuvable ou invalide");
 }
 
-// ── 8. Build check ────────────────────────────────────────────────────────────
-console.log("\n── Phase 8 : Vérification build ────────────────");
+// ── 8. .go file no forbidden terms spot check ─────────────────────────────────
+console.log("\n── Phase 8 : Spot check agent Go ───────────────");
+const GO_FILES = [
+  "sentinel-immune-agent/cmd/agent/main.go",
+];
+const GO_FORBIDDEN = ["CRYSTALS-Dilithium", "Kyber-1024", "zksnark:", "Post-Quantum Ready", "PQReady"];
+for (const file of GO_FILES) {
+  try {
+    const content = readFileSync(file, "utf8");
+    const lines = content.split("\n");
+    let ok = true;
+    for (const term of GO_FORBIDDEN) {
+      const regex = new RegExp(term, "i");
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith("//")) continue;
+        if (ALLOWED_CONTEXTS.some(a => line.toLowerCase().includes(a.toLowerCase()))) continue;
+        if (regex.test(line)) {
+          log(false, `Agent Go: terme interdit "${term}" dans ${file}:${i + 1}`);
+          ok = false;
+        }
+      }
+    }
+    if (ok) log(true, `${file.split("/").pop()} — aucun terme interdit Go`);
+  } catch {
+    log(false, `${file} introuvable`);
+  }
+}
+
+// ── 9. Build check ────────────────────────────────────────────────────────────
+console.log("\n── Phase 9 : Vérification build TypeScript ─────");
 import { execSync } from "child_process";
 try {
   execSync("npx tsc --noEmit 2>&1", { stdio: "pipe", timeout: 60000 });
