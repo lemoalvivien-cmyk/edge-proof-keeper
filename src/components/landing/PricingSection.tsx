@@ -47,7 +47,7 @@ const plans = [
       "6 Agents IA Swarm complets",
       "Self-healing autonome < 4h",
       "OSINT & EASM Signals continus",
-      "Evidence Vault post-quantique",
+      "Evidence Vault cryptographique (SHA-256 Merkle)",
       "Predictive Causality Engine",
       "RSSI Virtuel IA (brief mensuel)",
       "DSI Go/No-Go dashboard",
@@ -70,7 +70,7 @@ const plans = [
       "Swarm Mode fully autonomous",
       "Déploiement on-premise possible",
       "Agents IA personnalisés",
-      "zk-SNARK + lattice crypto avancé" → supprimé, remplacé:
+      "Preuves cryptographiques avancées (roadmap)",
       "Preuves cryptographiques avancées (roadmap)",
       "Predictive Causality Engine Pro",
       "SLA 99.99% garanti",
