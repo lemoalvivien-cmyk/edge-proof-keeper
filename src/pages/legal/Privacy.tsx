@@ -37,7 +37,7 @@ export default function Privacy() {
                 est responsable du traitement des données personnelles collectées via la plateforme.
               </p>
               <p className="text-muted-foreground mt-2">
-                <strong>Contact DPO :</strong> <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline">dpo@securit-e.fr</a>
+                <strong>Contact DPO :</strong> <a href="mailto:dpo@securit-e.com" className="text-primary hover:underline">dpo@securit-e.com</a>
               </p>
             </section>
 
