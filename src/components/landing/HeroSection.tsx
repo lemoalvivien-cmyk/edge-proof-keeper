@@ -318,7 +318,7 @@ export function HeroSection() {
                     <span className="font-mono font-bold text-primary">490€ / an</span>
                   </div>
                   <div className="mt-2 text-center">
-                    <span className="text-[10px] font-mono text-success/80">ROI estimé : × 367 la première année</span>
+                    <span className="text-[10px] font-mono text-success/80">ROI estimé (base : coût moyen incident cyber)</span>
                   </div>
                 </div>
               </div>
@@ -330,7 +330,7 @@ export function HeroSection() {
                 className="absolute -top-4 -right-4 glass-card px-3 py-1.5 flex items-center gap-1.5 rounded-xl border border-success/30 shadow-lg"
               >
                 <CheckCircle2 className="w-3 h-3 text-success" />
-                <span className="text-xs font-semibold">NIS2 Conforme ✓</span>
+                <span className="text-xs font-semibold">NIS2 Documenté ✓</span>
               </motion.div>
               <motion.div
                 animate={{ y: [4, -4, 4] }}
@@ -338,7 +338,7 @@ export function HeroSection() {
                 className="absolute -bottom-4 -left-4 glass-card px-3 py-1.5 flex items-center gap-1.5 rounded-xl border border-primary/30 shadow-lg"
               >
                 <Lock className="w-3 h-3 text-primary" />
-                <span className="text-xs font-semibold">Preuve post-quantique ✓</span>
+                <span className="text-xs font-semibold">Preuve SHA-256 ✓</span>
               </motion.div>
             </motion.div>
           </div>

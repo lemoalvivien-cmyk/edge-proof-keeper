@@ -19,9 +19,9 @@ const agents = [
   {
     id: "02",
     name: "Analyst Agent",
-    role: "Prédiction d'attaques à 90 jours",
-    description: "Corrèle les signaux, calcule les probabilités d'attaque, génère un plan de remédiation priorisé en langage business — pas en jargon technique.",
-    metric: "Prédiction à 87% de précision",
+    role: "Analyse prédictive de risques",
+    description: "Corrèle les signaux, calcule les probabilités de risque, génère un plan de remédiation priorisé en langage business — pas en jargon technique.",
+    metric: "Priorisation basée sur le risque réel",
     Icon: Brain,
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
