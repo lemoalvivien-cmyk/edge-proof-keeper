@@ -249,11 +249,11 @@ function PredictiveCausalityTab() {
 /* ── Evidence Vault Tab ── */
 function EvidenceVaultTab() {
   const proofs = [
-    { id: "PK-2841", action: "Port 8443 closure proof", hash: "0x7a4f...b2c1", algo: "CRYSTALS-Dilithium3", ts: "2026-03-13 14:22:47", status: "verified" },
-    { id: "PK-2840", action: "CVE-2025-0041 patch verification", hash: "0x3d9e...a7f2", algo: "zk-SNARK Groth16", ts: "2026-03-13 09:11:03", status: "verified" },
-    { id: "PK-2839", action: "Credential rotation audit trail", hash: "0xb1c4...2e8d", algo: "CRYSTALS-Dilithium3", ts: "2026-03-12 18:44:21", status: "verified" },
-    { id: "PK-2838", action: "NIS2 compliance snapshot Q1 2026", hash: "0x6f2a...c0d4", algo: "Lattice + SHA-3", ts: "2026-03-10 08:00:00", status: "verified" },
-    { id: "PK-2837", action: "Domain typosquat neutralization", hash: "0xd4c1...8e3a", algo: "zk-SNARK Groth16", ts: "2026-03-09 15:33:12", status: "verified" },
+    { id: "PK-2841", action: "Port 8443 closure proof", hash: "0x7a4f...b2c1", algo: "SHA-256 Merkle Chain", ts: "2026-03-13 14:22:47", status: "verified" },
+    { id: "PK-2840", action: "CVE-2025-0041 patch verification", hash: "0x3d9e...a7f2", algo: "SHA-256 Merkle Chain", ts: "2026-03-13 09:11:03", status: "verified" },
+    { id: "PK-2839", action: "Credential rotation audit trail", hash: "0xb1c4...2e8d", algo: "SHA-256 Merkle Chain", ts: "2026-03-12 18:44:21", status: "verified" },
+    { id: "PK-2838", action: "NIS2 compliance snapshot Q1 2026", hash: "0x6f2a...c0d4", algo: "SHA-256 Merkle Chain", ts: "2026-03-10 08:00:00", status: "verified" },
+    { id: "PK-2837", action: "Domain typosquat neutralization", hash: "0xd4c1...8e3a", algo: "SHA-256 Merkle Chain", ts: "2026-03-09 15:33:12", status: "verified" },
   ];
 
   return (
