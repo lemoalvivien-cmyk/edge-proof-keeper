@@ -33,6 +33,7 @@ import { generatePortfolioSummary } from '@/lib/api-client';
 import { LiveAgentDemo } from '@/components/demo/LiveAgentDemo';
 import { GuidedTour } from '@/components/onboarding/GuidedTour';
 import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
+import { WowPanel } from '@/components/dashboard/WowPanel';
 import { TrialModal } from '@/components/ui/TrialModal';
 import { useSubscription } from '@/hooks/useSubscription';
 import { OntologyView } from '@/components/ontology/OntologyView';
@@ -223,23 +224,28 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Vue Direction</h1>
-            <p className="text-muted-foreground">
-              Bienvenue{profile?.full_name ? `, ${profile.full_name}` : ''}. Voici l'état de votre posture cyber.
+            <h1 className="text-3xl font-bold tracking-tight">Cockpit Cyber</h1>
+            <p className="text-muted-foreground text-sm">
+              {profile?.full_name ? `${profile.full_name} — ` : ''}Centre de commandement souverain · 6 agents actifs
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {/* Always-visible "Lancer analyse" CTA */}
+            {(autoSeeding || pipelineRunning) && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-xs font-mono text-primary">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                {autoSeeding ? 'Initialisation…' : 'Analyse en cours…'}
+              </div>
+            )}
             <Button
               onClick={handleQuickPipeline}
               disabled={!organization?.id || pipelineRunning || autoSeeding}
-              className="gap-2 bg-primary hover:bg-primary/90"
+              className="gap-2 neon-glow font-bold"
               size="sm"
             >
               {pipelineRunning || autoSeeding
                 ? <Loader2 className="w-4 h-4 animate-spin" />
                 : <Zap className="w-4 h-4" />}
-              Lancer analyse immédiate
+              Lancer analyse 47s
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/technical')}>
               Vue Technique
@@ -248,84 +254,45 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Badges row */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex flex-wrap items-center gap-2"
-        >
-          <Badge className="bg-primary/10 text-primary border border-primary/20 gap-1.5">
-            <Sparkles className="w-3 h-3" />
-            Aha Moment en 47s — Analyse autonome immédiate
-          </Badge>
-          <Badge variant="outline" className="text-muted-foreground border-border gap-1.5">
-            <CheckCircle2 className="w-3 h-3" />
-            Pipeline de démonstration — preuves SHA-256 réelles
-          </Badge>
-          <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5 gap-1.5">
-            🇫🇷 Gouvernance cyber accessible aux PME/ETI
-          </Badge>
-          {subscription.trialActive && (
-            <Badge className="bg-warning/10 text-warning border border-warning/30 gap-1.5">
-              <Clock className="w-3 h-3" />
-              Essai 14j gratuit actif
-            </Badge>
-          )}
-          {!subscription.subscribed && !subscription.isLoading && (
-            <Badge
-              className="bg-accent/10 text-accent border border-accent/30 gap-1.5 cursor-pointer hover:bg-accent/20 transition-colors"
-              onClick={() => setTrialModalOpen(true)}
-            >
-              <CreditCard className="w-3 h-3" />
-              Essai 14 jours gratuit — Paiement Stripe sécurisé
-            </Badge>
-          )}
-          {autoSeeding && (
-            <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5 gap-1.5">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              Initialisation données démo…
-            </Badge>
-          )}
-        </motion.div>
-
-        {/* Trial upgrade banner — only for non-subscribers */}
+        {/* Upgrade banner — only for non-subscribers */}
         {!subscription.subscribed && !subscription.isLoading && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-primary/30 bg-primary/5 p-4 flex items-center justify-between flex-wrap gap-3"
+            className="rounded-xl border border-accent/25 bg-gradient-to-r from-primary/5 to-accent/5 p-3.5 flex items-center justify-between flex-wrap gap-3"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center">
-                <Zap className="w-4 h-4 text-primary" />
+              <div className="w-8 h-8 rounded-lg bg-accent/15 border border-accent/25 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-accent" />
               </div>
               <div>
-                <p className="font-semibold text-foreground text-sm">Essai 14 jours gratuit — Paiement Stripe sécurisé</p>
-                <p className="text-xs text-muted-foreground">Starter 490 € / an · Pro 6 900 € / an · Satisfait ou remboursé 30j</p>
+                <p className="font-semibold text-foreground text-sm">Activez l'accès complet — Essai 14j gratuit</p>
+                <p className="text-xs text-muted-foreground">Starter 490 € / an · Annulation libre · Données souveraines 🇫🇷</p>
               </div>
             </div>
             <Button
               size="sm"
-              className="gap-2 neon-glow font-bold"
+              className="gap-2 font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
               onClick={() => setTrialModalOpen(true)}
             >
               <CreditCard className="w-4 h-4" />
-              Passer au plan payant 490 €
-              <ArrowRight className="w-3.5 h-3.5" />
+              Démarrer — 490 €/an
             </Button>
           </motion.div>
         )}
 
+        {/* ══ WOW PANEL — Premier écran, moment de vérité ══ */}
+        <WowPanel
+          findingsCount={findingCounts?.total ?? 0}
+          criticalCount={findingCounts?.critical ?? 0}
+          highCount={findingCounts?.high ?? 0}
+          riskScore={riskScore}
+          topFindings={topFindings}
+          onLaunchPipeline={handleQuickPipeline}
+          pipelineRunning={pipelineRunning || autoSeeding}
+          runsCount={pipelineProof?.runs ?? 0}
+        />
 
-        {/* Empty state if no data at all */}
-        {!hasData && !autoSeeding && (
-          <DashboardEmptyState
-            onLaunchDemo={() => navigate('/demo')}
-            onLaunchAnalysis={handleQuickPipeline}
-            isLoading={pipelineRunning}
-          />
-        )}
 
         {/* Key Metrics */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
