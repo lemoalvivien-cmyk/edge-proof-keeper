@@ -34,6 +34,8 @@ import { LiveAgentDemo } from '@/components/demo/LiveAgentDemo';
 import { GuidedTour } from '@/components/onboarding/GuidedTour';
 import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
 import { WowPanel } from '@/components/dashboard/WowPanel';
+import { PlanValueTracker } from '@/components/dashboard/PlanValueTracker';
+import { UpsellNudge } from '@/components/ui/UpsellNudge';
 import { TrialModal } from '@/components/ui/TrialModal';
 import { useSubscription } from '@/hooks/useSubscription';
 import { OntologyView } from '@/components/ontology/OntologyView';
