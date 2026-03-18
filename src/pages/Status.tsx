@@ -291,7 +291,7 @@ export default function Status() {
           <div className="flex items-center justify-center gap-2">
             <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
             <span className="text-xs text-muted-foreground">
-              Hébergement souverain France 🇫🇷 · Certifié SecNumCloud
+              Hébergement souverain France 🇫🇷 · SecNumCloud objectif roadmap 2026
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
