@@ -164,7 +164,7 @@ export function OntologyView() {
               <Network className="h-5 w-5 text-primary" />
               Ontologie Souveraine
               <Badge variant="outline" className="text-xs border-primary/30 text-primary">
-                🧠 Palantir-style
+                🧠 Cartographie des risques
               </Badge>
             </CardTitle>
             <CardDescription>
