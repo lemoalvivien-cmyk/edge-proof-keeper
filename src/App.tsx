@@ -184,7 +184,11 @@ const App = () => (
                   <Route path="/plans" element={<ProtectedRoute requiredRoles={['admin']}><PlansAddons /></ProtectedRoute>} />
                   <Route path="/admin-readiness" element={<ProtectedRoute requiredRoles={['admin']}><AdminReadiness /></ProtectedRoute>} />
                   <Route path="/admin/leads" element={<ProtectedRoute requiredRoles={['admin']}><AdminLeads /></ProtectedRoute>} />
+                  <Route path="/admin/access-codes" element={<ProtectedRoute requiredRoles={['admin']}><AdminAccessCodes /></ProtectedRoute>} />
                   <Route path="/settings/revenue" element={<ProtectedRoute requiredRoles={['admin']}><RevenueSettings /></ProtectedRoute>} />
+
+                  {/* Activate premium access code — requires auth, no paywall */}
+                  <Route path="/activate" element={<ProtectedRoute><Activate /></ProtectedRoute>} />
 
                   {/* Protected + paywalled app routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><PaywallGate><Dashboard /></PaywallGate></ProtectedRoute>} />
