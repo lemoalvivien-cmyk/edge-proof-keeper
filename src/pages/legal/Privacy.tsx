@@ -130,7 +130,7 @@ export default function Privacy() {
                 <li><strong>Limitation :</strong> restreindre le traitement</li>
               </ul>
               <p className="text-muted-foreground mt-2">
-                Pour exercer ces droits : <a href="mailto:dpo@securit-e.fr" className="text-primary hover:underline"><strong>dpo@securit-e.fr</strong></a>
+                Pour exercer ces droits : <a href="mailto:dpo@securit-e.com" className="text-primary hover:underline"><strong>dpo@securit-e.com</strong></a>
               </p>
             </section>
 
