@@ -6,17 +6,17 @@ const vaultFeatures = [
   {
     icon: Database,
     title: "Coffre-fort de preuves immuable",
-    description: "Chaque action des agents est automatiquement horodatée et signée avec CRYSTALS-Dilithium — l'algorithme post-quantique standardisé par le NIST. Inviolable même par un ordinateur quantique.",
-    highlight: "Post-Quantum Ready",
+    description: "Chaque action des agents est automatiquement horodatée et enchaînée dans une Merkle Tree SHA-256. Toute tentative de falsification est instantanément détectable par recalcul du hash.",
+    highlight: "Cryptographiquement vérifiable",
     color: "text-primary",
     glow: "hsl(185 100% 52%)",
     badge: "label-badge-cyan",
-    proof: "Résiste aux attaques quantiques",
+    proof: "SHA-256 Merkle Chain · Immuable",
   },
   {
     icon: Hash,
-    title: "Chaîne cryptographique SHA-3 Merkle",
-    description: "Intégrité vérifiable par une chaîne de hashes enchaînés. Toute tentative de falsification — même d'un seul bit — est instantanément détectée et signalée.",
+    title: "Chaîne SHA-256 Merkle enchaînée",
+    description: "Intégrité vérifiable par une chaîne de hashes enchaînés (séquence + hash précédent). Toute modification — même d'un seul bit — invalide toute la chaîne et est détectée immédiatement.",
     highlight: "Inviolable",
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
@@ -26,19 +26,19 @@ const vaultFeatures = [
   {
     icon: FileCheck,
     title: "Proof Packs exportables NIS2/RGPD",
-    description: "Exportez des packs de preuves signés numériquement en 10 minutes. Structurés pour être directement opposables aux régulateurs (ANSSI, CNIL), assureurs et auditeurs.",
-    highlight: "Opposable réglementairement",
+    description: "Exportez des packs de preuves signés numériquement. Structurés pour être présentables aux régulateurs (ANSSI, CNIL), assureurs et auditeurs. Vérifiables indépendamment.",
+    highlight: "Présentable réglementairement",
     color: "text-success",
     glow: "hsl(158 80% 46%)",
     badge: "label-badge-green",
-    proof: "ANSSI · CNIL · Assureurs · Tribunaux",
+    proof: "ANSSI · CNIL · Assureurs · Auditeurs",
   },
 ];
 
 const liveProofs = [
-  { id: "PK-2841", action: "Port 8443 — fermeture prouvée", algo: "CRYSTALS-Dilithium3", ts: "2026-03-13 14:22:47" },
+  { id: "PK-2841", action: "Port 8443 — fermeture prouvée", algo: "SHA-256 Merkle Chain", ts: "2026-03-13 14:22:47" },
   { id: "PK-2840", action: "CVE-2025-0041 — patch vérifié", algo: "SHA-256 Merkle Chain", ts: "2026-03-13 09:11:03" },
-  { id: "PK-2839", action: "Rotation credentials — auditée", algo: "CRYSTALS-Dilithium3", ts: "2026-03-12 18:44:21" },
+  { id: "PK-2839", action: "Rotation credentials — auditée", algo: "SHA-256 Merkle Chain", ts: "2026-03-12 18:44:21" },
 ];
 
 export function EvidenceSection() {
@@ -60,15 +60,15 @@ export function EvidenceSection() {
           >
             <div className="label-badge label-badge-cyan mx-auto w-fit">
               <Lock className="w-3 h-3" />
-              Evidence Vault Post-Quantique
+              Evidence Vault — Preuves cryptographiques
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               Vos preuves de conformité,{" "}
-              <span className="text-gradient">inviolables pour toujours</span>
+              <span className="text-gradient">cryptographiquement vérifiables</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Chaque action des agents est prouvée cryptographiquement et archivée de manière immuable.
-              Votre dossier NIS2/RGPD est prêt à être présenté en 10 minutes.
+              Chaque action est prouvée par une chaîne SHA-256 immuable et archivée automatiquement.
+              Votre dossier NIS2/RGPD est prêt à être présenté en quelques minutes.
             </p>
           </motion.div>
 
@@ -120,7 +120,7 @@ export function EvidenceSection() {
                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
                   <span className="text-[10px] font-mono text-muted-foreground">EVIDENCE VAULT · LIVE</span>
                 </div>
-                <span className="label-badge label-badge-cyan text-[9px]">POST-QUANTUM SECURED</span>
+                <span className="label-badge label-badge-cyan text-[9px]">SHA-256 MERKLE CHAIN</span>
               </div>
 
               <div className="p-3 rounded-xl bg-secondary/30 border border-border/50">
@@ -162,7 +162,7 @@ export function EvidenceSection() {
 
               {/* Compliance badges */}
               <div className="pt-3 border-t border-border/40">
-                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">Opposable à</div>
+                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">Présentable à</div>
                 <div className="flex flex-wrap gap-2">
                   {["ANSSI", "CNIL", "NIS2", "RGPD", "ISO 27001", "Assureurs cyber"].map((b) => (
                     <span key={b} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/8 border border-primary/20 text-primary/80 font-mono">
@@ -183,10 +183,10 @@ export function EvidenceSection() {
           >
             <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-muted-foreground">
               {[
-                { icon: Lock, label: "CRYSTALS-Dilithium" },
+                { icon: Lock, label: "SHA-256 Merkle Chain" },
                 { icon: Shield, label: "Conforme RGPD" },
                 { icon: Link2, label: "NIS2 Ready" },
-                { icon: Cpu, label: "Self-Healing" },
+                { icon: Cpu, label: "Automatisation supervisée" },
                 { icon: Activity, label: "Audit Trail complet" },
                 { icon: () => <span className="text-base">🇫🇷</span>, label: "Hébergé en France" },
               ].map((item, i) => (
