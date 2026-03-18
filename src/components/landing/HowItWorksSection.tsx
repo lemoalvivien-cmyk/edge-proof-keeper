@@ -29,7 +29,7 @@ const STEPS = [
     glowAlpha: "hsl(258 90% 66% / 0.15)",
     badge: "ANALYSE IA",
     badgeColor: "label-badge-purple",
-    impact: "ROI remédiation : 34× vs exploit",
+    impact: "Analyse risque/impact business",
   },
   {
     time: "23s",
@@ -68,7 +68,7 @@ const STEPS = [
     glowAlpha: "hsl(185 100% 52% / 0.15)",
     badge: "PREUVE ✓",
     badgeColor: "label-badge-cyan",
-    impact: "Evidence NIS2 : certifiée",
+    impact: "Evidence NIS2 : archivée et vérifiable",
   },
 ];
 
@@ -189,7 +189,7 @@ function AutoPlayTimeline({ isInView }: { isInView: boolean }) {
           <Shield className="w-5 h-5 text-success flex-shrink-0" />
           <div>
             <p className="text-xs font-bold text-success">Cycle complet — 47 secondes</p>
-            <p className="text-[10px] text-muted-foreground font-mono">Preuve NIS2 exportable · Zéro intervention humaine</p>
+            <p className="text-[10px] text-muted-foreground font-mono">Preuve NIS2 exportable · Supervision Go/No-Go validée</p>
           </div>
         </motion.div>
       )}
@@ -330,7 +330,7 @@ export function HowItWorksSection() {
                   Tester la démo interactive complète
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
-                <p className="text-center text-xs text-muted-foreground mt-2 font-mono">
+              <p className="text-center text-xs text-muted-foreground mt-2 font-mono">
                   Données démo réalistes · Preuves SHA-256 réelles · Aucune installation
                 </p>
               </motion.div>
@@ -354,20 +354,20 @@ export function HowItWorksSection() {
                   <span className="text-[10px] font-mono text-muted-foreground mx-3">securit-e.com — Swarm Intelligence</span>
                   <div className="ml-auto flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                    <span className="text-[9px] font-mono text-success">AUTONOMOUS · 6/6</span>
+                    <span className="text-[9px] font-mono text-success">DÉMO · 6 AGENTS</span>
                   </div>
                 </div>
 
                 <div className="p-5">
-                  {/* Top KPIs */}
+                  {/* Top KPIs — données démo illustratives */}
                   <div className="grid grid-cols-3 gap-2 mb-5">
                     {[
-                      { label: "Score", value: "87/100", color: "text-success" },
-                      { label: "Findings", value: "9 open", color: "text-warning" },
-                      { label: "Vault", value: "2 841", color: "text-primary" },
+                      { label: "Score démo", value: "→ vos données", color: "text-success" },
+                      { label: "Findings", value: "démo : 9", color: "text-warning" },
+                      { label: "Vault", value: "démo : 2 841", color: "text-primary" },
                     ].map((kpi, i) => (
                       <div key={i} className="text-center p-2.5 rounded-xl bg-muted/20 border border-border/40">
-                        <div className={`text-lg font-bold font-mono ${kpi.color}`}>{kpi.value}</div>
+                        <div className={`text-sm font-bold font-mono ${kpi.color}`}>{kpi.value}</div>
                         <div className="text-[9px] text-muted-foreground mt-0.5">{kpi.label}</div>
                       </div>
                     ))}

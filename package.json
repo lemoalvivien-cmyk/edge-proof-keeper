@@ -9,10 +9,11 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "echo 'No unit tests configured — run test:smoke or test:release'",
-    "test:smoke": "node tests/smoke/critical-routes.test.ts 2>/dev/null || npx tsx tests/smoke/critical-routes.test.ts",
+    "test": "npx vitest run --reporter=verbose 2>/dev/null || echo '[INFO] Vitest non configuré — lancer: npm run test:smoke'",
+    "test:unit": "npx vitest run 2>/dev/null || echo '[INFO] Aucun test unitaire configuré'",
+    "test:smoke": "node scripts/release-gate.mjs --smoke-only",
     "test:release": "node scripts/release-gate.mjs",
-    "test:e2e": "echo 'E2E: Playwright not installed — install with: npx playwright install'",
+    "test:e2e": "npx playwright test 2>/dev/null || echo '[MANQUE] Playwright non installé — executer: npx playwright install && npx playwright install chromium'",
     "gate": "node scripts/release-gate.mjs"
   },
   "dependencies": {

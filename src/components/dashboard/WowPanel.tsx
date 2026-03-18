@@ -113,9 +113,10 @@ export function WowPanel({
   const [cycleProgress, setCycleProgress] = useState(0);
   const cycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Increment vault counter slowly
+// Fix WowPanel: vault counter should not silently increment as if live
+  // Increment vault counter slowly — DEMO MODE only
   useEffect(() => {
-    const t = setInterval(() => setVaultCount(v => v + Math.floor(Math.random() * 2)), 8000);
+    const t = setInterval(() => setVaultCount(v => v + 1), 30000); // 1 per 30s — clearly demo pace
     return () => clearInterval(t);
   }, []);
 

@@ -1,8 +1,8 @@
 # Securit-E Edge Agent
 
-> Sidecar Go ultra-léger &lt;50Mo — WireGuard + mTLS + post-quantum crypto (CRYSTALS-Dilithium3)
+> Sidecar Go ultra-léger <50Mo — WireGuard + mTLS
 > 
-> Pilote les 6 skills OpenClaw (fix_port, rotate_creds, close_domain, patch_vuln, notify_rollback, swarm_collaborate)
+> Pilote les 6 skills OpenClaw supervisés (fix_port, rotate_creds, close_domain, patch_vuln, notify_rollback, swarm_collaborate)
 
 ## Démarrage rapide
 
@@ -27,34 +27,37 @@ sentinel-immune-agent/
 │   │   ├── patch_vuln.go          # Patcher CVE automatiquement
 │   │   ├── notify_rollback.go     # Notifier + rollback en cas d'échec
 │   │   └── swarm_collaborate.go   # Intelligence anonymisée inter-clients
-│   ├── crypto/dilithium.go        # CRYSTALS-Dilithium3 signing
+│   ├── crypto/signing.go          # Signature SHA-256 des preuves d'exécution
 │   └── vault/local_cache.go       # Cache local Evidence Vault
 ├── config.example.yaml
 └── README.md
 ```
 
-## Architecture Swarm
+## Architecture
 
 ```mermaid
 graph LR
-    A[Swarm Bus<br/>Kyber-1024 encrypted] -->|Skill invocation| B[Securit-E Edge Agent<br/>Go sidecar]
-    B -->|mTLS WireGuard| C[fix_port]
-    B -->|mTLS WireGuard| D[rotate_creds]
-    B -->|mTLS WireGuard| E[patch_vuln]
-    B -->|mTLS WireGuard| F[close_domain]
-    B -->|mTLS WireGuard| G[notify_rollback]
-    B -->|mTLS WireGuard| H[swarm_collaborate]
+    A[Securit-E Platform] -->|Skill invocation mTLS| B[Securit-E Edge Agent<br/>Go sidecar]
+    B -->|WireGuard| C[fix_port]
+    B -->|WireGuard| D[rotate_creds]
+    B -->|WireGuard| E[patch_vuln]
+    B -->|WireGuard| F[close_domain]
+    B -->|WireGuard| G[notify_rollback]
+    B -->|WireGuard| H[swarm_collaborate]
     C --> I[Evidence Vault]
     D --> I
     E --> I
     F --> I
     G --> I
     H --> I
-    I -->|CRYSTALS-Dilithium3 sign| J[Proof Pack zk-SNARK]
-    J -->|NIS2 export| K[Regulateur / Assureur / Juge]
+    I -->|SHA-256 Merkle entry| J[Proof Pack]
+    J -->|NIS2 export| K[Régulateur / Assureur / Juge]
 ```
 
-## Cycle complet (47 secondes)
+## Cycle complet (47 secondes — mesuré en conditions de laboratoire)
+
+> **Note de transparence** : Ce cycle est une démonstration sur périmètre contrôlé.
+> En production, les délais dépendent de votre infrastructure et des validations humaines requises.
 
 ```mermaid
 sequenceDiagram
@@ -64,12 +67,12 @@ sequenceDiagram
     participant Verifier as Verifier Agent
     participant Vault as Evidence Vault
 
-    Executor->>Edge: Skill invocation (Kyber-1024 encrypted)
-    Edge->>Edge: Dilithium3 signature verification
-    Edge->>Skill: Execute skill(input)
-    Skill->>Vault: Pre-action intent hash
+    Executor->>Edge: Skill invocation (mTLS authenticated)
+    Edge->>Edge: JWT verification + tenant validation
+    Edge->>Skill: Execute skill(input) — après Go/No-Go DSI
+    Skill->>Vault: Pre-action intent hash (SHA-256)
     Skill->>Skill: Execute remediation
-    Skill->>Vault: Post-action zk-SNARK proof
+    Skill->>Vault: Post-action proof hash (SHA-256 Merkle)
     Skill->>Edge: SkillResult{success, proof_hash}
     Edge->>Executor: Execution confirmed
     Edge->>Verifier: Trigger verification
@@ -94,15 +97,10 @@ agent:
     - notify_rollback
     - swarm_collaborate
 
-crypto:
-  algorithm: "CRYSTALS-Dilithium3"
-  zk_backend: "groth16"
-  post_quantum: true
-
-self_healing:
-  max_auto_remediation: 5
-  require_dsi_approval: true    # false = fully autonomous mode
+remediation:
+  require_dsi_approval: true    # Toujours true en production — mode supervisé
   rollback_timeout_hours: 4
+  max_auto_remediation: 5
 ```
 
 ## Build & Deploy
@@ -129,13 +127,11 @@ docker run -d \
 
 - **WireGuard** : tunnel chiffré Curve25519 pour tout le trafic agent
 - **mTLS** : authentification mutuelle TLS 1.3 entre agent et platform
-- **CRYSTALS-Dilithium3** : signature post-quantique NIST standardisée sur chaque skill call
-- **Kyber-1024** : échange de clés post-quantique sur le Swarm Bus
-- **zk-SNARK Groth16** : preuve à divulgation nulle de chaque action de remédiation
-- Rollback automatique si vérification échoue (timeout 4h)
-- Aucune clé privée ne quitte l'agent (principe Zero-Knowledge)
+- **SHA-256 Merkle Chain** : chaque skill call signe une entrée immuable dans l'Evidence Vault
+- **Rollback automatique** si vérification échoue (timeout 4h)
+- Validation Go/No-Go DSI requise pour toute action sensible en production
 
-## Skills disponibles
+## Skills disponibles (mode supervisé)
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
@@ -144,8 +140,8 @@ docker run -d \
 | `close_domain` | Executor | Sinkhole/block domaine typosquat ou C2 |
 | `patch_vuln` | Executor | Apply OS/application patch pour CVE ciblé |
 | `notify_rollback` | Verifier | Rollback + notification stakeholders sur échec |
-| `swarm_collaborate` | Swarm | Partage anonymisé de TTP avec le Swarm inter-clients |
+| `swarm_collaborate` | Swarm | Partage anonymisé de TTP avec le réseau inter-clients |
 
 ---
 
-*Securit-E Edge Agent — Souveraineté Numérique France 🇫🇷 — Post-Quantum Ready*
+*Securit-E Edge Agent — Souveraineté Numérique France 🇫🇷*

@@ -225,9 +225,9 @@ export function HeroSection() {
               {/* Live stats strip */}
               <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
                 {[
-                  { v: "47s", l: "Détection → preuve", c: "text-primary" },
-                  { v: "0", l: "Équipe cyber requise", c: "text-success" },
-                  { v: "10M€", l: "Amende NIS2 max évitée", c: "text-warning" },
+                  { v: "47s", l: "Cycle lab démontré", c: "text-primary" },
+                  { v: "6", l: "Agents supervisés IA", c: "text-success" },
+                  { v: "10M€", l: "Amende NIS2 max", c: "text-warning" },
                 ].map((s, i) => (
                   <div key={i} className="text-center p-3 rounded-xl glass-card border border-border/60">
                     <div className={`text-xl font-bold font-mono ${s.c}`}>{s.v}</div>
@@ -264,34 +264,35 @@ export function HeroSection() {
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Score Gouvernance Cyber</div>
-                      <div className="text-4xl font-bold font-mono text-gradient neon-text mt-1">87<span className="text-lg text-muted-foreground">/100</span></div>
+                      <div className="text-4xl font-bold font-mono text-gradient neon-text mt-1">— <span className="text-lg text-muted-foreground font-normal">vos données</span></div>
                     </div>
                     <div className="text-right">
                       <div className="text-[10px] text-muted-foreground">Preuves vault</div>
                       <div className="text-xl font-bold font-mono text-primary"><ThreatCounter /></div>
-                      <div className="text-[9px] text-muted-foreground font-mono">archivées · immuables</div>
+                      <div className="text-[9px] text-muted-foreground font-mono">démo · SHA-256</div>
                     </div>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: "87%" }}
+                      animate={{ width: "60%" }}
                       transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
                       className="h-full rounded-full"
                       style={{ background: "linear-gradient(90deg, hsl(var(--neon-cyan)), hsl(var(--neon-blue)))" }}
                     />
                   </div>
+                  <div className="text-[9px] text-muted-foreground/60 font-mono mt-1.5 text-right">Démo — vos données afficheront votre score réel</div>
                 </div>
 
                 {/* Cycle progression */}
                 <div className="p-3 rounded-xl bg-secondary/20 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-muted-foreground">CYCLE EN COURS — SWARM AUTONOME</span>
+                    <span className="font-mono text-muted-foreground">CYCLE DÉMO — DÉTECTION → PREUVE</span>
                     <motion.span
                       animate={{ opacity: [1, 0.4, 1] }}
                       transition={{ duration: 1, repeat: Infinity }}
                       className="text-primary font-mono font-bold"
-                    >⏱ 47s</motion.span>
+                    >⏱ ~47s lab</motion.span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
                     <motion.div
@@ -310,7 +311,7 @@ export function HeroSection() {
                 {/* ROI bottom strip */}
                 <div className="pt-3 border-t border-border/40">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Coût moyen évité par an</span>
+                    <span className="text-muted-foreground">Coût moyen incident cyber (source CESIN)</span>
                     <span className="font-mono font-bold text-success">≥ 180 000€</span>
                   </div>
                   <div className="flex items-center justify-between text-xs mt-1">
