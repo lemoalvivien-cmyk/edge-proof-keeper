@@ -127,12 +127,12 @@ export function EvidenceSection() {
                 <div className="text-[10px] font-mono text-muted-foreground mb-2 uppercase tracking-wider">Statistiques du vault</div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="text-center">
-                    <div className="text-2xl font-bold font-mono text-primary">2 841</div>
-                    <div className="text-[9px] text-muted-foreground">Preuves archivées</div>
+                    <div className="text-2xl font-bold font-mono text-primary">Vault</div>
+                    <div className="text-[9px] text-muted-foreground">SHA-256 Merkle Chain</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold font-mono text-success">100%</div>
-                    <div className="text-[9px] text-muted-foreground">Intégrité vérifiée</div>
+                    <div className="text-2xl font-bold font-mono text-success">Chain ✓</div>
+                    <div className="text-[9px] text-muted-foreground">Intégrité vérifiable</div>
                   </div>
                 </div>
               </div>
