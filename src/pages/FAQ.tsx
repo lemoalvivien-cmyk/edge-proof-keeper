@@ -81,7 +81,7 @@ const faqCategories = [
       },
       {
         q: "Puis-je tester avant de payer ?",
-        a: "Oui. L'essai gratuit 14 jours donne accès à la totalité des fonctionnalités Pro : 6 agents IA, Evidence Vault, rapports, self-healing, ontologie et export Proof Pack. Aucune carte bancaire requise. À la fin de l'essai, vous choisissez votre plan ou vos données sont conservées 30 jours supplémentaires.",
+        a: "Oui. L'essai 14 jours donne accès à la totalité des fonctionnalités. Une carte bancaire est requise pour activer l'essai Stripe — annulation libre à tout moment avant la fin des 14 jours. À la fin de l'essai, si vous ne souhaitez pas continuer, vous pouvez annuler et vos données sont conservées 30 jours supplémentaires.",
       },
     ],
   },
