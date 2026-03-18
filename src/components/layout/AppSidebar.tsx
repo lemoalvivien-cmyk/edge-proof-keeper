@@ -42,6 +42,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
 const mainNavItems = [
+  { title: 'Cockpit Exécutif', href: '/executive', icon: Gauge },
   { title: 'Dashboard Immune', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Vue Technique', href: '/dashboard/technical', icon: Shield },
   { title: 'Risques Prédictifs', href: '/risks', icon: AlertTriangle },

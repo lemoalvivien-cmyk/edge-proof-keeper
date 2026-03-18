@@ -73,6 +73,7 @@ const RevenueSettings = lazy(() => import("./pages/RevenueSettings"));
 const PlatformHealth = lazy(() => import("./pages/PlatformHealth"));
 const AdminReadiness = lazy(() => import("./pages/AdminReadiness"));
 const AdminLeads = lazy(() => import("./pages/AdminLeads"));
+const ExecutiveCockpit = lazy(() => import("./pages/ExecutiveCockpit"));
 const AdminAccessCodes = lazy(() => import("./pages/AdminAccessCodes"));
 const ApiTest = lazy(() => import("./pages/ApiTest"));
 const Activate = lazy(() => import("./pages/Activate"));
@@ -191,6 +192,7 @@ const App = () => (
                   <Route path="/activate" element={<ProtectedRoute><Activate /></ProtectedRoute>} />
 
                   {/* Protected + paywalled app routes */}
+                  <Route path="/executive" element={<ProtectedRoute><PaywallGate><ExecutiveCockpit /></PaywallGate></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><PaywallGate><Dashboard /></PaywallGate></ProtectedRoute>} />
                   <Route path="/dashboard/technical" element={<ProtectedRoute><PaywallGate><DashboardTechnical /></PaywallGate></ProtectedRoute>} />
                   <Route path="/assets" element={<ProtectedRoute><PaywallGate><Assets /></PaywallGate></ProtectedRoute>} />
