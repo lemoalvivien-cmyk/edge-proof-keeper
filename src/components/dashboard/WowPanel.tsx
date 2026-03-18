@@ -326,9 +326,9 @@ export function WowPanel({
               })}
 
               <div className="pt-1 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground font-mono">
-                  Agents IA en charge des remédiations automatiquement
-                </span>
+              <span className="text-xs text-muted-foreground font-mono">
+                Agents IA supervisés — validation Go/No-Go requise
+              </span>
                 <Button
                   size="sm"
                   variant="ghost"
