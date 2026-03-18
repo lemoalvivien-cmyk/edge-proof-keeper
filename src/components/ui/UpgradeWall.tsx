@@ -143,7 +143,7 @@ export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
             <div className="text-3xl font-black mb-0.5">6 900€<span className="text-sm font-normal text-muted-foreground">/an</span></div>
             <p className="text-xs text-muted-foreground mb-4">575€ / mois · équivaut à 5,75% d'un RSSI</p>
             <ul className="space-y-1.5 text-xs text-muted-foreground flex-1 mb-5">
-              {["6 Agents IA autonomes 24/7", "Self-healing < 4h SLA", "RSSI Virtuel IA — brief CODIR", "Evidence post-quantique", "OSINT & EASM continu"].map((f, i) => (
+              {["6 Agents IA supervisés 24/7", "Remédiation assistée < 4h", "RSSI Virtuel IA — brief CODIR", "Evidence Vault SHA-256", "OSINT & EASM continu"].map((f, i) => (
                 <li key={i} className="flex items-center gap-1.5"><Check className="w-3 h-3 text-success flex-shrink-0" />{f}</li>
               ))}
             </ul>
