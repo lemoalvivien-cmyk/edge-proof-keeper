@@ -51,9 +51,9 @@ const AGENT_TIMELINE = [
 ];
 
 const VAULT_ENTRIES = [
-  { id: 'PK-2841', action: 'Port closure proof', hash: '7a4f...b2c1', algo: 'CRYSTALS-Dilithium3', ts: '14:22:47' },
-  { id: 'PK-2840', action: 'CVE patch verified', hash: '3d9e...a7f2', algo: 'zk-SNARK Groth16', ts: '09:11:03' },
-  { id: 'PK-2839', action: 'Credential rotation', hash: 'b1c4...2e8d', algo: 'CRYSTALS-Dilithium3', ts: '18:44:21' },
+  { id: 'PK-2841', action: 'Fermeture port 8443 — prouvée', hash: '7a4f...b2c1', algo: 'CRYSTALS-Dilithium3', ts: '14:22:47' },
+  { id: 'PK-2840', action: 'CVE-2025-0041 — patch vérifié', hash: '3d9e...a7f2', algo: 'SHA-256 Merkle Chain', ts: '09:11:03' },
+  { id: 'PK-2839', action: 'Rotation credentials — auditée', hash: 'b1c4...2e8d', algo: 'CRYSTALS-Dilithium3', ts: '18:44:21' },
 ];
 
 function AnimatedScore({ target }: { target: number }) {
@@ -326,7 +326,7 @@ export function WowPanel({
 
               <div className="pt-1 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground font-mono">
-                  Agents IA prenant en charge les remédations automatiquement
+                  Agents IA en charge des remédiations automatiquement
                 </span>
                 <Button
                   size="sm"

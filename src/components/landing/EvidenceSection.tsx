@@ -37,7 +37,7 @@ const vaultFeatures = [
 
 const liveProofs = [
   { id: "PK-2841", action: "Port 8443 — fermeture prouvée", algo: "CRYSTALS-Dilithium3", ts: "2026-03-13 14:22:47" },
-  { id: "PK-2840", action: "CVE-2025-0041 — patch vérifié", algo: "zk-SNARK Groth16", ts: "2026-03-13 09:11:03" },
+  { id: "PK-2840", action: "CVE-2025-0041 — patch vérifié", algo: "SHA-256 Merkle Chain", ts: "2026-03-13 09:11:03" },
   { id: "PK-2839", action: "Rotation credentials — auditée", algo: "CRYSTALS-Dilithium3", ts: "2026-03-12 18:44:21" },
 ];
 

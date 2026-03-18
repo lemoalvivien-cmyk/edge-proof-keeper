@@ -11,22 +11,22 @@ import { trackEvent } from "@/lib/tracking";
 const plans = [
   {
     id: "starter",
-    name: "Starter",
+    name: "Sentinel",
     price: "490€",
     period: "TTC / an",
     monthly: "40,83€ / mois",
-    tagline: "Gouvernance cyber de base pour ETI",
+    tagline: "Première ligne de défense souveraine",
     badge: "DÉMARRAGE",
     badgeColor: "label-badge-cyan",
     highlight: false,
     icon: Shield,
-    roiNote: "ROI dès la 1ère amende évitée",
+    roiNote: "ROI dès la 1ère amende NIS2 évitée",
     features: [
       "Scout Agent — détection surface d'attaque",
       "Dashboard Direction + Technique",
       "Conformité RGPD & NIS2 documentée",
-      "Evidence Vault — preuves SHA-256",
-      "Rapports d'audit exportables en PDF",
+      "Evidence Vault — preuves SHA-256 immuables",
+      "Rapports d'audit exportables PDF",
       "Inventaire des actifs cyber",
       "Hébergement souverain 🇫🇷",
       "Support email prioritaire",
@@ -34,50 +34,50 @@ const plans = [
   },
   {
     id: "pro",
-    name: "Pro",
+    name: "Command",
     price: "6 900€",
     period: "TTC / an",
     monthly: "575€ / mois",
-    tagline: "Centre de commandement cyber complet",
-    badge: "RECOMMANDÉ",
+    tagline: "Centre de commandement cyber autonome",
+    badge: "★ CHOIX DSI / RSSI",
     badgeColor: "label-badge-purple",
     highlight: true,
     icon: Zap,
-    roiNote: "Équivaut à 2% d'un RSSI temps plein",
+    roiNote: "= 5,75% du coût d'un RSSI interne (120k€)",
     features: [
-      "Tout Starter inclus",
+      "Tout Sentinel inclus",
       "6 Agents IA Swarm Intelligence complets",
       "Self-healing autonome · SLA < 4h",
       "OSINT & EASM Signals — surveillance continue",
-      "Evidence Vault post-quantique · CRYSTALS-Dilithium",
+      "Evidence Vault SHA-256 · CRYSTALS-Dilithium",
       "Predictive Causality Engine · 90j d'horizon",
       "RSSI Virtuel IA — brief CODIR mensuel",
       "DSI Go/No-Go · validation en 1 clic",
-      "SLA 99.9% garanti",
+      "SLA 99.9% garanti contractuellement",
     ],
   },
   {
     id: "enterprise",
-    name: "Enterprise",
+    name: "Sovereign",
     price: "29 900€",
     period: "TTC / an",
     monthly: "2 491€ / mois",
-    tagline: "Souveraineté totale · On-prem · Swarm complet",
-    badge: "SOUVERAINETÉ TOTALE",
+    tagline: "Souveraineté totale · On-prem · Swarm autonome",
+    badge: "ENTERPRISE SOUVERAIN",
     badgeColor: "label-badge-cyan",
     highlight: false,
     icon: Crown,
-    roiNote: "Inclut déploiement on-premise dédié",
+    roiNote: "Inclut déploiement on-premise & Account Manager",
     features: [
-      "Tout Pro inclus",
+      "Tout Command inclus",
       "Swarm Mode fully autonomous",
-      "Déploiement on-premise certifié",
+      "Déploiement on-premise certifié SecNumCloud",
       "Agents IA personnalisés sur vos process",
-      "Preuves cryptographiques avancées (roadmap)",
+      "Preuves cryptographiques avancées",
       "Predictive Causality Engine Pro",
       "SLA 99.99% garanti contractuellement",
-      "Account Manager dédié",
-      "CISO Board-level reports personnalisés",
+      "Account Manager CISO dédié",
+      "Rapports Board-level personnalisés",
     ],
   },
 ];
@@ -286,10 +286,10 @@ export function PricingSection() {
                           onClick={() => handleStripeCheckout(plan.id as "starter" | "pro")}
                         >
                           {checkoutLoading === plan.id
-                            ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
-                            : <CreditCard className="w-4 h-4 mr-1.5" />}
-                          {plan.id === "starter" ? `Activer Starter — ${plan.price}` : `Activer Pro — ${plan.price}`}
-                          <ArrowRight className="w-4 h-4 ml-1" />
+                             ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
+                             : <CreditCard className="w-4 h-4 mr-1.5" />}
+                           {plan.id === "starter" ? `Activer Sentinel — ${plan.price}` : `Activer Command — ${plan.price}`}
+                           <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       ) : (
                         <Button
@@ -328,11 +328,11 @@ export function PricingSection() {
               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-4">Vs. alternatives du marché</p>
               <div className="grid grid-cols-4 gap-3 text-sm">
                 {[
-                  { name: "SECURIT-E Pro", price: "6 900€ / an", highlight: true, note: "✓ 14j gratuits · Essai immédiat", sub: "6 agents IA + Evidence Vault" },
-                  { name: "RSSI interne", price: "~120 000€ / an", highlight: false, note: "Salaire + charges + formation", sub: "1 personne, pas 24/7" },
-                  { name: "Palantir / Tanium", price: "≥ 50 000€ / an", highlight: false, note: "Tarifs enterprise uniquement", sub: "Complexité d'intégration élevée" },
-                  { name: "Consulting cyber", price: "≥ 15 000€ / mission", highlight: false, note: "Ponctuel, non continu", sub: "Pas de preuve automatique" },
-                ].map((c) => (
+                   { name: "SECURIT-E Command", price: "6 900€ / an", highlight: true, note: "✓ 14j gratuits · Essai immédiat", sub: "6 agents IA + Evidence Vault" },
+                   { name: "RSSI interne", price: "~120 000€ / an", highlight: false, note: "Salaire + charges + formation", sub: "1 personne, pas 24/7" },
+                   { name: "Palantir / Tanium", price: "≥ 50 000€ / an", highlight: false, note: "Tarifs enterprise uniquement", sub: "Complexité d'intégration élevée" },
+                   { name: "Consulting cyber", price: "≥ 15 000€ / mission", highlight: false, note: "Ponctuel, non continu", sub: "Pas de preuve automatique" },
+                 ].map((c) => (
                   <div key={c.name} className={`rounded-xl p-4 border ${c.highlight ? "border-primary/50 bg-primary/8" : "border-border bg-muted/20"}`}>
                     <p className={`font-bold text-xs mb-1.5 ${c.highlight ? "text-primary" : "text-foreground"}`}>{c.name}</p>
                     <p className="font-mono font-black text-sm text-foreground">{c.price}</p>

@@ -224,28 +224,41 @@ export default function Dashboard() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between flex-wrap gap-3"
+        >
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Cockpit Cyber</h1>
-            <p className="text-muted-foreground text-sm">
-              {profile?.full_name ? `${profile.full_name} — ` : ''}Centre de commandement souverain · 6 agents actifs
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-xl bg-primary/12 border border-primary/25 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-primary" />
+              </div>
+              <h1 className="text-2xl font-black tracking-tight">Centre de Commandement Cyber</h1>
+              <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/10 border border-success/20 text-[10px] font-mono text-success font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                6 AGENTS ACTIFS
+              </span>
+            </div>
+            <p className="text-muted-foreground text-xs font-mono ml-10">
+              {profile?.full_name ? `${profile.full_name} · ` : ''}Souverain · NIS2 · RGPD · ISO 27001
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {(autoSeeding || pipelineRunning) && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-xs font-mono text-primary">
                 <Loader2 className="w-3 h-3 animate-spin" />
-                {autoSeeding ? 'Initialisation…' : 'Analyse en cours…'}
+                {autoSeeding ? 'Initialisation démo…' : 'Analyse en cours…'}
               </div>
             )}
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 border-warning/30 text-warning hover:bg-warning/10"
+              className="gap-1.5 border-accent/30 text-accent hover:bg-accent/10 font-semibold"
               onClick={() => navigate('/executive')}
             >
               <BarChart3 className="w-4 h-4" />
-              Vue Exécutive
+              Cockpit Exécutif
             </Button>
             <Button
               onClick={handleQuickPipeline}
@@ -258,12 +271,8 @@ export default function Dashboard() {
                 : <Zap className="w-4 h-4" />}
               Lancer analyse 47s
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/technical')}>
-              Vue Technique
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Plan Value Tracker — always shown, adapts to subscription state */}
         {!subscription.isLoading && (
