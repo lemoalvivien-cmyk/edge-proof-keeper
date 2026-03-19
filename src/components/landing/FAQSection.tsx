@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     question: "Combien d'équipe cyber faut-il pour opérer SECURIT-E ?",
-    answer: "Le produit est conçu pour être piloté par une personne sans expertise cyber poussée. Les 6 agents autonomes gèrent la surveillance et les remédiatiosn avec supervision humaine. Le RSSI Virtuel IA vous envoie un brief mensuel en langage Direction. Pour les décisions critiques, le DSI reçoit une notification avec validation Go/No-Go.",
+    answer: "Le produit est conçu pour être piloté par une personne sans expertise cyber poussée. Les 6 agents supervisés gèrent la surveillance et les remédiatiosn avec supervision humaine. Le RSSI Virtuel IA vous envoie un brief mensuel en langage Direction. Pour les décisions critiques, le DSI reçoit une notification avec validation Go/No-Go.",
   },
   {
     question: "Que se passe-t-il si l'Executor fait une erreur de remédiation ?",
