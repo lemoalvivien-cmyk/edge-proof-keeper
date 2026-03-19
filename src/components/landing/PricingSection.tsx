@@ -47,7 +47,7 @@ const plans = [
     features: [
       "Tout Sentinel inclus",
       "6 Agents IA Swarm Intelligence complets",
-      "Self-healing autonome · SLA < 4h",
+      "Self-healing supervisé · Objectif < 4h",
       "OSINT & EASM Signals — surveillance continue",
       "Evidence Vault SHA-256 Merkle Chain immuable",
       "Predictive Causality Engine · 90j d'horizon",
