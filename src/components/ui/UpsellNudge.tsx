@@ -35,9 +35,9 @@ interface NudgeConfig {
 const NUDGE_CONFIGS: Record<UpsellFeature, NudgeConfig> = {
   self_healing: {
     icon: Zap,
-    title: "Self-healing autonome — Plan Command",
-    description: "Cette vulnérabilité peut être corrigée automatiquement en < 4h. Activez Command pour laisser vos agents travailler sans vous.",
-    gain: "Économise ~12h d'intervention manuelle par incident",
+    title: "Self-healing supervisé — Plan Command",
+    description: "Cette vulnérabilité peut être corrigée en < 4h avec validation Go/No-Go. Activez Command pour que vos agents travaillent sous votre supervision.",
+    gain: "Objectif : économiser ~12h d'intervention manuelle par incident",
     planRequired: "pro",
     planName: "Command",
     planPrice: "6 900€/an",

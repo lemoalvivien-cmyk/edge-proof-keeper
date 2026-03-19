@@ -88,9 +88,9 @@ function ThreatCounter() {
 const agentEvents = [
   { icon: Activity, color: "text-primary", text: "Scout — port:8443 exposé détecté", time: "0s" },
   { icon: Zap, color: "text-accent", text: "Analyst — plan de remédiation généré", time: "12s" },
-  { icon: CheckCircle2, color: "text-success", text: "DSI — Go validé en 1 clic", time: "23s" },
-  { icon: Lock, color: "text-warning", text: "Executor — port fermé automatiquement", time: "35s" },
-  { icon: Shield, color: "text-success", text: "Vault — preuve cryptographique ✓", time: "47s" },
+  { icon: CheckCircle2, color: "text-success", text: "DSI — Go/No-Go validé en 1 clic", time: "23s" },
+  { icon: Lock, color: "text-warning", text: "Executor — port fermé (supervisé)", time: "35s" },
+  { icon: Shield, color: "text-success", text: "Vault — preuve SHA-256 ✓", time: "47s" },
 ];
 
 function AgentFeed() {
