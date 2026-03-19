@@ -38,7 +38,7 @@ const plans = [
     price: "6 900€",
     period: "TTC / an",
     monthly: "575€ / mois",
-    tagline: "Centre de commandement cyber autonome",
+    tagline: "Centre de commandement cyber supervisé",
     badge: "★ CHOIX DSI / RSSI",
     badgeColor: "label-badge-purple",
     highlight: true,
