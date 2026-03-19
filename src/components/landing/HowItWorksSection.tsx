@@ -220,7 +220,7 @@ export function HowItWorksSection() {
           >
             <div className="label-badge label-badge-cyan mx-auto w-fit">
               <Activity className="w-3 h-3" />
-              Séquence autonome en temps réel
+              Séquence supervisée en temps réel
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               De la détection à la preuve{" "}

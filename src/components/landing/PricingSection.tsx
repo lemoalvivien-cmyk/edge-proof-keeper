@@ -70,7 +70,7 @@ const plans = [
     roiNote: "Inclut déploiement on-premise & Account Manager",
     features: [
       "Tout Command inclus",
-      "Swarm Mode supervisé — agents autonomes avec validation",
+      "Swarm Mode supervisé — agents assistés avec validation humaine",
       "Déploiement on-premise · SecNumCloud objectif roadmap",
       "Agents IA personnalisés sur vos process",
       "Preuves cryptographiques SHA-256 avancées",
