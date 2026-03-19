@@ -38,7 +38,7 @@ const plans = [
     price: "6 900€",
     period: "TTC / an",
     monthly: "575€ / mois",
-    tagline: "Centre de commandement cyber autonome",
+    tagline: "Centre de commandement cyber supervisé",
     badge: "★ CHOIX DSI / RSSI",
     badgeColor: "label-badge-purple",
     highlight: true,
@@ -47,7 +47,7 @@ const plans = [
     features: [
       "Tout Sentinel inclus",
       "6 Agents IA Swarm Intelligence complets",
-      "Self-healing autonome · SLA < 4h",
+      "Self-healing supervisé · Objectif < 4h",
       "OSINT & EASM Signals — surveillance continue",
       "Evidence Vault SHA-256 Merkle Chain immuable",
       "Predictive Causality Engine · 90j d'horizon",
@@ -70,7 +70,7 @@ const plans = [
     roiNote: "Inclut déploiement on-premise & Account Manager",
     features: [
       "Tout Command inclus",
-      "Swarm Mode supervisé — agents autonomes avec validation",
+      "Swarm Mode supervisé — agents assistés avec validation humaine",
       "Déploiement on-premise · SecNumCloud objectif roadmap",
       "Agents IA personnalisés sur vos process",
       "Preuves cryptographiques SHA-256 avancées",

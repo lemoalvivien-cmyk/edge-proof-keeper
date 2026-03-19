@@ -61,11 +61,12 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run E2E tests (public routes)
+      - name: Run E2E tests (public routes + product truth)
         run: npm run test:e2e
         env:
-          PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL || 'https://id-preview--535f1714-f91a-45af-915d-b9aa9bc9cf0a.lovable.app' }}
-          # Auth flows: set these secrets in GitHub → Settings → Secrets for full coverage
+          # Override with production URL for real E2E. Falls back to preview.
+          PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL || 'https://id-preview--535f1714-f91a-45af-915d-b9aa9bc9cf0a.lovable.app' }}
+          # Auth flows — skipped automatically if not set
           # E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           # E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
           # E2E_ACCESS_CODE: ${{ secrets.E2E_ACCESS_CODE }}
@@ -76,7 +77,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-public
           path: playwright-report/
           retention-days: 7
 
@@ -84,7 +85,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces
+          name: playwright-traces-public
           path: test-results/
           retention-days: 7
 
@@ -94,7 +95,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: build-and-test
-    # Only runs if auth credentials are configured
+    # Only runs if:
+    #  - push to main
+    #  - AND E2E_AUTH_ENABLED = true in GitHub Actions Variables
     if: |
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
@@ -120,6 +123,7 @@ jobs:
         run: npm run test:e2e
         env:
           PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+          # Required secrets — configure in GitHub → Settings → Secrets:
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
           E2E_ACCESS_CODE: ${{ secrets.E2E_ACCESS_CODE }}
@@ -130,7 +134,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-auth-report
+          name: playwright-report-auth
           path: playwright-report/
           retention-days: 14
 
@@ -138,6 +142,51 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-auth-traces
+          name: playwright-traces-auth
           path: test-results/
           retention-days: 14
+
+  # ── Job 4: E2E Stripe — manual/conditional, requires dedicated secrets ─────
+  # NOTE: This job is NEVER run automatically. Enable by setting E2E_STRIPE_ENABLED=true
+  # AND providing Stripe test mode keys. See tests/e2e/public-routes.spec.ts group H.
+  e2e-stripe:
+    name: E2E — Stripe Test Mode [manual only]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build-and-test
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      vars.E2E_STRIPE_ENABLED == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Stripe E2E (test mode)
+        run: npm run test:e2e -- --grep "Stripe"
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_TEST }}
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-stripe
+          path: test-results/
+          retention-days: 7

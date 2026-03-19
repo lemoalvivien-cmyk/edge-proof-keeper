@@ -43,7 +43,7 @@ sequenceDiagram
     E->>V: Intent log + skill invocation (mTLS)
     E->>VR: Action réalisée — validation request
     VR->>V: Proof SHA-256 signé + Merkle Chain
-    V->>D: Proof Pack prêt — opposable
+    V->>D: Proof Pack prêt — vérifiable cryptographiquement
 ```
 
 ## Stack technique

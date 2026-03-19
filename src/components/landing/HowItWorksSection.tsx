@@ -36,7 +36,7 @@ const STEPS = [
     agent: "DSI Dashboard",
     icon: CheckCircle2,
     action: "Go/No-Go validé en 1 clic — ou délégation supervisée au Swarm",
-    detail: "Interface 1-clic : le dirigeant valide ou délègue. Mode autonome disponible pour les patterns répétitifs. Audit trail instantané.",
+    detail: "Interface 1-clic : le dirigeant valide ou délègue. Mode délégation supervisée disponible pour les patterns validés. Audit trail instantané.",
     color: "text-success",
     glow: "hsl(158 80% 46%)",
     glowAlpha: "hsl(158 80% 46% / 0.15)",
@@ -220,7 +220,7 @@ export function HowItWorksSection() {
           >
             <div className="label-badge label-badge-cyan mx-auto w-fit">
               <Activity className="w-3 h-3" />
-              Séquence autonome en temps réel
+              Séquence supervisée en temps réel
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               De la détection à la preuve{" "}
