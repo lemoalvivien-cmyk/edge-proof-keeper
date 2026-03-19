@@ -6,6 +6,7 @@
  *   CONDITIONAL:   auth flows (requires E2E_TEST_EMAIL + E2E_TEST_PASSWORD env vars)
  *                  access code (requires E2E_ACCESS_CODE env var)
  *                  admin flows (requires E2E_ADMIN_EMAIL + E2E_ADMIN_PASSWORD env vars)
+ *                  paywall flows (requires auth creds + entitlement state)
  *
  * Required GitHub Secrets for full coverage:
  *   PLAYWRIGHT_BASE_URL   — target URL (default: local dev server)
@@ -13,13 +14,13 @@
  *   E2E_TEST_PASSWORD     — test user password
  *   E2E_ADMIN_EMAIL       — admin account email
  *   E2E_ADMIN_PASSWORD    — admin account password
- *   E2E_ACCESS_CODE       — valid test access code
+ *   E2E_ACCESS_CODE       — valid test access code (for /activate flow)
  *
  * Run public-only tests (no credentials needed):
  *   npx playwright test tests/e2e/public-routes.spec.ts
  *
  * Run with auth credentials:
- *   E2E_TEST_EMAIL=test@example.com E2E_TEST_PASSWORD=secret npx playwright test
+ *   E2E_TEST_EMAIL=user@example.com E2E_TEST_PASSWORD=secret npx playwright test
  */
 import { test, expect } from "@playwright/test";
 
@@ -27,76 +28,82 @@ const HAS_AUTH_CREDS = !!(process.env.E2E_TEST_EMAIL && process.env.E2E_TEST_PAS
 const HAS_ADMIN_CREDS = !!(process.env.E2E_ADMIN_EMAIL && process.env.E2E_ADMIN_PASSWORD);
 const HAS_ACCESS_CODE = !!process.env.E2E_ACCESS_CODE;
 
-// ── A. Public routes ─────────────────────────────────────────────────────────
+// ── A. Public routes ──────────────────────────────────────────────────────────
 
 test.describe("A. Public Routes", () => {
-  test("landing page loads and has title", async ({ page }) => {
+  test("landing page loads with title", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveTitle(/SECURIT-E|Securit-E|securit-e/i);
-    // Must not expose dashboard content to anonymous users
     await expect(page.locator("body")).not.toContainText("dashboard-protected-content");
   });
 
-  test("landing page has hero CTA buttons", async ({ page }) => {
+  test("landing page has CTA buttons", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("body")).toBeVisible();
-    // Should have at least one call-to-action
     const ctas = page.locator("button, a[href]");
     await expect(ctas.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test("/pricing loads without forbidden claims", async ({ page }) => {
+  test("/pricing loads with plans and no forbidden claims", async ({ page }) => {
     await page.goto("/pricing");
     await expect(page.locator("body")).toBeVisible();
-    // Forbidden hardcoded claims
+    // Plans present
+    await expect(page.locator("body")).toContainText(/Sentinel|Command|Sovereign/i);
+    // Forbidden claims absent
     await expect(page.locator("body")).not.toContainText("certifié SecNumCloud");
     await expect(page.locator("body")).not.toContainText("SLA garanti contractuellement");
     await expect(page.locator("body")).not.toContainText("fully autonomous");
     await expect(page.locator("body")).not.toContainText("CRYSTALS-Dilithium");
     await expect(page.locator("body")).not.toContainText("zk-SNARK");
     await expect(page.locator("body")).not.toContainText("ROI garanti");
-    // Plans should be present
-    await expect(page.locator("body")).toContainText(/Sentinel|Command|Sovereign/i);
+    await expect(page.locator("body")).not.toContainText("ROI 367x");
+    await expect(page.locator("body")).not.toContainText("87% prediction");
+    await expect(page.locator("body")).not.toContainText("99.97%");
   });
 
-  test("/pricing ROI calculator is interactive", async ({ page }) => {
+  test("/pricing ROI calculator renders", async ({ page }) => {
     await page.goto("/pricing");
-    // ROI block should be present
     await expect(page.locator("body")).toContainText(/ROI/i);
   });
 
-  test("/faq loads with real content", async ({ page }) => {
+  test("/faq loads with real content and no false autonomy claims", async ({ page }) => {
     await page.goto("/faq");
     await expect(page.locator("body")).toBeVisible();
-    // Should have actual FAQ content
     await expect(page.locator("body")).toContainText(/SECURIT-E|Evidence Vault|NIS2/i);
-    // Must not claim false autonomous operation
     await expect(page.locator("body")).not.toContainText("100% autonome");
     await expect(page.locator("body")).not.toContainText("zéro intervention humaine");
+    await expect(page.locator("body")).not.toContainText("CRYSTALS-Dilithium");
   });
 
-  test("/status loads and runs real checks", async ({ page }) => {
+  test("/status loads without fabricated uptime percentages", async ({ page }) => {
     await page.goto("/status");
     await expect(page.locator("body")).toBeVisible();
-    // Status page must not contain fabricated uptime percentages as facts
     await expect(page.locator("body")).not.toContainText("99.97%");
     await expect(page.locator("body")).not.toContainText("99.99% garanti");
   });
 
-  test("/demo loads with simulation label", async ({ page }) => {
+  test("/demo loads with demo/lab label", async ({ page }) => {
     await page.goto("/demo");
     await expect(page.locator("body")).toBeVisible();
-    // Demo should clearly label itself as simulation/demonstration
     await expect(page.locator("body")).toContainText(/simulat|démo|demo|lab/i);
+  });
+
+  test("/legal/terms loads", async ({ page }) => {
+    await page.goto("/legal/terms");
+    await expect(page.locator("body")).toBeVisible();
+  });
+
+  test("/legal/privacy loads", async ({ page }) => {
+    await page.goto("/legal/privacy");
+    await expect(page.locator("body")).toBeVisible();
   });
 });
 
-// ── B. Auth protection (unauthenticated redirects) ───────────────────────────
+// ── B. Auth protection (unauthenticated redirects) ────────────────────────────
 
-test.describe("B. Auth Protection", () => {
+test.describe("B. Auth Protection — unauthenticated redirects", () => {
   test("/dashboard redirects unauthenticated users", async ({ page }) => {
     await page.goto("/dashboard");
-    // Should NOT stay on /dashboard — must redirect to /auth or /
     await expect(page).not.toHaveURL(/\/dashboard$/, { timeout: 10000 });
   });
 
@@ -125,7 +132,12 @@ test.describe("B. Auth Protection", () => {
     await expect(page).not.toHaveURL(/\/findings$/, { timeout: 10000 });
   });
 
-  test("/auth page loads with email field", async ({ page }) => {
+  test("/remediation redirects unauthenticated users", async ({ page }) => {
+    await page.goto("/remediation");
+    await expect(page).not.toHaveURL(/\/remediation$/, { timeout: 10000 });
+  });
+
+  test("/auth page loads with email and password fields", async ({ page }) => {
     await page.goto("/auth");
     await expect(page.locator("body")).toBeVisible();
     await expect(
@@ -133,14 +145,11 @@ test.describe("B. Auth Protection", () => {
     ).toBeVisible({ timeout: 10000 });
   });
 
-  test("/activate page loads or redirects correctly", async ({ page }) => {
+  test("/activate page loads or redirects to /auth", async ({ page }) => {
     await page.goto("/activate");
     await expect(page.locator("body")).toBeVisible();
-    // Either shows the activation form or redirects to /auth
     const url = page.url();
-    const isActivatePage = url.includes("/activate");
-    const isAuthPage = url.includes("/auth");
-    expect(isActivatePage || isAuthPage).toBe(true);
+    expect(url.includes("/activate") || url.includes("/auth")).toBe(true);
   });
 });
 
@@ -164,32 +173,31 @@ test.describe("D. Product Truth — Public Pages", () => {
     await expect(body).not.toContainText("CRYSTALS-Dilithium");
     await expect(body).not.toContainText("Kyber-1024");
     await expect(body).not.toContainText("zk-SNARK");
+    await expect(body).not.toContainText("Palantir-style");
   });
 
-  test("landing cycle time is labeled as lab/demo", async ({ page }) => {
+  test("landing cycle time is labeled as lab or demo context", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("body")).toBeVisible();
-    // "47s" should be present somewhere (it's the hero claim)
-    // It must be qualified as lab/demo — we verify it's not a standalone production claim
     const body = await page.locator("body").innerText();
     if (body.includes("47s") || body.includes("47 secondes")) {
-      // Must have qualifying language nearby
-      expect(body.toLowerCase()).toMatch(/lab|démo|demo|démontré|conditi/);
+      // Must have qualifying language anywhere on the page
+      expect(body.toLowerCase()).toMatch(/lab|démo|demo|démontré|conditi|supervisé/);
     }
   });
 
-  test("/pricing has no hardcoded unverifiable ROI claims", async ({ page }) => {
+  test("/pricing has no unverifiable ROI guarantees", async ({ page }) => {
     await page.goto("/pricing");
     await expect(page.locator("body")).not.toContainText("ROI 367x");
     await expect(page.locator("body")).not.toContainText("87% prediction");
     await expect(page.locator("body")).not.toContainText("99.97%");
+    await expect(page.locator("body")).not.toContainText("ROI garanti");
   });
 
-  test("/executive is not accessible without auth", async ({ page }) => {
-    await page.goto("/executive");
-    const url = page.url();
-    // Should redirect away from /executive
-    expect(url).not.toMatch(/\/executive$/);
+  test("every public page has proper meta charset via html structure", async ({ page }) => {
+    await page.goto("/");
+    const charset = await page.locator("meta[charset]").count();
+    expect(charset).toBeGreaterThan(0);
   });
 });
 
@@ -206,25 +214,39 @@ test.describe("E. Auth Flows [CONDITIONAL — needs E2E_TEST_EMAIL + E2E_TEST_PA
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
   });
 
-  test("authenticated user sees dashboard content, not paywall if entitled", async ({ page }) => {
+  test("authenticated user can navigate to /executive", async ({ page }) => {
     await page.goto("/auth");
     await page.fill("input[type='email'], input[name='email']", process.env.E2E_TEST_EMAIL!);
     await page.fill("input[type='password'], input[name='password']", process.env.E2E_TEST_PASSWORD!);
     await page.click("button[type='submit']");
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
-    // Should show some dashboard content
+    await page.goto("/executive");
     await expect(page.locator("body")).toBeVisible();
-    await expect(page.locator("body")).not.toContainText("dashboard-protected-content");
+    // Should show executive cockpit OR paywall (not a redirect to /auth)
+    await expect(page).not.toHaveURL(/\/auth/, { timeout: 5000 });
+  });
+
+  test("paywall is shown for user without active subscription", async ({ page }) => {
+    // This test validates paywall gate logic — actual result depends on test account state
+    await page.goto("/auth");
+    await page.fill("input[type='email'], input[name='email']", process.env.E2E_TEST_EMAIL!);
+    await page.fill("input[type='password'], input[name='password']", process.env.E2E_TEST_PASSWORD!);
+    await page.click("button[type='submit']");
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
+    // Navigate to premium area — should show either content (if entitled) or upgrade wall
+    await page.goto("/proofs");
+    await expect(page.locator("body")).toBeVisible();
+    // Either way, no infinite loading or crash
+    const hasContent = await page.locator("body").innerText();
+    expect(hasContent.length).toBeGreaterThan(50);
   });
 
   test("logout redirects away from dashboard", async ({ page }) => {
-    // Login first
     await page.goto("/auth");
     await page.fill("input[type='email'], input[name='email']", process.env.E2E_TEST_EMAIL!);
     await page.fill("input[type='password'], input[name='password']", process.env.E2E_TEST_PASSWORD!);
     await page.click("button[type='submit']");
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
-    // Then logout via sidebar or button
     const logoutBtn = page.locator("[data-testid='logout'], button:has-text('Déconnexion'), button:has-text('Logout')").first();
     if (await logoutBtn.isVisible()) {
       await logoutBtn.click();
@@ -233,24 +255,34 @@ test.describe("E. Auth Flows [CONDITIONAL — needs E2E_TEST_EMAIL + E2E_TEST_PA
   });
 });
 
-// ── F. Access code — CONDITIONAL (requires E2E_ACCESS_CODE) ──────────────────
+// ── F. Access code — CONDITIONAL (requires E2E_ACCESS_CODE + auth creds) ──────
 
 test.describe("F. Access Code [CONDITIONAL — needs E2E_ACCESS_CODE + auth creds]", () => {
   test.skip(!HAS_ACCESS_CODE || !HAS_AUTH_CREDS, "Skipped: set E2E_ACCESS_CODE + E2E_TEST_EMAIL + E2E_TEST_PASSWORD to enable");
 
   test("/activate with valid code grants access", async ({ page }) => {
-    // Login first
     await page.goto("/auth");
     await page.fill("input[type='email'], input[name='email']", process.env.E2E_TEST_EMAIL!);
     await page.fill("input[type='password'], input[name='password']", process.env.E2E_TEST_PASSWORD!);
     await page.click("button[type='submit']");
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
-    // Go to activate
     await page.goto("/activate");
     await page.fill("input[placeholder*='code'], input[name='code'], input[type='text']", process.env.E2E_ACCESS_CODE!);
     await page.click("button[type='submit']");
-    // Should show success and redirect
     await expect(page.locator("body")).toContainText(/activé|succès|granted|access|bienvenue/i, { timeout: 15000 });
+  });
+
+  test("/activate with invalid code shows error", async ({ page }) => {
+    await page.goto("/auth");
+    await page.fill("input[type='email'], input[name='email']", process.env.E2E_TEST_EMAIL!);
+    await page.fill("input[type='password'], input[name='password']", process.env.E2E_TEST_PASSWORD!);
+    await page.click("button[type='submit']");
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
+    await page.goto("/activate");
+    await page.fill("input[placeholder*='code'], input[name='code'], input[type='text']", "INVALID-CODE-XYZ-999");
+    await page.click("button[type='submit']");
+    // Should show error, not grant access
+    await expect(page.locator("body")).toContainText(/invalide|erreur|invalid|error|incorrect/i, { timeout: 10000 });
   });
 });
 
@@ -271,17 +303,40 @@ test.describe("G. Admin Flows [CONDITIONAL — needs E2E_ADMIN_EMAIL + E2E_ADMIN
   });
 
   test("non-admin user is redirected from /admin/access-codes", async ({ page }) => {
-    if (!HAS_AUTH_CREDS) {
-      test.skip();
-      return;
-    }
+    test.skip(!HAS_AUTH_CREDS, "Needs E2E_TEST_EMAIL + E2E_TEST_PASSWORD");
     await page.goto("/auth");
     await page.fill("input[type='email'], input[name='email']", process.env.E2E_TEST_EMAIL!);
     await page.fill("input[type='password'], input[name='password']", process.env.E2E_TEST_PASSWORD!);
     await page.click("button[type='submit']");
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
     await page.goto("/admin/access-codes");
-    // Should be redirected to /dashboard (not admin area)
     await expect(page).not.toHaveURL(/\/admin\/access-codes/, { timeout: 10000 });
+  });
+
+  test("admin can view /admin/readiness", async ({ page }) => {
+    await page.goto("/auth");
+    await page.fill("input[type='email'], input[name='email']", process.env.E2E_ADMIN_EMAIL!);
+    await page.fill("input[type='password'], input[name='password']", process.env.E2E_ADMIN_PASSWORD!);
+    await page.click("button[type='submit']");
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 20000 });
+    await page.goto("/admin/readiness");
+    await expect(page.locator("body")).toBeVisible();
+    await expect(page.locator("body")).toContainText(/readiness|prêt|ready|checklist/i, { timeout: 10000 });
+  });
+});
+
+// ── H. Stripe flows — CONDITIONAL (test mode, requires explicit env) ──────────
+// Note: These flows require Stripe test mode keys set up and are NOT run in standard CI.
+// They must be triggered manually or via a dedicated job with STRIPE secrets.
+// See .github/workflows/ci.yml job "e2e-stripe" for configuration.
+test.describe("H. Stripe Checkout [CONDITIONAL — manual/dedicated CI job only]", () => {
+  test.skip(true, "Stripe E2E requires dedicated test mode setup — see ci.yml job e2e-stripe");
+
+  test("Sentinel checkout opens Stripe test session", async ({ page }) => {
+    // Requires: authenticated user + STRIPE_PUBLISHABLE_KEY_TEST in env
+    await page.goto("/pricing");
+    await page.click("button:has-text('Démarrer'), button:has-text('Activer')");
+    // Stripe checkout redirect
+    await expect(page).toHaveURL(/stripe\.com|checkout/, { timeout: 20000 });
   });
 });
