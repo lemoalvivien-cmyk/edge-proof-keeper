@@ -30,7 +30,7 @@ const plans = [
     icon: Shield,
     color: "primary",
     roiLabel: "Retour dès la 1ère vulnérabilité corrigée",
-    tension: "Passez à Command pour l'IA autonome →",
+    tension: "Passez à Command pour les 6 agents IA →",
     perks: [
       { text: "Scout Agent — détection surface d'attaque", available: true },
       { text: "Dashboard Direction + Technique", available: true },
