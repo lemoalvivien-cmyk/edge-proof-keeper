@@ -188,7 +188,7 @@ export default function Demo() {
             </div>
           </div>
           <Button onClick={() => navigate('/auth')} size="sm" className="neon-glow">
-            Démarrer gratuitement
+            Essai 14j · Carte requise
           </Button>
         </div>
       </div>
@@ -436,7 +436,7 @@ export default function Demo() {
                   </Button>
                   <Button onClick={() => navigate('/auth')} className="neon-glow gap-2">
                     <Shield className="h-4 w-4" />
-                    Démarrer gratuitement
+                    Essai 14j · Carte requise
                   </Button>
                 </div>
               </div>

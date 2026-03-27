@@ -45,7 +45,7 @@ const plans = [
       { text: "RSSI Virtuel IA — brief CODIR", available: false },
     ],
     cta: "Activer Sentinel",
-    ctaSecondary: "Démarrer l'essai 14j gratuit",
+    ctaSecondary: "Essai 14j · Carte requise",
   },
   {
     id: "pro",
@@ -74,7 +74,7 @@ const plans = [
       { text: "Account Manager dédié", available: false },
     ],
     cta: "Activer Command",
-    ctaSecondary: "Démarrer l'essai 14j gratuit",
+    ctaSecondary: "Essai 14j · Carte requise",
   },
   {
     id: "sovereign",
@@ -231,7 +231,7 @@ const Pricing = () => {
               Avec des preuves cryptographiques que votre RSSI ne peut pas générer seul.
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />14j gratuits</span>
+              <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />14j gratuits · Carte requise</span>
               <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />Paiement Stripe sécurisé</span>
               <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />Satisfait ou remboursé 30j</span>
               <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />Données 🇫🇷</span>
@@ -286,7 +286,7 @@ const Pricing = () => {
                     <p className="text-xs text-muted-foreground mt-1">soit {plan.monthly}</p>
                     <p className="text-xs text-success font-semibold mt-1.5">{plan.roiLabel}</p>
                     {plan.id !== "sovereign" && (
-                      <p className="text-xs text-success/80 mt-1 flex items-center gap-1"><Clock className="w-3 h-3" />14 jours gratuits inclus</p>
+                      <p className="text-xs text-success/80 mt-1 flex items-center gap-1"><Clock className="w-3 h-3" />14j gratuits · Carte requise</p>
                     )}
                   </div>
 

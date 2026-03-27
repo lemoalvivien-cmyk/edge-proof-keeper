@@ -7,7 +7,7 @@ const productLinks = [
   { to: "/faq", label: "FAQ NIS2 / RGPD" },
   { to: "/status", label: "État des services" },
   { to: "/auth", label: "Connexion" },
-  { to: "/auth?tab=signup", label: "Essai gratuit 14j" },
+  { to: "/auth?tab=signup", label: "Essai 14j · Carte requise" },
 ];
 
 const offresLinks = [

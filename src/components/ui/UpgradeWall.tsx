@@ -250,7 +250,7 @@ export function UpgradeWall({ trialActive, plan }: UpgradeWallProps) {
                       {loading === p.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
                       {p.ctaLabel}
                     </Button>
-                    <p className="text-[10px] text-center text-muted-foreground mt-2">14j gratuits · Stripe · Annulation libre</p>
+                    <p className="text-[10px] text-center text-muted-foreground mt-2">14j gratuits · Carte requise · Stripe · Annulation libre</p>
                   </>
                 )}
               </div>

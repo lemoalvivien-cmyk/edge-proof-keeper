@@ -159,7 +159,7 @@ export function TrialModal({ open, onClose, afterDemo = false }: TrialModalProps
                   <CheckCircle2 className="w-3 h-3 text-success" /> Satisfait ou remboursé 30j
                 </span>
                 <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-primary" /> 14j gratuits
+                  <Clock className="w-3 h-3 text-primary" /> 14j gratuits · Carte requise
                 </span>
               </div>
 

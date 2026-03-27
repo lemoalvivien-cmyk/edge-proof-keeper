@@ -113,7 +113,7 @@ export function FAQSection() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold neon-glow hover:scale-[1.02] transition-transform"
               >
                 <Shield className="w-4 h-4" />
-                Essai 14j gratuit <ArrowRight className="w-3.5 h-3.5" />
+                Essai 14j · Carte requise <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <a
                 href="mailto:contact@securit-e.com"

@@ -191,11 +191,11 @@ export function PricingSection() {
               SECURIT-E Pro : <span className="text-gradient">6 900€/an</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Tout inclus. Sans équipe cyber dédiée. Sans surprise. Un essai gratuit de 14 jours pour valider par vous-même.
+              Tout inclus. Sans équipe cyber dédiée. Sans surprise. Essai 14 jours — carte requise, annulation libre.
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/30 text-success text-sm font-semibold">
               <Clock className="w-4 h-4" />
-              14j gratuits · Paiement Stripe sécurisé 🔒 · Satisfait ou remboursé 30j
+              14j gratuits · Carte requise · Paiement Stripe 🔒 · Satisfait ou remboursé 30j
             </div>
           </motion.div>
 
@@ -257,9 +257,9 @@ export function PricingSection() {
                       <p className="text-xs text-muted-foreground mt-1">soit {plan.monthly}</p>
                       <p className="text-xs text-success font-medium mt-1.5">{plan.roiNote}</p>
                       {plan.id !== "enterprise" && (
-                        <p className="text-xs text-success/80 font-medium mt-1 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> 14 jours gratuits inclus
-                        </p>
+                         <p className="text-xs text-success/80 font-medium mt-1 flex items-center gap-1">
+                           <Clock className="w-3 h-3" /> 14j gratuits · Carte requise
+                         </p>
                       )}
                     </div>
 
@@ -310,7 +310,7 @@ export function PricingSection() {
                           {checkoutLoading === plan.id
                             ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
                             : <CreditCard className="w-4 h-4 mr-1.5" />}
-                          Essai gratuit 14j — {plan.price} / an
+                          Essai 14j · Carte requise — {plan.price} / an
                           <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       )}
@@ -337,7 +337,7 @@ export function PricingSection() {
               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-4">Vs. alternatives du marché</p>
               <div className="grid grid-cols-4 gap-3 text-sm">
                 {[
-                   { name: "SECURIT-E Command", price: "6 900€ / an", highlight: true, note: "✓ 14j gratuits · Essai immédiat", sub: "6 agents IA + Evidence Vault" },
+                   { name: "SECURIT-E Command", price: "6 900€ / an", highlight: true, note: "✓ 14j gratuits · Carte requise", sub: "6 agents IA + Evidence Vault" },
                    { name: "RSSI interne", price: "~120 000€ / an", highlight: false, note: "Salaire + charges + formation", sub: "1 personne, pas 24/7" },
                    { name: "Palantir / Tanium", price: "≥ 50 000€ / an", highlight: false, note: "Tarifs enterprise uniquement", sub: "Complexité d'intégration élevée" },
                    { name: "Consulting cyber", price: "≥ 15 000€ / mission", highlight: false, note: "Ponctuel, non continu", sub: "Pas de preuve automatique" },
