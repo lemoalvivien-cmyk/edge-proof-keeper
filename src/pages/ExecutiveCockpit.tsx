@@ -345,8 +345,8 @@ export default function ExecutiveCockpit() {
                 <RadialGauge value={controlCoverage} label="Couverture Contrôles" color="hsl(var(--accent))" />
                 <RadialGauge value={backlogCleared} label="Backlog Traité" color="hsl(var(--primary))" />
                 <RadialGauge
-                  value={Math.min(99, 40 + d_evidence)}
-                  label="Niveau Confiance"
+                  value={hasRealData ? Math.min(100, d_evidence) : 0}
+                  label="Preuves Vault"
                   color="hsl(var(--success))"
                 />
               </div>
