@@ -614,7 +614,7 @@ export default function Dashboard() {
           <UpsellNudge feature="codir_report" variant="banner" />
         )}
 
-        {/* Live Agents Demo */}
+        {/* Simulated Agents Demo */}
         <Card className="border-primary/30">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between flex-wrap gap-2">

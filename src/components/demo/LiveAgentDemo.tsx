@@ -502,7 +502,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
             </div>
             <div className="flex items-center gap-2 pt-1">
               <Badge className="bg-success/20 text-success border-success/30 text-xs">
-                Pipeline 100% réelle — zéro stub
+                Simulation complète — données fictives
               </Badge>
               <span className="text-xs text-muted-foreground">SHA-256 · Merkle Light · Evidence Vault immutable</span>
             </div>

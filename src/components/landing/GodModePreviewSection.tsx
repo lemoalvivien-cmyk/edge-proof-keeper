@@ -259,7 +259,7 @@ function EvidenceVaultTab() {
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-muted-foreground font-mono">2 841 preuves archivées — chaîne immuable SHA-256</span>
+        <span className="text-xs text-muted-foreground font-mono">Preuves archivées (démo) — chaîne immuable SHA-256</span>
         <span className="label-badge label-badge-cyan text-[10px]">SHA-256 MERKLE CHAIN</span>
       </div>
       {proofs.map((p, i) => (

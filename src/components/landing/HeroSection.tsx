@@ -306,7 +306,7 @@ export function HeroSection() {
                   </div>
                 </div>
 
-                {/* Live agent feed */}
+                {/* Simulated agent feed */}
                 <AgentFeed />
 
                 {/* ROI bottom strip */}
