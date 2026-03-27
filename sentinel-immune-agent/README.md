@@ -87,8 +87,8 @@ tenant_id: "your-org-uuid"
 region: "fr-paris"
 
 agent:
-  public_key: "YOUR_WIREGUARD_PUBLIC_KEY"
   endpoint: "edge-agent.securit-e.com:51820"
+  signing_key: "YOUR_HMAC_SIGNING_KEY"    # Required in production
   skills_enabled:
     - fix_port
     - rotate_creds
@@ -98,9 +98,12 @@ agent:
     - swarm_collaborate
 
 remediation:
-  require_dsi_approval: true    # Toujours true en production — mode supervisé
+  require_dsi_approval: true    # Always true in production — mode supervisé
   rollback_timeout_hours: 4
   max_auto_remediation: 5
+
+# Development mode — disables security enforcement
+# dev_mode: true  # NEVER enable in production
 ```
 
 ## Build & Deploy
