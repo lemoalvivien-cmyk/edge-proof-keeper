@@ -620,10 +620,10 @@ export default function Dashboard() {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Activity className="h-5 w-5 text-primary" />
-                Démo Agents Autonomes — Séquence 47s Live
+                Simulation Agents — Séquence 47s
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Badge className="bg-primary/10 text-primary border-primary/30 text-xs">DEMO LIVE</Badge>
+                <Badge className="bg-warning/10 text-warning border-warning/30 text-xs">SIMULATION</Badge>
                 <Badge variant="outline" className="text-xs text-success border-success/30 bg-success/10">
                   Aha Moment en 47s
                 </Badge>
