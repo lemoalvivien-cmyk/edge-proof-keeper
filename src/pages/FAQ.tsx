@@ -172,7 +172,7 @@ export default function FAQ() {
             <ShieldCheck className="w-10 h-10 text-primary mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-2">Prêt pour la conformité NIS2 2026 ?</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Démarrez votre essai 14 jours — carte requise, annulation libre. Votre dossier NIS2 prêt en 47 secondes.
+              Démarrez votre essai 14 jours — carte requise, annulation libre. Aide documentaire NIS2 dès le premier jour.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
