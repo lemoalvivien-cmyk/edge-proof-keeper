@@ -305,7 +305,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
           className="w-full gap-2 font-mono text-xs"
         >
           {running ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />}
-          {running ? `Agents en cours (${elapsed}s)...` : allDone ? 'Relancer la démo' : 'Lancer démo agents (47s)'}
+          {running ? `Simulation en cours (${elapsed}s)...` : allDone ? 'Relancer la simulation' : 'Lancer simulation agents (47s)'}
         </Button>
       </div>
     );
