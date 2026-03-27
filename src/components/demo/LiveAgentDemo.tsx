@@ -318,7 +318,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Terminal className="w-5 h-5 text-primary" />
-            Démo Agents Live — Séquence 47s
+            Simulation Agents — Séquence 47s
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
             Pipeline de démonstration — simulation sécurisée · preuves SHA-256 réelles
