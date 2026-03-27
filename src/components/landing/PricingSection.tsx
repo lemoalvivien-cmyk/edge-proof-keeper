@@ -195,7 +195,7 @@ export function PricingSection() {
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/30 text-success text-sm font-semibold">
               <Clock className="w-4 h-4" />
-              14j gratuits · Paiement Stripe sécurisé 🔒 · Satisfait ou remboursé 30j
+              14j gratuits · Carte requise · Paiement Stripe 🔒 · Satisfait ou remboursé 30j
             </div>
           </motion.div>
 
