@@ -223,7 +223,7 @@ export function HeroSection() {
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Déploiement en 15 min</span>
               </motion.div>
 
-              {/* Live stats strip */}
+              {/* Key stats strip */}
               <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
                 {[
                   { v: "47s", l: "Cycle lab démontré", c: "text-primary" },
