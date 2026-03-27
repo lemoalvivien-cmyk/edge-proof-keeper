@@ -118,18 +118,11 @@ export function WowPanel({
   runsCount = 0,
 }: WowPanelProps) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'threats' | 'timeline' | 'vault'>('threats');
-  const [vaultCount, setVaultCount] = useState(2841);
+  const hasRealData = findingsCount > 0;
+  const dataProvenance = resolveProvenance(hasRealData);
   const [cycleActive, setCycleActive] = useState(false);
   const [cycleProgress, setCycleProgress] = useState(0);
   const cycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-// Fix WowPanel: vault counter should not silently increment as if live
-  // Increment vault counter slowly — DEMO MODE only
-  useEffect(() => {
-    const t = setInterval(() => setVaultCount(v => v + 1), 30000); // 1 per 30s — clearly demo pace
-    return () => clearInterval(t);
-  }, []);
 
   // Build threats from real or demo data
   const threats: Threat[] = topFindings.length > 0
