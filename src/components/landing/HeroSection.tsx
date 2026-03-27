@@ -211,7 +211,7 @@ export function HeroSection() {
                   }}
                 >
                   <CalendarDays className="w-4 h-4" />
-                  Voir le cycle 47s en live
+                  Voir la démo interactive 47s
                 </Button>
               </motion.div>
 
