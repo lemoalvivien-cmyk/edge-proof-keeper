@@ -275,8 +275,8 @@ describe("Data provenance system", () => {
 // ── Agent hardening tests ────────────────────────────────────────────────────
 describe("Agent hardening — no permissive defaults", () => {
   const readFile = (p: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const f = require("fs");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const f = (globalThis as any)["require"]("fs");
     return f.readFileSync(p, "utf-8") as string;
   };
 
