@@ -120,6 +120,7 @@ export function WowPanel({
   const navigate = useNavigate();
   const hasRealData = findingsCount > 0;
   const dataProvenance = resolveProvenance(hasRealData);
+  const [activeTab, setActiveTab] = useState<'threats' | 'timeline' | 'vault'>('threats');
   const [cycleActive, setCycleActive] = useState(false);
   const [cycleProgress, setCycleProgress] = useState(0);
   const cycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
