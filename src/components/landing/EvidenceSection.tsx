@@ -118,7 +118,7 @@ export function EvidenceSection() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                  <span className="text-[10px] font-mono text-muted-foreground">EVIDENCE VAULT · LIVE</span>
+                  <span className="text-[10px] font-mono text-muted-foreground">EVIDENCE VAULT · DÉMO</span>
                 </div>
                 <span className="label-badge label-badge-cyan text-[9px]">SHA-256 MERKLE CHAIN</span>
               </div>
