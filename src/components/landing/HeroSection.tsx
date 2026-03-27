@@ -166,7 +166,7 @@ export function HeroSection() {
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-xs font-semibold text-primary">
                   <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
-                  🇫🇷 100% Souverain France
+                  🇫🇷 Hébergé en France · Souverain
                 </div>
               </motion.div>
 
@@ -197,7 +197,7 @@ export function HeroSection() {
                   }}
                 >
                   <Shield className="w-4 h-4" />
-                  Activer mon essai — 14j gratuit
+                  Essai 14j gratuit · Carte requise
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </Button>
 
@@ -211,13 +211,13 @@ export function HeroSection() {
                   }}
                 >
                   <CalendarDays className="w-4 h-4" />
-                  Voir le cycle 47s en live
+                  Voir la démo interactive 47s
                 </Button>
               </motion.div>
 
               {/* Micro-trust: friction removers */}
               <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Essai 14j sans engagement</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Essai 14j · Carte requise</span>
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Annulation libre</span>
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Prise en main guidée</span>
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Déploiement en 15 min</span>
@@ -256,7 +256,7 @@ export function HeroSection() {
                   </div>
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-success/10 border border-success/20">
                     <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                    <span className="text-[10px] font-mono text-success font-semibold">LIVE · 6 AGENTS ACTIFS</span>
+                    <span className="text-[10px] font-mono text-success font-semibold">SIMULATION · 6 AGENTS</span>
                   </div>
                 </div>
 

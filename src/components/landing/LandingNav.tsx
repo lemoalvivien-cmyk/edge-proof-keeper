@@ -40,7 +40,7 @@ export function LandingNav() {
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
-                🇫🇷 100% Souverain France · Hébergement France
+                🇫🇷 Hébergé en France · Souverain
               </span>
             </div>
           </div>
@@ -85,7 +85,7 @@ export function LandingNav() {
                 Comment ça marche
               </button>
               <Link to="/demo" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50">
-                Démo live
+                Démo interactive
               </Link>
               <Link to="/pricing" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50">
                 Tarifs
@@ -158,7 +158,7 @@ export function LandingNav() {
                   Comment ça marche
                 </button>
                 <Link to="/demo" className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                  Démo live (47s)
+                  Démo interactive (47s)
                 </Link>
                 <Link to="/pricing" className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                   Tarifs

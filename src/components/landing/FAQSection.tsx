@@ -36,7 +36,7 @@ const faqs = [
   },
   {
     question: "Y a-t-il des frais cachés ? Le prix est-il tout inclus ?",
-    answer: "Non. Sentinel 490€/an : détection, Evidence Vault, rapports, conformité NIS2/RGPD, hébergement France. Command 6 900€/an ajoute les 6 agents complets, remédiation assistée, EASM/OSINT, RSSI Virtuel IA. Sovereign 29 900€/an pour la souveraineté totale on-premise. Essai 14j gratuit sans CB.",
+    answer: "Non. Sentinel 490€/an : détection, Evidence Vault, rapports, conformité NIS2/RGPD, hébergement France. Command 6 900€/an ajoute les 6 agents complets, remédiation assistée, EASM/OSINT, RSSI Virtuel IA. Sovereign 29 900€/an pour le déploiement on-premise dédié. Essai 14j gratuit — carte requise, annulation libre.",
   },
   {
     question: "Mes données restent-elles en France ?",

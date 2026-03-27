@@ -30,7 +30,7 @@ const plans = [
     icon: Shield,
     color: "primary",
     roiLabel: "Retour dès la 1ère vulnérabilité corrigée",
-    tension: "Passez à Command pour l'IA autonome →",
+    tension: "Passez à Command pour les 6 agents IA →",
     perks: [
       { text: "Scout Agent — détection surface d'attaque", available: true },
       { text: "Dashboard Direction + Technique", available: true },
@@ -41,7 +41,7 @@ const plans = [
       { text: "Hébergement souverain 🇫🇷", available: true },
       { text: "Support email prioritaire", available: true },
       { text: "Agents IA Swarm Intelligence", available: false },
-      { text: "Self-healing autonome < 4h", available: false },
+      { text: "Remédiation assistée · Objectif < 4h", available: false },
       { text: "RSSI Virtuel IA — brief CODIR", available: false },
     ],
     cta: "Activer Sentinel",
@@ -53,7 +53,7 @@ const plans = [
     price: "6 900",
     period: "€ TTC / an",
     monthly: "575€ / mois",
-    tagline: "Centre de commandement cyber autonome",
+    tagline: "Centre de commandement cyber supervisé",
     badge: "★ CHOIX DSI / RSSI",
     highlight: true,
     icon: Zap,
@@ -63,13 +63,13 @@ const plans = [
     perks: [
       { text: "Tout Sentinel inclus", available: true },
       { text: "6 Agents IA Swarm Intelligence complets", available: true },
-      { text: "Self-healing autonome · SLA < 4h", available: true },
+      { text: "Remédiation assistée · Objectif < 4h", available: true },
       { text: "OSINT & EASM Signals — surveillance continue", available: true },
       { text: "Evidence Vault cryptographique (SHA-256 Merkle Chain)", available: true },
       { text: "Predictive Causality Engine · 90j d'horizon", available: true },
       { text: "RSSI Virtuel IA — brief CODIR mensuel", available: true },
       { text: "DSI Go/No-Go · validation en 1 clic", available: true },
-      { text: "SLA 99.9% — objectif mesuré (sans garantie contractuelle)", available: true },
+      { text: "Disponibilité cible 99.9% — objectif mesuré", available: true },
       { text: "Déploiement on-premise dédié", available: false },
       { text: "Account Manager dédié", available: false },
     ],
@@ -82,8 +82,8 @@ const plans = [
     price: "29 900",
     period: "€ TTC / an",
     monthly: "2 491€ / mois",
-    tagline: "Autonomie totale · On-prem · Swarm complet",
-    badge: "SOUVERAINETÉ TOTALE",
+    tagline: "Souveraineté renforcée · On-prem · Swarm supervisé",
+    badge: "ENTERPRISE SOUVERAIN",
     highlight: false,
     icon: Crown,
     color: "primary",
@@ -94,7 +94,7 @@ const plans = [
       { text: "Swarm Mode — supervision avancée 24/7", available: true },
       { text: "Déploiement on-premise (objectif roadmap 2026)", available: true },
       { text: "Agents IA personnalisés sur vos process", available: true },
-      { text: "SLA 99.99% — objectif contractuel sur devis", available: true },
+      { text: "SLA renforcé · Contractualisé sur devis Enterprise", available: true },
       { text: "Account Manager dédié CISO-level", available: true },
       { text: "CISO Board-level reports personnalisés", available: true },
       { text: "Intégration SIEM / SOC existant", available: true },
@@ -107,7 +107,7 @@ const plans = [
 
 /* ─── Competitor table ───────────────────────────────────────────── */
 const competitors = [
-  { name: "SECURIT-E Command", price: "6 900€ / an", self: true, trial: true, auto: true, sovereign: true, support: "Inclus" },
+  { name: "SECURIT-E Command", price: "6 900€ / an", self: true, trial: true, auto: true, sovereign: true, support: "Inclus" },  // "auto" = remédiation assistée
   { name: "RSSI interne", price: "≥ 120 000€ / an", self: false, trial: false, auto: false, sovereign: false, support: "1 personne" },
   { name: "Splunk / Tanium", price: "≥ 50 000€ / an", self: false, trial: false, auto: false, sovereign: false, support: "Payant" },
   { name: "Consulting cyber", price: "≥ 15 000€ / mission", self: false, trial: false, auto: false, sovereign: false, support: "Non continu" },
@@ -161,8 +161,8 @@ const faqs = [
   { q: "L'essai gratuit demande-t-il une carte bancaire ?", a: "Oui. L'essai de 14 jours est piloté par Stripe avec saisie de carte. Vous n'êtes débité qu'à J+15, avec annulation libre à tout moment depuis votre espace." },
   { q: "Puis-je passer d'une offre à l'autre ?", a: "Oui, upgrade ou downgrade en quelques clics depuis les paramètres. Les données restent intégralement conservées." },
   { q: "Où sont hébergées mes données ?", a: "En France uniquement, sur infrastructure souveraine. Conformité RGPD native. Chiffrement AES-256 au repos, TLS 1.3 en transit." },
-  { q: "Le self-healing est-il vraiment autonome ?", a: "L'automatisation des corrections est déployée en Q2 2026. En attendant, les scripts sont générés et vérifiés par les agents — l'approbation humaine reste requise pour l'exécution." },
-  { q: "Comment fonctionne le support Enterprise ?", a: "Account Manager dédié + accès prioritaire à l'équipe engineering + SLA contractuels 99.99% + canaux privés Slack/Teams." },
+  { q: "La remédiation est-elle supervisée ?", a: "Oui. Les scripts de remédiation sont générés et vérifiés par les agents IA — l'approbation humaine Go/No-Go reste requise pour l'exécution. L'objectif de remédiation assistée < 4h est une cible selon offre." },
+  { q: "Comment fonctionne le support Enterprise ?", a: "Account Manager dédié + accès prioritaire à l'équipe engineering + SLA contractualisé sur devis + canaux privés Slack/Teams." },
 ];
 
 function FaqItem({ q, a }: { q: string; a: string }) {
@@ -346,7 +346,7 @@ const Pricing = () => {
                     <th className="text-left p-4 font-semibold text-muted-foreground">Solution</th>
                     <th className="text-center p-4 font-semibold text-muted-foreground">Coût annuel</th>
                     <th className="text-center p-4 font-semibold text-muted-foreground">Essai gratuit</th>
-                    <th className="text-center p-4 font-semibold text-muted-foreground">Remédiation auto</th>
+                    <th className="text-center p-4 font-semibold text-muted-foreground">Remédiation assistée</th>
                     <th className="text-center p-4 font-semibold text-muted-foreground">Souverain 🇫🇷</th>
                     <th className="text-center p-4 font-semibold text-muted-foreground">Support</th>
                   </tr>
