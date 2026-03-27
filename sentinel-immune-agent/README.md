@@ -130,9 +130,11 @@ docker run -d \
 
 - **WireGuard** : tunnel chiffré Curve25519 pour tout le trafic agent
 - **mTLS** : authentification mutuelle TLS 1.3 entre agent et platform
-- **SHA-256 Merkle Chain** : chaque skill call signe une entrée immuable dans l'Evidence Vault
+- **SHA-256 HMAC** : chaque skill call signe une entrée dans l'Evidence Vault
+- **Fail-closed** : en production, l'agent refuse de démarrer sans certs, signing key, et tenant ID
 - **Rollback automatique** si vérification échoue (timeout 4h)
 - Validation Go/No-Go DSI requise pour toute action sensible en production
+- **Mode dev** : opt-in explicite via `SENTINEL_DEV_MODE=true` — désactive les contrôles de sécurité
 
 ## Skills disponibles (mode supervisé)
 
