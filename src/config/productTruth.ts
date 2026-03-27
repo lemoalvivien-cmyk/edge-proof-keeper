@@ -42,7 +42,7 @@ export const ALLOWED_MARKETING_CLAIMS = [
   "6 agents IA supervisés",
   "SHA-256 Merkle Chain",
   "Hébergé en France",
-  "NIS2 Ready",
+  "Support NIS2 documenté",
   "RGPD natif",
   "Supervision humaine Go/No-Go",
   "47 secondes (conditions de laboratoire)",
