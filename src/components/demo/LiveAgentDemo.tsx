@@ -218,7 +218,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
 
         updateStep(step.id, {
           status: 'running',
-          logs: [`[T+${step.targetTime}s] ${step.agent} agent dispatching ${step.skill}...`],
+          logs: tagLogs([`[T+${step.targetTime}s] ${step.agent} agent dispatching ${step.skill}...`], 'simulated'),
         });
 
         try {
