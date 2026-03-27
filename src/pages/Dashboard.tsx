@@ -529,7 +529,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Zap className="h-5 w-5 text-primary" />
-                Preuve Produit Live
+                Preuve Produit
               </CardTitle>
               <div className="flex items-center gap-2">
                 {pipelineState === 'idle' && (pipelineProof?.runs ?? 0) === 0 && (
