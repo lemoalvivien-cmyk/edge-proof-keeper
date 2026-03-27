@@ -257,9 +257,9 @@ export function PricingSection() {
                       <p className="text-xs text-muted-foreground mt-1">soit {plan.monthly}</p>
                       <p className="text-xs text-success font-medium mt-1.5">{plan.roiNote}</p>
                       {plan.id !== "enterprise" && (
-                        <p className="text-xs text-success/80 font-medium mt-1 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> 14 jours gratuits inclus
-                        </p>
+                         <p className="text-xs text-success/80 font-medium mt-1 flex items-center gap-1">
+                           <Clock className="w-3 h-3" /> 14j gratuits · Carte requise
+                         </p>
                       )}
                     </div>
 
