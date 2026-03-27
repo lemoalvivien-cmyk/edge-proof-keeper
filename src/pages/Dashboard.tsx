@@ -580,7 +580,7 @@ export default function Dashboard() {
               <Button size="sm" onClick={handleQuickPipeline} disabled={!organization?.id || pipelineRunning} className="gap-1.5">
                 {pipelineRunning
                   ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
-                  : <><Play className="h-4 w-4" />Lancer la preuve live</>}
+                  : <><Play className="h-4 w-4" />Lancer la preuve</>}
               </Button>
               {(pipelineProof?.summaries ?? 0) > 0 && (
                 <Button size="sm" variant="outline" asChild className="gap-1.5">
