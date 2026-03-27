@@ -486,8 +486,8 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
             className="rounded-xl border border-success/40 bg-success/5 p-5 space-y-3"
           >
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-success" />
-              <span className="font-bold text-success">Pipeline complète — 47 secondes ✓</span>
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <span className="font-bold text-yellow-600">Simulation complète — 47 secondes ✓</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
               {[
