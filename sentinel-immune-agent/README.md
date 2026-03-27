@@ -2,7 +2,7 @@
 
 > Sidecar Go ultra-léger <50Mo — WireGuard + mTLS
 > 
-> Pilote les 6 skills OpenClaw supervisés (fix_port, rotate_creds, close_domain, patch_vuln, notify_rollback, swarm_collaborate)
+> Pilote les 6 skills supervisés (fix_port, rotate_creds, close_domain, patch_vuln, notify_rollback, swarm_collaborate)
 
 ## Démarrage rapide
 
