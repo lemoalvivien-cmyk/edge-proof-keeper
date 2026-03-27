@@ -203,7 +203,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
           setVaultEntries(v => v + 1);
         }
       } else {
-        updateStep('seed', { status: 'done', logs: ['[DEMO] Scout scan completed', '[T+2s] Signal CVE-2025-1337 created ✓'], proof: `sha256:demo:${Date.now().toString(16)}` });
+        updateStep('seed', { status: 'done', logs: tagLogs(['[DEMO] Scout scan completed', '[T+2s] Signal CVE-2025-1337 created ✓'], 'simulated'), proof: `sha256:demo:${Date.now().toString(16)}` });
         setVaultEntries(v => v + 1);
       }
 
