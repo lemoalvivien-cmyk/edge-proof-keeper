@@ -232,7 +232,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
 
           updateStep(step.id, {
             status: 'done',
-            logs: result.logs ?? [`[T+${step.targetTime}s] ${step.skill} executed in ${duration}ms ✓`],
+            logs: tagLogs(result.logs ?? [`[T+${step.targetTime}s] ${step.skill} executed in ${duration}ms ✓`], 'simulated'),
             proof: result.proof?.hash ? `sha256:${result.proof.hash.slice(0, 32)}...` : undefined,
             duration,
           });
