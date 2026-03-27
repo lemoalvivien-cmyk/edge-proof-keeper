@@ -377,7 +377,7 @@ export default function Auth() {
                     >
                       {isLoading
                         ? <><Loader2 className="w-4 h-4 animate-spin" /> Création du compte…</>
-                        : <><Zap className="w-4 h-4" /> Créer mon compte gratuit</>
+                        : <><Zap className="w-4 h-4" /> Créer mon compte · Essai 14j inclus</>
                       }
                     </Button>
                     <p className="text-[11px] text-muted-foreground text-center">

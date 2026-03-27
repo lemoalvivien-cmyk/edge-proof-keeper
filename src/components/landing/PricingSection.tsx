@@ -337,7 +337,7 @@ export function PricingSection() {
               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-4">Vs. alternatives du marché</p>
               <div className="grid grid-cols-4 gap-3 text-sm">
                 {[
-                   { name: "SECURIT-E Command", price: "6 900€ / an", highlight: true, note: "✓ 14j gratuits · Essai immédiat", sub: "6 agents IA + Evidence Vault" },
+                   { name: "SECURIT-E Command", price: "6 900€ / an", highlight: true, note: "✓ 14j gratuits · Carte requise", sub: "6 agents IA + Evidence Vault" },
                    { name: "RSSI interne", price: "~120 000€ / an", highlight: false, note: "Salaire + charges + formation", sub: "1 personne, pas 24/7" },
                    { name: "Palantir / Tanium", price: "≥ 50 000€ / an", highlight: false, note: "Tarifs enterprise uniquement", sub: "Complexité d'intégration élevée" },
                    { name: "Consulting cyber", price: "≥ 15 000€ / mission", highlight: false, note: "Ponctuel, non continu", sub: "Pas de preuve automatique" },
