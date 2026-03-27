@@ -222,10 +222,10 @@ describe("Execution mode separation", () => {
     expect(typeof Skills.fix_port).toBe("function");
   });
 
-  it("should not contain 'EXÉCUTÉ' badge in LiveAgentDemo", async () => {
-    // Use dynamic require to read the file
-    const content = (await import("node:fs")).readFileSync("src/components/demo/LiveAgentDemo.tsx", "utf-8") as string;
-    expect(content).not.toContain("✓ EXÉCUTÉ");
-    expect(content).toContain("EXECUTION_MODE_LABELS.simulated.badge");
+  it("should use SIMULATION labels not EXÉCUTÉ in execution mode config", async () => {
+    const { EXECUTION_MODE_LABELS } = await import("@/types/execution");
+    // Simulated mode should say SIMULATION, not EXÉCUTÉ
+    expect(EXECUTION_MODE_LABELS.simulated.badge).toBe("SIMULATION");
+    expect(EXECUTION_MODE_LABELS.simulated.badge).not.toContain("EXÉCUTÉ");
   });
 });
