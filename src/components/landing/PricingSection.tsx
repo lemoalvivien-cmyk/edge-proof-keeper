@@ -310,7 +310,7 @@ export function PricingSection() {
                           {checkoutLoading === plan.id
                             ? <Zap className="w-4 h-4 mr-1.5 animate-pulse" />
                             : <CreditCard className="w-4 h-4 mr-1.5" />}
-                          Essai gratuit 14j — {plan.price} / an
+                          Essai 14j · Carte requise — {plan.price} / an
                           <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       )}
