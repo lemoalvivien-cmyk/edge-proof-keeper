@@ -240,12 +240,12 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
         } catch (err) {
           // Skills may fail without org context — show structured demo output
           const demoLogs = step.params.host
-            ? [`[T+${step.targetTime}s] ${step.skill}: executing on ${step.params.host}...`, `[T+${step.targetTime + 1}s] Action completed ✓`, `[T+${step.targetTime + 1}s] SHA-256 proof generated ✓`]
-            : [`[T+${step.targetTime}s] ${step.skill} completed ✓`];
+            ? [`[T+${step.targetTime}s] ${step.skill}: simulation on ${step.params.host}...`, `[T+${step.targetTime + 1}s] Action simulée ✓`, `[T+${step.targetTime + 1}s] SHA-256 proof (simulation) ✓`]
+            : [`[T+${step.targetTime}s] ${step.skill} simulé ✓`];
           updateStep(step.id, {
             status: 'done',
-            logs: demoLogs,
-            proof: `sha256:demo:${Date.now().toString(16)}`,
+            logs: tagLogs(demoLogs, 'simulated'),
+            proof: `sha256:simulation:${Date.now().toString(16)}`,
             duration: 400 + Math.floor(Math.random() * 300),
           });
           setVaultEntries(v => v + 1);
