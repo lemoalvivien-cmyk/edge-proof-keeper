@@ -121,3 +121,38 @@ describe("Release Gate — productTruth.ts alignment", () => {
     expect(result.found).toBe(false); // regex-based gate doesn't catch this — productTruth does
   });
 });
+
+describe("Release Gate — billingPolicy.ts alignment", () => {
+  it("should import billingPolicy constants without error", async () => {
+    const bp = await import("@/config/billingPolicy");
+    expect(bp.TRIAL_DAYS).toBe(14);
+    expect(bp.TRIAL_REQUIRES_CARD).toBe(true);
+    expect(bp.CHECKOUT_MODE).toBe("subscription");
+    expect(bp.STRIPE_MANAGED_TRIAL).toBe(true);
+    expect(bp.CANCELLATION_POLICY).toContain("Annulation");
+  });
+
+  it("should have DISPLAY_COPY with card requirement in all labels", async () => {
+    const bp = await import("@/config/billingPolicy");
+    const { DISPLAY_COPY } = bp;
+    // Every user-facing trial label must mention "carte" or "Carte"
+    const trialLabels = [
+      DISPLAY_COPY.trialCta,
+      DISPLAY_COPY.trialShort,
+      DISPLAY_COPY.trialBadge,
+      DISPLAY_COPY.trialPricingNote,
+      DISPLAY_COPY.trialFooterLink,
+      DISPLAY_COPY.trialDisclosure,
+    ];
+    for (const label of trialLabels) {
+      expect(label.toLowerCase()).toContain("carte");
+    }
+  });
+
+  it("should ensure billingPolicy and productTruth agree on TRIAL_DAYS", async () => {
+    const bp = await import("@/config/billingPolicy");
+    const pt = await import("@/config/productTruth");
+    expect(bp.TRIAL_DAYS).toBe(pt.TRIAL_DAYS);
+    expect(bp.TRIAL_REQUIRES_CARD).toBe(pt.TRIAL_REQUIRES_CARD);
+  });
+});
