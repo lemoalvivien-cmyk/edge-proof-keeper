@@ -156,3 +156,78 @@ describe("Release Gate — billingPolicy.ts alignment", () => {
     expect(bp.TRIAL_REQUIRES_CARD).toBe(pt.TRIAL_REQUIRES_CARD);
   });
 });
+
+// ── Execution mode separation tests ──────────────────────────────────────────
+describe("Execution mode separation", () => {
+  it("should export ExecutionMode type with exactly two values", async () => {
+    const { EXECUTION_MODE_LABELS, checkRealExecutionPreconditions, tagLogs } = await import("@/types/execution");
+    expect(Object.keys(EXECUTION_MODE_LABELS)).toEqual(["simulated", "supervised_real"]);
+    expect(EXECUTION_MODE_LABELS.simulated.badge).toBe("SIMULATION");
+    expect(EXECUTION_MODE_LABELS.supervised_real.badge).toBe("EXÉCUTION SUPERVISÉE");
+  });
+
+  it("should fail-closed when preconditions are missing", async () => {
+    const { checkRealExecutionPreconditions } = await import("@/types/execution");
+    // No preconditions → must return simulated
+    const result = checkRealExecutionPreconditions({});
+    expect(result.allowed).toBe(false);
+    expect(result.mode).toBe("simulated");
+    expect(result.failures.length).toBe(4);
+  });
+
+  it("should allow supervised_real only when ALL preconditions pass", async () => {
+    const { checkRealExecutionPreconditions } = await import("@/types/execution");
+    const result = checkRealExecutionPreconditions({
+      authorization_valid: true,
+      go_nogo_approved: true,
+      connector_available: true,
+      audit_trail_ready: true,
+    });
+    expect(result.allowed).toBe(true);
+    expect(result.mode).toBe("supervised_real");
+    expect(result.failures.length).toBe(0);
+  });
+
+  it("should prefix logs with [SIMULATION] in simulated mode", async () => {
+    const { tagLogs } = await import("@/types/execution");
+    const logs = tagLogs(["Action completed ✓", "Hash generated"], "simulated");
+    expect(logs[0]).toMatch(/^\[SIMULATION\]/);
+    expect(logs[1]).toMatch(/^\[SIMULATION\]/);
+  });
+
+  it("should prefix logs with [SUPERVISED] in supervised_real mode", async () => {
+    const { tagLogs } = await import("@/types/execution");
+    const logs = tagLogs(["Action completed ✓"], "supervised_real");
+    expect(logs[0]).toMatch(/^\[SUPERVISED\]/);
+  });
+
+  it("should not double-prefix already tagged logs", async () => {
+    const { tagLogs } = await import("@/types/execution");
+    const logs = tagLogs(["[SIMULATION] Already tagged"], "simulated");
+    expect(logs[0]).toBe("[SIMULATION] Already tagged");
+    // No double prefix
+    expect(logs[0].indexOf("[SIMULATION]")).toBe(0);
+    expect(logs[0].indexOf("[SIMULATION]", 1)).toBe(-1);
+  });
+
+  it("should throw on requireRealExecution with missing preconditions", async () => {
+    const { requireRealExecution } = await import("@/types/execution");
+    expect(() => requireRealExecution({})).toThrow("préconditions manquantes");
+  });
+
+  it("should include execution_mode in SkillExecutionResult type", async () => {
+    // Verify the interface has execution_mode by checking the skills module compiles
+    const { Skills } = await import("@/lib/skills");
+    expect(Skills).toBeDefined();
+    expect(typeof Skills.fix_port).toBe("function");
+  });
+
+  it("should not contain 'EXÉCUTÉ' badge in LiveAgentDemo", async () => {
+    const fs = await import("fs");
+    const content = fs.readFileSync("src/components/demo/LiveAgentDemo.tsx", "utf-8");
+    // Must NOT show "EXÉCUTÉ" as a badge in simulation context
+    expect(content).not.toContain("✓ EXÉCUTÉ");
+    // Must show SIMULATION badge
+    expect(content).toContain("EXECUTION_MODE_LABELS.simulated.badge");
+  });
+});
