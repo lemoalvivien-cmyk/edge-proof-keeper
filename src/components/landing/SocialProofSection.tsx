@@ -3,10 +3,10 @@ import { useRef } from "react";
 import { ShieldCheck, Clock, Users, Cpu, Quote, TrendingUp, Star } from "lucide-react";
 
 const stats = [
-  { icon: Users, value: "12", label: "ETI françaises en accès prioritaire", color: "text-primary" },
+  { icon: Users, value: "Beta", label: "Accès prioritaire — beta fermée", color: "text-primary" },
   { icon: ShieldCheck, value: "Vault", label: "SHA-256 Merkle Chain — preuves archivées", color: "text-success" },
-  { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré lab)", color: "text-accent" },
-  { icon: TrendingUp, value: "ROI×", label: "Estimé vs coût moyen incident cyber France", color: "text-warning" },
+  { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré en lab)", color: "text-accent" },
+  { icon: TrendingUp, value: "Estimé", label: "ROI basé sur coût moyen incident cyber France", color: "text-warning" },
 ];
 
 const testimonials = [
