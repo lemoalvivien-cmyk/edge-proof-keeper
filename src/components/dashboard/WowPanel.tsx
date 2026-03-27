@@ -190,7 +190,7 @@ export function WowPanel({
             onClick={() => navigate('/demo')}
           >
             <Play className="w-3 h-3 fill-current text-primary" />
-            Démo live
+            Simulation
           </Button>
           <Button
             size="sm"
