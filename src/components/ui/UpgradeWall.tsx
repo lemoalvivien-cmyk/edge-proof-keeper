@@ -37,7 +37,7 @@ const LOCKED_FEATURES = [
 
 const URGENCY_STATS = [
   { icon: TrendingDown, val: "< 4h", label: "cible de remédiation assistée" },
-  { icon: Shield, val: "🇫🇷 France", label: "hébergement souverain garanti" },
+  { icon: Shield, val: "🇫🇷 France", label: "hébergé en France" },
   { icon: Clock, val: "47s", label: "cycle détection → preuve (lab)" },
 ];
 

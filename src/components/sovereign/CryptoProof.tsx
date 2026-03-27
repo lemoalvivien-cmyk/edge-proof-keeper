@@ -269,7 +269,7 @@ export function CryptoProof({
             </div>
 
             <p className="text-[10px] text-muted-foreground font-mono">
-              🔐 SHA-256 Merkle Tree · SECURIT-E Souverain France
+              🔐 SHA-256 Merkle Tree · SECURIT-E · Hébergé en France
             </p>
           </div>
         )}

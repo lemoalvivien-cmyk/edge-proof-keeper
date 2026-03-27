@@ -108,7 +108,7 @@ export function PromiseSection() {
               <span className="text-gradient">6 agents IA supervisés : 490€.</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Chaque agent opère 24/7 avec supervision humaine et validation Go/No-Go. Ensemble, ils forment un système immunitaire cyber souverain conçu pour les dirigeants.
+              Chaque agent opère 24/7 avec supervision humaine et validation Go/No-Go. Ensemble, ils forment un système immunitaire cyber hébergé en France, conçu pour les dirigeants.
             </p>
           </motion.div>
 

@@ -479,7 +479,7 @@ export default function Auth() {
           <a href="/legal/terms" className="text-primary hover:underline">CGU</a>
           {' '}et notre{' '}
           <a href="/legal/privacy" className="text-primary hover:underline">politique de confidentialité</a>.
-          {' '}VLM Consulting — 100% souverain 🇫🇷
+          {' '}VLM Consulting — Hébergé en France 🇫🇷
         </p>
       </motion.div>
     </div>

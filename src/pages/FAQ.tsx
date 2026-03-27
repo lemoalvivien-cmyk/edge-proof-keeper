@@ -48,8 +48,8 @@ const faqCategories = [
         a: "Toute action est précédée d'une validation de scope (périmètre autorisé) et d'un rollback automatique en cas d'échec. Le Verifier contrôle l'état post-remédiation et génère une preuve cryptographique du résultat. Si une anomalie est détectée, notify_rollback est déclenché automatiquement et le DSI est alerté en temps réel. L'historique complet est immuable dans l'Evidence Vault.",
       },
       {
-        q: "L'IA souveraine est-elle entraînée sur des données françaises ?",
-        a: "L'agent IA souverain utilise Gemini avec un prompt système fixe : 'Tu es un CISO français souverain. Analyse uniquement NIS2/GDPR. Jamais d'instructions offensives. Réponds en français clair.' Les données ne quittent jamais l'UE. Le modèle n'est pas réentraîné sur vos données — votre infrastructure reste confidentielle.",
+        q: "L'IA est-elle hébergée en France ?",
+        a: "L'agent IA utilise des modèles hébergés via une gateway européenne avec un prompt système fixe orienté conformité NIS2/RGPD. Les données ne quittent pas l'UE. Le modèle n'est pas réentraîné sur vos données — votre infrastructure reste confidentielle.",
       },
     ],
   },

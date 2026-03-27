@@ -23,7 +23,7 @@ const STEPS = [
     agent: "Analyst Agent",
     icon: Brain,
     action: "Génère plan de remédiation priorisé + impact business",
-    detail: "LLM souverain analyse le contexte, estime l'impact RGPD/NIS2, génère 3 scénarios de remédiation par criticité. Brief DSI automatique.",
+    detail: "IA hébergée en France analyse le contexte, estime l'impact RGPD/NIS2, génère 3 scénarios de remédiation par criticité. Brief DSI automatique.",
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
     glowAlpha: "hsl(258 90% 66% / 0.15)",

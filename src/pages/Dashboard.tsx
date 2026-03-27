@@ -630,7 +630,7 @@ export default function Dashboard() {
               </div>
             </div>
             <CardDescription>
-              6 skills autonomes réels · SHA-256 · Evidence Vault immutable · NIS2 compliant
+              6 skills supervisés · SHA-256 · Evidence Vault · Support NIS2 documenté
             </CardDescription>
           </CardHeader>
           <CardContent>
