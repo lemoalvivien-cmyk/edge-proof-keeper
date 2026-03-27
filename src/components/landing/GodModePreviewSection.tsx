@@ -386,7 +386,7 @@ export function GodModePreviewSection() {
             </Button>
             <Button size="lg" variant="outline" className="border-border hover:border-primary/30 gap-2" asChild>
               <Link to="/demo">
-                Voir démo live (47s)
+                Voir la simulation (47s)
               </Link>
             </Button>
           </motion.div>
