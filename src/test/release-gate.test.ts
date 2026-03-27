@@ -223,11 +223,9 @@ describe("Execution mode separation", () => {
   });
 
   it("should not contain 'EXÉCUTÉ' badge in LiveAgentDemo", async () => {
-    const fs = await import("fs");
-    const content = fs.readFileSync("src/components/demo/LiveAgentDemo.tsx", "utf-8");
-    // Must NOT show "EXÉCUTÉ" as a badge in simulation context
+    const { readFileSync } = await import("node:fs");
+    const content = readFileSync("src/components/demo/LiveAgentDemo.tsx", "utf-8");
     expect(content).not.toContain("✓ EXÉCUTÉ");
-    // Must show SIMULATION badge
     expect(content).toContain("EXECUTION_MODE_LABELS.simulated.badge");
   });
 });
