@@ -104,12 +104,9 @@ sentinel:
   swarmUrl: "https://swarm.securit-e.com"
   wgEndpoint: "edge-agent.securit-e.com:51820"
 
-  # Post-quantum keys (set via K8s secret)
-  dilithiumPubKey: ""
-
   selfHeal:
     maxAutoPerHour: 5
-    requireDSIApproval: false
+    requireDSIApproval: true  # Always true in production — supervised mode
     rollbackTimeoutHours: 4
 
 # ── TLS certificates (from K8s secret) ───────────────────────────────────────

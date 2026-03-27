@@ -3,9 +3,10 @@ version: "3.9"
 # Securit-E Edge Agent — Docker Compose
 # Usage:
 #   docker-compose up -d
-#   docker-compose logs -f sentinel-agent
+#   docker-compose logs -f securit-e-agent
 #
 # Production: use Helm chart (helm/) for Kubernetes deployment
+# Development: set SENTINEL_DEV_MODE=true to disable security enforcement
 
 services:
   securit-e-agent:
@@ -20,18 +21,19 @@ services:
       - "8443:8443"  # mTLS API
 
     environment:
-      - SENTINEL_TENANT_ID=${SENTINEL_TENANT_ID:-demo-tenant}
+      - SENTINEL_TENANT_ID=${SENTINEL_TENANT_ID:?SENTINEL_TENANT_ID is required}
       - SENTINEL_REGION=${SENTINEL_REGION:-fr-paris}
       - SENTINEL_API_PORT=8443
       - SENTINEL_VAULT_URL=${SENTINEL_VAULT_URL:-https://vault.securit-e.com}
       - SENTINEL_SWARM_URL=${SENTINEL_SWARM_URL:-https://swarm.securit-e.com}
       - SENTINEL_WG_ENDPOINT=${SENTINEL_WG_ENDPOINT:-edge-agent.securit-e.com:51820}
+      - SENTINEL_SIGNING_KEY=${SENTINEL_SIGNING_KEY:?SENTINEL_SIGNING_KEY is required}
       # TLS certs — mount from host or K8s secret
       - SENTINEL_TLS_CERT=/certs/agent.crt
       - SENTINEL_TLS_KEY=/certs/agent.key
       - SENTINEL_CA_CERT=/certs/ca.crt
-      # Post-quantum keys
-      - SENTINEL_DILITHIUM_PUB=${SENTINEL_DILITHIUM_PUB:-}
+      # Dev mode — set to "true" only for local development
+      # - SENTINEL_DEV_MODE=true
 
     volumes:
       - ./certs:/certs:ro       # mTLS certificates
@@ -50,7 +52,7 @@ services:
           memory: 32M
 
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8443/health"]
+      test: ["CMD", "wget", "-qO-", "https://localhost:8443/health", "--no-check-certificate"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -59,7 +61,7 @@ services:
     labels:
       - "securit-e.component=edge-agent"
       - "securit-e.version=2026.1.0"
-      - "securit-e.pq=dilithium3"
+      - "securit-e.signing=sha256-hmac"
 
 networks:
   securit-e-net:
