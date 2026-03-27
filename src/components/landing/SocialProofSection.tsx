@@ -62,7 +62,7 @@ export function SocialProofSection() {
           >
             <div className="label-badge label-badge-cyan mx-auto w-fit">
               <Cpu className="w-3 h-3" />
-              Beta privée — résultats réels
+              Beta privée — témoignages reconstitués
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               Ce que disent les{" "}
@@ -70,7 +70,7 @@ export function SocialProofSection() {
               <br />en accès prioritaire
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              12 ETI françaises en beta fermée. Témoignages collectés avec accord explicite de publication.
+              Témoignages reconstitués à partir de retours beta. Les noms et entreprises ont été anonymisés.
             </p>
           </motion.div>
 
