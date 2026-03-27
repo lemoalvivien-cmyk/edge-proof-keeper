@@ -44,7 +44,7 @@ const agents = [
     id: "04",
     name: "Verifier Agent",
     role: "Validation & rollback automatique",
-    description: "Vérifie chaque remédiation. Rollback immédiat si anomalie détectée. Garantit l'intégrité de votre infrastructure après chaque intervention.",
+    description: "Vérifie chaque remédiation. Rollback immédiat si anomalie détectée. Contrôle d'intégrité post-intervention sur votre infrastructure.",
     metric: "Rollback automatique si anomalie",
     Icon: ShieldCheck,
     color: "text-warning",
