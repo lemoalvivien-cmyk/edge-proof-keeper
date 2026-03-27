@@ -174,7 +174,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
       const orgId = organization?.id;
 
       // ── T+0s: Scout — seed-demo-run ────────────────────────────────────────
-      updateStep('seed', { status: 'running', logs: ['[T+0s] Scout EASM scan starting...', '[T+200ms] Connecting to OSINT feeds: Shodan, Censys...', '[T+800ms] Port scan: api.client.fr...', '[T+1200ms] CVE-2025-1337 matched on port 8443 (nginx 1.24.0)', '[T+1800ms] Signal created: { severity: CRITICAL, confidence: 0.94 }', '[T+2100ms] Evidence pre-proof: SHA-256 generated ✓'] });
+      updateStep('seed', { status: 'running', logs: tagLogs(['[T+0s] Scout EASM scan starting...', '[T+200ms] Connecting to OSINT feeds: Shodan, Censys...', '[T+800ms] Port scan: api.client.fr...', '[T+1200ms] CVE-2025-1337 matched on port 8443 (nginx 1.24.0)', '[T+1800ms] Signal created: { severity: CRITICAL, confidence: 0.94 }', '[T+2100ms] Evidence pre-proof: SHA-256 generated ✓'], 'simulated') });
 
       let toolRunId: string | null = null;
       if (orgId) {
