@@ -277,7 +277,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${running ? 'bg-primary animate-pulse' : allDone ? 'bg-success' : 'bg-muted-foreground'}`} />
             <span className="text-xs font-mono text-muted-foreground">
-              {running ? `AGENTS EN COURS — ${elapsed}s / 47s` : allDone ? 'PIPELINE COMPLÈTE — 47s ✓' : 'PRÊT'}
+              {running ? `SIMULATION EN COURS — ${elapsed}s / 47s` : allDone ? 'SIMULATION COMPLÈTE — 47s ✓' : 'PRÊT'}
             </span>
           </div>
           {allDone && (
