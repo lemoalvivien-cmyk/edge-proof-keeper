@@ -177,7 +177,7 @@ function SovereignActivationBlock({
         setPingDetail(`HTTP ${res.status} · ${ms}ms`);
         onConfirmed(ts);
         toast({
-          title: '✅ 100% SOUVERAIN EXTERNE activé',
+          title: '✅ EXTERNE CONFIRMÉ — activé',
           description: `Core API joignable en ${ms}ms — badge permanent sauvegardé en DB.`,
         });
       } else {
