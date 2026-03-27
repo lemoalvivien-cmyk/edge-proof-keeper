@@ -188,7 +188,7 @@ export default function Demo() {
             </div>
           </div>
           <Button onClick={() => navigate('/auth')} size="sm" className="neon-glow">
-            Démarrer gratuitement
+            Essai 14j · Carte requise
           </Button>
         </div>
       </div>
