@@ -48,6 +48,7 @@ export async function executeSkill(
 
   return {
     ...json,
+    execution_mode: json.execution_mode ?? 'simulated',
     logs: (json.result?.logs as string[]) ?? [],
   };
 }
