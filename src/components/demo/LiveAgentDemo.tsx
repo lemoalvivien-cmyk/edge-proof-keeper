@@ -421,8 +421,8 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
                         <span className="text-[10px] text-muted-foreground font-mono">{state.duration}ms</span>
                       )}
                       {isDone && (
-                        <Badge variant="outline" className="text-[10px] text-success border-success/30 bg-success/10">
-                          ✓ EXÉCUTÉ
+                        <Badge variant="outline" className={`text-[10px] ${EXECUTION_MODE_LABELS.simulated.color} ${EXECUTION_MODE_LABELS.simulated.borderColor} ${EXECUTION_MODE_LABELS.simulated.bgColor}`}>
+                          ✓ {EXECUTION_MODE_LABELS.simulated.badge}
                         </Badge>
                       )}
                       {isRunning && (
