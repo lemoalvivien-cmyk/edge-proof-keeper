@@ -45,7 +45,7 @@ export function DashboardEmptyState({ onLaunchDemo, onLaunchAnalysis, isLoading,
         <p className="text-sm text-muted-foreground">Aucune tâche de remédiation active</p>
         <Button size="sm" variant="outline" onClick={onLaunchDemo} disabled={isLoading} className="gap-2">
           <Play className="w-4 h-4" />
-          Revoir la démo 47s
+          Revoir la simulation 47s
         </Button>
       </motion.div>
     );
@@ -74,7 +74,7 @@ export function DashboardEmptyState({ onLaunchDemo, onLaunchAnalysis, isLoading,
         </Button>
         <Button variant="outline" onClick={onLaunchDemo} disabled={isLoading} className="gap-2">
           <Play className="w-4 h-4" />
-          Voir la démo 47s
+          Voir la simulation 47s
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

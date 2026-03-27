@@ -84,7 +84,7 @@ function ThreatCounter() {
   return <span className="font-mono text-primary tabular-nums">{count.toLocaleString('fr-FR')}</span>;
 }
 
-/* ── Live agent feed ── */
+/* ── Simulated agent feed ── */
 const agentEvents = [
   { icon: Activity, color: "text-primary", text: "Scout — port:8443 exposé détecté", time: "0s" },
   { icon: Zap, color: "text-accent", text: "Analyst — plan de remédiation généré", time: "12s" },
@@ -223,7 +223,7 @@ export function HeroSection() {
                 <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Déploiement en 15 min</span>
               </motion.div>
 
-              {/* Live stats strip */}
+              {/* Key stats strip */}
               <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
                 {[
                   { v: "47s", l: "Cycle lab démontré", c: "text-primary" },
@@ -238,7 +238,7 @@ export function HeroSection() {
               </motion.div>
             </div>
 
-            {/* ── RIGHT: Live cockpit preview ── */}
+            {/* ── RIGHT: Simulated cockpit preview ── */}
             <motion.div variants={fadeUp} className="hidden lg:block relative">
               <div className="absolute inset-0 blur-3xl rounded-3xl pointer-events-none"
                 style={{ background: "radial-gradient(circle, hsl(185 100% 52% / 0.10) 0%, transparent 70%)" }} />
@@ -306,7 +306,7 @@ export function HeroSection() {
                   </div>
                 </div>
 
-                {/* Live agent feed */}
+                {/* Simulated agent feed */}
                 <AgentFeed />
 
                 {/* ROI bottom strip */}

@@ -1,7 +1,7 @@
 /**
- * SECURIT-E — LiveAgentDemo
- * 47-second real pipeline: seed → 6 skills → Evidence Vault
- * Real-time logs via Framer Motion + Supabase Realtime
+ * SECURIT-E — LiveAgentDemo (Simulation)
+ * 47-second simulated pipeline: seed → 6 skills → Evidence Vault
+ * Animated logs via Framer Motion — données simulées
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -277,7 +277,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${running ? 'bg-primary animate-pulse' : allDone ? 'bg-success' : 'bg-muted-foreground'}`} />
             <span className="text-xs font-mono text-muted-foreground">
-              {running ? `AGENTS EN COURS — ${elapsed}s / 47s` : allDone ? 'PIPELINE COMPLÈTE — 47s ✓' : 'PRÊT'}
+              {running ? `SIMULATION EN COURS — ${elapsed}s / 47s` : allDone ? 'SIMULATION COMPLÈTE — 47s ✓' : 'PRÊT'}
             </span>
           </div>
           {allDone && (
@@ -305,7 +305,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
           className="w-full gap-2 font-mono text-xs"
         >
           {running ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />}
-          {running ? `Agents en cours (${elapsed}s)...` : allDone ? 'Relancer la démo' : 'Lancer démo agents (47s)'}
+          {running ? `Simulation en cours (${elapsed}s)...` : allDone ? 'Relancer la simulation' : 'Lancer simulation agents (47s)'}
         </Button>
       </div>
     );
@@ -318,10 +318,10 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Terminal className="w-5 h-5 text-primary" />
-            Démo Agents Live — Séquence 47s
+            Simulation Agents — Séquence 47s
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Pipeline de démonstration — simulation sécurisée · preuves SHA-256 réelles
+            Simulation sécurisée — données fictives · preuves SHA-256 de démonstration
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -502,7 +502,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
             </div>
             <div className="flex items-center gap-2 pt-1">
               <Badge className="bg-success/20 text-success border-success/30 text-xs">
-                Pipeline 100% réelle — zéro stub
+                Simulation complète — données fictives
               </Badge>
               <span className="text-xs text-muted-foreground">SHA-256 · Merkle Light · Evidence Vault immutable</span>
             </div>

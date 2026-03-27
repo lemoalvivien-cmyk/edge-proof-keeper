@@ -529,7 +529,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Zap className="h-5 w-5 text-primary" />
-                Preuve Produit Live
+                Preuve Produit
               </CardTitle>
               <div className="flex items-center gap-2">
                 {pipelineState === 'idle' && (pipelineProof?.runs ?? 0) === 0 && (
@@ -580,7 +580,7 @@ export default function Dashboard() {
               <Button size="sm" onClick={handleQuickPipeline} disabled={!organization?.id || pipelineRunning} className="gap-1.5">
                 {pipelineRunning
                   ? <><Loader2 className="h-4 w-4 animate-spin" />Pipeline en cours…</>
-                  : <><Play className="h-4 w-4" />Lancer la preuve live</>}
+                  : <><Play className="h-4 w-4" />Lancer la preuve</>}
               </Button>
               {(pipelineProof?.summaries ?? 0) > 0 && (
                 <Button size="sm" variant="outline" asChild className="gap-1.5">
@@ -614,16 +614,16 @@ export default function Dashboard() {
           <UpsellNudge feature="codir_report" variant="banner" />
         )}
 
-        {/* Live Agents Demo */}
+        {/* Simulated Agents Demo */}
         <Card className="border-primary/30">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Activity className="h-5 w-5 text-primary" />
-                Démo Agents Autonomes — Séquence 47s Live
+                Simulation Agents — Séquence 47s
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Badge className="bg-primary/10 text-primary border-primary/30 text-xs">DEMO LIVE</Badge>
+                <Badge className="bg-warning/10 text-warning border-warning/30 text-xs">SIMULATION</Badge>
                 <Badge variant="outline" className="text-xs text-success border-success/30 bg-success/10">
                   Aha Moment en 47s
                 </Badge>

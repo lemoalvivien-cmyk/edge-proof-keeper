@@ -8,8 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-/* ── Dashboard Live Tab ── */
-function DashboardLiveTab() {
+/* ── Dashboard Preview Tab ── */
+function DashboardPreviewTab() {
   return (
     <div className="grid md:grid-cols-3 gap-4">
       {/* Score maturité */}
@@ -94,10 +94,10 @@ function AgentsIATab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-mono text-muted-foreground">SWARM INTELLIGENCE — 6/6 AGENTS ACTIFS</span>
+        <span className="text-xs font-mono text-muted-foreground">AGENTS IA — 6/6 SUPERVISÉS</span>
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-          <span className="text-[10px] text-success font-mono">SWARM SUPERVISÉ</span>
+          <span className="text-[10px] text-success font-mono">SUPERVISÉ</span>
         </div>
       </div>
       <div className="grid md:grid-cols-2 gap-3">
@@ -150,7 +150,7 @@ function AutoRemediationTab() {
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-mono text-muted-foreground">QUEUE DE REMÉDIATION — SELF-HEALING &lt; 4H</span>
+        <span className="text-xs font-mono text-muted-foreground">QUEUE DE REMÉDIATION — ASSISTÉE &lt; 4H (OBJECTIF)</span>
         <span className="label-badge label-badge-cyan text-[10px]">EXECUTOR AGENT</span>
       </div>
       {plans.map((p, i) => (
@@ -259,7 +259,7 @@ function EvidenceVaultTab() {
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-muted-foreground font-mono">2 841 preuves archivées — chaîne immuable SHA-256</span>
+        <span className="text-xs text-muted-foreground font-mono">Preuves archivées (démo) — chaîne immuable SHA-256</span>
         <span className="label-badge label-badge-cyan text-[10px]">SHA-256 MERKLE CHAIN</span>
       </div>
       {proofs.map((p, i) => (
@@ -302,12 +302,12 @@ export function GodModePreviewSection() {
               <Activity className="w-3 h-3" />
               God Mode Preview
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               Le cockpit <span className="text-gradient">Securit-E</span>
-              <br />en action réelle
+              <br />en simulation
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Dashboard Live · 6 Agents IA · Auto-Remédiation · Predictive Causality · Evidence Vault SHA-256.
+              Dashboard · 6 Agents IA supervisés · Remédiation assistée · Predictive Causality · Evidence Vault SHA-256.
             </p>
           </motion.div>
 
@@ -326,11 +326,11 @@ export function GodModePreviewSection() {
                   <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
                 </div>
                 <div className="flex-1 mx-4 px-3 py-0.5 rounded bg-background/50 text-[10px] font-mono text-muted-foreground">
-                  securit-e.com/dashboard — Armure Cyber · LIVE
+                  securit-e.com/dashboard — Armure Cyber · SIMULATION
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                  <span className="text-[10px] font-mono text-muted-foreground">6 AGENTS · AUTONOMOUS</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
+                  <span className="text-[10px] font-mono text-muted-foreground">6 AGENTS · SUPERVISÉ</span>
                 </div>
               </div>
 
@@ -360,7 +360,7 @@ export function GodModePreviewSection() {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="dashboard"><DashboardLiveTab /></TabsContent>
+                  <TabsContent value="dashboard"><DashboardPreviewTab /></TabsContent>
                   <TabsContent value="agents"><AgentsIATab /></TabsContent>
                   <TabsContent value="remediation"><AutoRemediationTab /></TabsContent>
                   <TabsContent value="causality"><PredictiveCausalityTab /></TabsContent>
@@ -386,7 +386,7 @@ export function GodModePreviewSection() {
             </Button>
             <Button size="lg" variant="outline" className="border-border hover:border-primary/30 gap-2" asChild>
               <Link to="/demo">
-                Voir démo live (47s)
+                Voir la simulation (47s)
               </Link>
             </Button>
           </motion.div>

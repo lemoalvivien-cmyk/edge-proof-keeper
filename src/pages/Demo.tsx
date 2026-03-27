@@ -493,18 +493,18 @@ export default function Demo() {
                     className="neon-glow gap-2 font-bold"
                   >
                     <Shield className="h-4 w-4" />
-                    Commencer l'essai gratuit 14 jours
+                    Commencer l'essai 14 jours
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => {
-                      trackEvent('cta_demander_demo', { source_page: '/demo', cta_origin: 'demo_technical_cta' });
+                      trackEvent('cta_sandbox_supervisee', { source_page: '/demo', cta_origin: 'demo_sandbox_cta' });
                       openBookingOrFallback(() => setDemoContactOpen(true));
                     }}
                     className="gap-2"
                   >
                     <CalendarDays className="h-4 w-4" />
-                    Book 15-min demo
+                    Demander une sandbox supervisée
                   </Button>
                 </div>
                 <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-1">
