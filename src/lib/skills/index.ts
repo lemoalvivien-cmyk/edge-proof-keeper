@@ -1,9 +1,10 @@
 /**
  * SECURIT-E — Skills Index
- * All 6 skills now call the real execute-skill Edge Function.
- * Real SHA-256 proofs, structured logs, Evidence Vault writes.
+ * All 6 skills call the real execute-skill Edge Function.
+ * Every response carries execution_mode: 'simulated' | 'supervised_real'.
  */
 import { supabase } from '@/integrations/supabase/client';
+import type { ExecutionMode } from '@/types/execution';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
@@ -11,6 +12,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as strin
 export interface SkillExecutionResult {
   success: boolean;
   skill: string;
+  execution_mode: ExecutionMode;
   duration_ms: number;
   proof: {
     hash: string;
