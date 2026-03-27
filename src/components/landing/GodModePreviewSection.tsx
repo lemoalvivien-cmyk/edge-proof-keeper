@@ -302,12 +302,12 @@ export function GodModePreviewSection() {
               <Activity className="w-3 h-3" />
               God Mode Preview
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               Le cockpit <span className="text-gradient">Securit-E</span>
-              <br />en action réelle
+              <br />en simulation
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Dashboard Live · 6 Agents IA · Auto-Remédiation · Predictive Causality · Evidence Vault SHA-256.
+              Dashboard · 6 Agents IA supervisés · Remédiation assistée · Predictive Causality · Evidence Vault SHA-256.
             </p>
           </motion.div>
 
