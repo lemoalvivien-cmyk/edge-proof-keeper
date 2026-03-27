@@ -150,7 +150,7 @@ function AutoRemediationTab() {
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-mono text-muted-foreground">QUEUE DE REMÉDIATION — SELF-HEALING &lt; 4H</span>
+        <span className="text-xs font-mono text-muted-foreground">QUEUE DE REMÉDIATION — ASSISTÉE &lt; 4H (OBJECTIF)</span>
         <span className="label-badge label-badge-cyan text-[10px]">EXECUTOR AGENT</span>
       </div>
       {plans.map((p, i) => (
