@@ -238,7 +238,7 @@ export function HeroSection() {
               </motion.div>
             </div>
 
-            {/* ── RIGHT: Live cockpit preview ── */}
+            {/* ── RIGHT: Simulated cockpit preview ── */}
             <motion.div variants={fadeUp} className="hidden lg:block relative">
               <div className="absolute inset-0 blur-3xl rounded-3xl pointer-events-none"
                 style={{ background: "radial-gradient(circle, hsl(185 100% 52% / 0.10) 0%, transparent 70%)" }} />
