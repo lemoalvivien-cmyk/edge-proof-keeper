@@ -84,7 +84,7 @@ function ThreatCounter() {
   return <span className="font-mono text-primary tabular-nums">{count.toLocaleString('fr-FR')}</span>;
 }
 
-/* ── Live agent feed ── */
+/* ── Simulated agent feed ── */
 const agentEvents = [
   { icon: Activity, color: "text-primary", text: "Scout — port:8443 exposé détecté", time: "0s" },
   { icon: Zap, color: "text-accent", text: "Analyst — plan de remédiation généré", time: "12s" },
