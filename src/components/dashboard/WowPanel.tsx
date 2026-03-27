@@ -533,12 +533,9 @@ export function WowPanel({
       <div className="px-5 py-3 border-t border-border/50 bg-secondary/10 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <Clock className="w-3.5 h-3.5" />
-          <span className="font-mono">Dernière analyse : il y a moins de 1h</span>
+          <span className="font-mono">{hasRealData ? 'Données réelles' : 'Données de démonstration'}</span>
           <span className="text-border">·</span>
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-            <span className="text-success font-semibold">6/6 agents actifs</span>
-          </span>
+          <ProvenanceBadge provenance={dataProvenance} source={hasRealData ? 'findings/tool_runs' : 'demo-data.ts'} />
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="ghost" className="h-7 px-3 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={() => navigate('/risks')}>
