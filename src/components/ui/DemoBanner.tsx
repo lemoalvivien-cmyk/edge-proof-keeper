@@ -1,5 +1,4 @@
-import { FlaskConical, X } from 'lucide-react';
-import { useState } from 'react';
+import { FlaskConical } from 'lucide-react';
 
 export function DemoBanner() {
   return (
