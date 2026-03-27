@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/version-2026.1.0-00ff9d?style=for-the-badge&logo=shield)](https://securit-e.com)
 [![Hébergé en France](https://img.shields.io/badge/France-Hébergé_🇫🇷-003189?style=for-the-badge)](https://securit-e.com)
 [![Crypto](https://img.shields.io/badge/Crypto-SHA--256_Merkle_Chain-8b5cf6?style=for-the-badge)](https://securit-e.com)
-[![NIS2 Ready](https://img.shields.io/badge/NIS2-Ready_2026-ef4444?style=for-the-badge)](https://securit-e.com)
+[![Support NIS2](https://img.shields.io/badge/NIS2-Support_documenté-ef4444?style=for-the-badge)](https://securit-e.com)
 
 ---
 
