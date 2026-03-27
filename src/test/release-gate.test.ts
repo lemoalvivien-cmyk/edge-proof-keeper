@@ -271,3 +271,65 @@ describe("Data provenance system", () => {
     expect(PROVENANCE_CONFIG.simulated.shortLabel).toBe("SIMULÉ");
   });
 });
+
+// ── Agent hardening tests ────────────────────────────────────────────────────
+describe("Agent hardening — no permissive defaults", () => {
+  it("Go agent must not have 'demo-tenant' as default TenantID", async () => {
+    const fs = await import("fs");
+    const goCode = fs.readFileSync("sentinel-immune-agent/cmd/agent/main.go", "utf-8");
+    // TenantID should default to "" not "demo-tenant"
+    expect(goCode).toContain('TenantID: getEnv("SENTINEL_TENANT_ID", "")');
+    expect(goCode).not.toContain('TenantID: getEnv("SENTINEL_TENANT_ID", "demo-tenant")');
+  });
+
+  it("Go agent must have fail-closed production checks", async () => {
+    const fs = await import("fs");
+    const goCode = fs.readFileSync("sentinel-immune-agent/cmd/agent/main.go", "utf-8");
+    expect(goCode).toContain("log.Fatalf");
+    expect(goCode).toContain("SENTINEL_SIGNING_KEY is required in production");
+    expect(goCode).toContain("TLS certificates");
+  });
+
+  it("Go agent must not have commented-out HMAC verification", async () => {
+    const fs = await import("fs");
+    const goCode = fs.readFileSync("sentinel-immune-agent/cmd/agent/main.go", "utf-8");
+    // Should not have the old commented-out verification block
+    expect(goCode).not.toContain("// mac := hmac.New(sha256.New");
+    expect(goCode).not.toContain("// return hmac.Equal");
+  });
+
+  it("Go agent must not have silent HTTP fallback in production", async () => {
+    const fs = await import("fs");
+    const goCode = fs.readFileSync("sentinel-immune-agent/cmd/agent/main.go", "utf-8");
+    // Production mode should Fatalf on TLS failure, not fallback
+    expect(goCode).toContain("refusing to start without TLS in production");
+  });
+
+  it("docker-compose must not reference post-quantum (dilithium)", async () => {
+    const fs = await import("fs");
+    const dc = fs.readFileSync("sentinel-immune-agent/docker-compose.yml", "utf-8");
+    expect(dc.toLowerCase()).not.toContain("dilithium");
+    expect(dc).not.toContain("SENTINEL_DILITHIUM");
+  });
+
+  it("helm values must not reference post-quantum annotations", async () => {
+    const fs = await import("fs");
+    const helm = fs.readFileSync("sentinel-immune-agent/helm/values.yaml", "utf-8");
+    expect(helm.toLowerCase()).not.toContain("dilithium");
+    expect(helm).not.toContain("pq-algorithm");
+  });
+
+  it("helm values must have requireDSIApproval: true", async () => {
+    const fs = await import("fs");
+    const helm = fs.readFileSync("sentinel-immune-agent/helm/values.yaml", "utf-8");
+    expect(helm).toContain("requireDSIApproval: true");
+    expect(helm).not.toMatch(/requireDSIApproval:\s*false/);
+  });
+
+  it("docker-compose must require SENTINEL_TENANT_ID (no demo default)", async () => {
+    const fs = await import("fs");
+    const dc = fs.readFileSync("sentinel-immune-agent/docker-compose.yml", "utf-8");
+    expect(dc).toContain("SENTINEL_TENANT_ID:?");
+    expect(dc).not.toContain("demo-tenant");
+  });
+});
