@@ -491,10 +491,10 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
               {[
-                { label: 'Skills exécutés', value: '6/6', color: 'text-success' },
+                { label: 'Skills simulés', value: '6/6', color: 'text-yellow-600' },
                 { label: 'Preuves Vault', value: `${vaultEntries}`, color: 'text-primary' },
-                { label: 'Intervention humaine', value: '0', color: 'text-success' },
-                { label: 'Conformité NIS2', value: '✓', color: 'text-success' },
+                { label: 'Mode', value: 'SIMULATION', color: 'text-yellow-600' },
+                { label: 'Données', value: 'Fictives', color: 'text-yellow-600' },
               ].map((stat, i) => (
                 <div key={i} className="p-3 rounded-lg bg-background/60 border border-border/30">
                   <div className={`text-xl font-bold font-mono ${stat.color}`}>{stat.value}</div>
