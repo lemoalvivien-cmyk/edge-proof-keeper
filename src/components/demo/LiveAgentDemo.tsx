@@ -7,8 +7,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, CheckCircle2, AlertCircle, Loader2, Shield, Zap,
-  Terminal, Lock, Activity, Clock, Database, RefreshCw,
+  Terminal, Lock, Activity, Clock, Database, RefreshCw, AlertTriangle,
 } from 'lucide-react';
+import { EXECUTION_MODE_LABELS, tagLogs } from '@/types/execution';
+import type { ExecutionMode } from '@/types/execution';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
