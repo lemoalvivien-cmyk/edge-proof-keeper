@@ -466,7 +466,7 @@ export function WowPanel({
                     <Lock className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-foreground">{vaultCount.toLocaleString('fr-FR')} preuves archivées</p>
+                    <p className="text-xs font-bold text-foreground">{runsCount > 0 ? `${runsCount} preuves archivées` : 'Aucune preuve — lancez une analyse'}</p>
                     <p className="text-[10px] text-muted-foreground font-mono">Chaîne immuable SHA-256 · Vault souverain</p>
                   </div>
                 </div>
