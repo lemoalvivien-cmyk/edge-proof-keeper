@@ -229,3 +229,38 @@ describe("Execution mode separation", () => {
     expect(EXECUTION_MODE_LABELS.simulated.badge).not.toContain("EXÉCUTÉ");
   });
 });
+
+// ── Data provenance tests ────────────────────────────────────────────────────
+describe("Data provenance system", () => {
+  it("should have exactly 3 provenance levels: real, derived, simulated", async () => {
+    const { PROVENANCE_CONFIG } = await import("@/types/provenance");
+    expect(Object.keys(PROVENANCE_CONFIG)).toEqual(["real", "derived", "simulated"]);
+  });
+
+  it("should mark simulated data as non-exportable", async () => {
+    const { isExportable } = await import("@/types/provenance");
+    expect(isExportable("real")).toBe(true);
+    expect(isExportable("derived")).toBe(true);
+    expect(isExportable("simulated")).toBe(false);
+  });
+
+  it("should resolve to simulated when no real data", async () => {
+    const { resolveProvenance } = await import("@/types/provenance");
+    expect(resolveProvenance(false)).toBe("simulated");
+    expect(resolveProvenance(true)).toBe("real");
+    expect(resolveProvenance(true, true)).toBe("derived");
+  });
+
+  it("should not contain Math.random in swarm_collaborate client code", async () => {
+    const { readFileSync } = await import("fs");
+    const content = readFileSync("src/lib/skills/swarm_collaborate.ts", "utf-8");
+    expect(content).not.toContain("Math.random()");
+  });
+
+  it("should not contain fake vault counter in WowPanel", async () => {
+    const { readFileSync } = await import("fs");
+    const content = readFileSync("src/components/dashboard/WowPanel.tsx", "utf-8");
+    expect(content).not.toContain("setVaultCount");
+    expect(content).not.toContain("LivePulse");
+  });
+});
