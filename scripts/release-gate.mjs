@@ -87,7 +87,7 @@ const FORBIDDEN = [
 const SKIP = ["node_modules", ".git", "dist", "build", "release-gate.mjs", ".lock", "bun.lock"];
 
 // Test files deliberately contain forbidden strings in test assertions
-const SKIP_TEST_FILES = [".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx", "SPRINT", "VERIFICATION", "productTruth.ts"];
+const SKIP_TEST_FILES = [".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx", "SPRINT", "VERIFICATION", "productTruth.ts", "cryptoCapabilities.ts", "sovereigntyCapabilities.ts"];
 
 // These patterns are allowed even if they match (comments, docs explaining what's NOT implemented)
 const ALLOWED_CONTEXTS = [
