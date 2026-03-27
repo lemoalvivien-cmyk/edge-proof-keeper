@@ -35,7 +35,7 @@ const vaultFeatures = [
   },
 ];
 
-const liveProofs = [
+const demoProofs = [
   { id: "PK-XXX", action: "Port exposé — fermeture prouvée", algo: "SHA-256 Merkle Chain", ts: "Démo — données simulées" },
   { id: "PK-XXX", action: "CVE critique — patch vérifié", algo: "SHA-256 Merkle Chain", ts: "Démo — données simulées" },
   { id: "PK-XXX", action: "Rotation credentials — auditée", algo: "SHA-256 Merkle Chain", ts: "Démo — données simulées" },
@@ -108,7 +108,7 @@ export function EvidenceSection() {
               ))}
             </div>
 
-            {/* Right: live vault preview */}
+            {/* Right: simulated vault preview */}
             <motion.div
               initial={{ opacity: 0, x: 24 }}
               animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -118,7 +118,7 @@ export function EvidenceSection() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                  <span className="text-[10px] font-mono text-muted-foreground">EVIDENCE VAULT · LIVE</span>
+                  <span className="text-[10px] font-mono text-muted-foreground">EVIDENCE VAULT · DÉMO</span>
                 </div>
                 <span className="label-badge label-badge-cyan text-[9px]">SHA-256 MERKLE CHAIN</span>
               </div>
@@ -139,7 +139,7 @@ export function EvidenceSection() {
 
               <div className="space-y-2">
                 <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Dernières preuves archivées</div>
-                {liveProofs.map((p, i) => (
+                {demoProofs.map((p, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0 }}

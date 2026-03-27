@@ -114,7 +114,7 @@ export function LandingNav() {
                   navigate('/auth?tab=signup');
                 }}
               >
-                Essai gratuit 14j
+                Essai 14j · Carte requise
                 <ArrowRight className="w-3 h-3" />
               </Button>
             </div>
@@ -172,7 +172,7 @@ export function LandingNav() {
                   </Button>
                   <Button className="w-full neon-glow font-bold gap-2" onClick={() => { setIsMobileMenuOpen(false); navigate('/auth?tab=signup'); }}>
                     <Shield className="w-4 h-4" />
-                    Essai gratuit 14j
+                    Essai 14j · Carte requise
                   </Button>
                 </div>
               </div>
