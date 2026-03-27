@@ -271,3 +271,58 @@ describe("Data provenance system", () => {
     expect(PROVENANCE_CONFIG.simulated.shortLabel).toBe("SIMULÉ");
   });
 });
+
+// ── Agent hardening tests ────────────────────────────────────────────────────
+describe("Agent hardening — no permissive defaults", () => {
+  // Use dynamic import to get node:fs in jsdom environment
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const readFile = async (p: string): Promise<string> => {
+    const mod = "f" + "s";
+    const fsModule: any = await import(/* @vite-ignore */ mod);
+    return fsModule.readFileSync(p, "utf-8");
+  };
+
+  it("Go agent must not have 'demo-tenant' as default TenantID", async () => {
+    const goCode = await readFile("sentinel-immune-agent/cmd/agent/main.go");
+    expect(goCode).toContain('TenantID: getEnv("SENTINEL_TENANT_ID", "")');
+    expect(goCode).not.toContain('TenantID: getEnv("SENTINEL_TENANT_ID", "demo-tenant")');
+  });
+
+  it("Go agent must have fail-closed production checks", async () => {
+    const goCode = await readFile("sentinel-immune-agent/cmd/agent/main.go");
+    expect(goCode).toContain("log.Fatalf");
+    expect(goCode).toContain("SENTINEL_SIGNING_KEY is required in production");
+  });
+
+  it("Go agent must not have commented-out HMAC verification", async () => {
+    const goCode = await readFile("sentinel-immune-agent/cmd/agent/main.go");
+    expect(goCode).not.toContain("// mac := hmac.New(sha256.New");
+    expect(goCode).not.toContain("// return hmac.Equal");
+  });
+
+  it("Go agent must not have silent HTTP fallback in production", async () => {
+    const goCode = await readFile("sentinel-immune-agent/cmd/agent/main.go");
+    expect(goCode).toContain("refusing to start without TLS in production");
+  });
+
+  it("docker-compose must not reference post-quantum (dilithium)", async () => {
+    const dc = await readFile("sentinel-immune-agent/docker-compose.yml");
+    expect(dc.toLowerCase()).not.toContain("dilithium");
+  });
+
+  it("helm values must not reference post-quantum annotations", async () => {
+    const helm = await readFile("sentinel-immune-agent/helm/values.yaml");
+    expect(helm.toLowerCase()).not.toContain("dilithium");
+    expect(helm).not.toContain("pq-algorithm");
+  });
+
+  it("helm values must have requireDSIApproval: true", async () => {
+    const helm = await readFile("sentinel-immune-agent/helm/values.yaml");
+    expect(helm).toContain("requireDSIApproval: true");
+  });
+
+  it("docker-compose must require SENTINEL_TENANT_ID (no demo default)", async () => {
+    const dc = await readFile("sentinel-immune-agent/docker-compose.yml");
+    expect(dc).not.toContain("demo-tenant");
+  });
+});

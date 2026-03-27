@@ -24,7 +24,7 @@ serviceAccount:
 # ── Pod annotations / labels ──────────────────────────────────────────────────
 podAnnotations:
   securit-e.io/version: "2026.1.0"
-  securit-e.io/pq-algorithm: "dilithium3"
+  securit-e.io/signing: "sha256-hmac"
 
 podLabels:
   app.kubernetes.io/component: edge-agent
@@ -104,12 +104,9 @@ sentinel:
   swarmUrl: "https://swarm.securit-e.com"
   wgEndpoint: "edge-agent.securit-e.com:51820"
 
-  # Post-quantum keys (set via K8s secret)
-  dilithiumPubKey: ""
-
   selfHeal:
     maxAutoPerHour: 5
-    requireDSIApproval: false
+    requireDSIApproval: true  # Always true in production — supervised mode
     rollbackTimeoutHours: 4
 
 # ── TLS certificates (from K8s secret) ───────────────────────────────────────

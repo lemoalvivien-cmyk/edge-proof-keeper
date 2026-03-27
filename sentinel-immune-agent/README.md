@@ -2,7 +2,7 @@
 
 > Sidecar Go ultra-léger <50Mo — WireGuard + mTLS
 > 
-> Pilote les 6 skills OpenClaw supervisés (fix_port, rotate_creds, close_domain, patch_vuln, notify_rollback, swarm_collaborate)
+> Pilote les 6 skills supervisés (fix_port, rotate_creds, close_domain, patch_vuln, notify_rollback, swarm_collaborate)
 
 ## Démarrage rapide
 
@@ -87,8 +87,8 @@ tenant_id: "your-org-uuid"
 region: "fr-paris"
 
 agent:
-  public_key: "YOUR_WIREGUARD_PUBLIC_KEY"
   endpoint: "edge-agent.securit-e.com:51820"
+  signing_key: "YOUR_HMAC_SIGNING_KEY"    # Required in production
   skills_enabled:
     - fix_port
     - rotate_creds
@@ -98,9 +98,12 @@ agent:
     - swarm_collaborate
 
 remediation:
-  require_dsi_approval: true    # Toujours true en production — mode supervisé
+  require_dsi_approval: true    # Always true in production — mode supervisé
   rollback_timeout_hours: 4
   max_auto_remediation: 5
+
+# Development mode — disables security enforcement
+# dev_mode: true  # NEVER enable in production
 ```
 
 ## Build & Deploy
@@ -127,9 +130,11 @@ docker run -d \
 
 - **WireGuard** : tunnel chiffré Curve25519 pour tout le trafic agent
 - **mTLS** : authentification mutuelle TLS 1.3 entre agent et platform
-- **SHA-256 Merkle Chain** : chaque skill call signe une entrée immuable dans l'Evidence Vault
+- **SHA-256 HMAC** : chaque skill call signe une entrée dans l'Evidence Vault
+- **Fail-closed** : en production, l'agent refuse de démarrer sans certs, signing key, et tenant ID
 - **Rollback automatique** si vérification échoue (timeout 4h)
 - Validation Go/No-Go DSI requise pour toute action sensible en production
+- **Mode dev** : opt-in explicite via `SENTINEL_DEV_MODE=true` — désactive les contrôles de sécurité
 
 ## Skills disponibles (mode supervisé)
 
