@@ -391,7 +391,7 @@ export function HowItWorksSection() {
                       <span className="w-1.5 h-1.5 rounded-full bg-accent" /> ISO 27001
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground/60">🇫🇷 100% Souverain</span>
+                  <span className="text-[10px] font-mono text-muted-foreground/60">🇫🇷 Hébergé en France</span>
                 </div>
               </div>
             </motion.div>

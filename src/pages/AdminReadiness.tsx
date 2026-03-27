@@ -929,7 +929,7 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
         </div>
         <CardDescription>
           {coreConfigured
-            ? `Core API externe configuré${externalConfirmed ? ' — ping OK · 100% souverain externe' : ' — cliquez Ping pour confirmer la connectivité'}`
+            ? `Core API externe configuré${externalConfirmed ? ' — ping OK · externe confirmé' : ' — cliquez Ping pour confirmer la connectivité'}`
             : isProd
             ? '🔒 PROD : fallback interne désactivé — configurez Core API URL dans /settings/revenue'
             : 'Moteur interne (Edge Functions) · Core API externe optionnel en dev'}

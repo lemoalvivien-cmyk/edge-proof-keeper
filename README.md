@@ -110,7 +110,7 @@ sequenceDiagram
     EA->>EX: SkillResponse { success: true, proof_hash }
     EX->>VL: Log evidence (T+42s)
     VL->>VL: SHA-256 Merkle Chain entry sealed
-    VL-->>DS: Proof pack — NIS2 compliant ✓ (T+47s)
+    VL-->>DS: Proof pack — NIS2 documenté ✓ (T+47s)
 ```
 
 ### Stack technique

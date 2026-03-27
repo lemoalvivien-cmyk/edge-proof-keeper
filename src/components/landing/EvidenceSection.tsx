@@ -185,7 +185,7 @@ export function EvidenceSection() {
               {[
                 { icon: Lock, label: "SHA-256 Merkle Chain" },
                 { icon: Shield, label: "Conforme RGPD" },
-                { icon: Link2, label: "NIS2 Ready" },
+                { icon: Link2, label: "Support NIS2" },
                 { icon: Cpu, label: "Automatisation supervisée" },
                 { icon: Activity, label: "Audit Trail complet" },
                 { icon: () => <span className="text-base">🇫🇷</span>, label: "Hébergé en France" },

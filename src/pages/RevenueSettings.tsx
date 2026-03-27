@@ -237,7 +237,7 @@ function SovereignActivationBlock({
         {pingState === 'running'
           ? <><Loader2 className="h-4 w-4 animate-spin" />Ping en cours…</>
           : pingState === 'ok'
-          ? <><ShieldCheck className="h-4 w-4" />100% SOUVERAIN EXTERNE ✓</>
+          ? <><ShieldCheck className="h-4 w-4" />EXTERNE CONFIRMÉ ✓</>
           : <><Activity className="h-4 w-4" />Ping & Activer Souveraineté Externe<ArrowRight className="h-4 w-4" /></>
         }
       </Button>
