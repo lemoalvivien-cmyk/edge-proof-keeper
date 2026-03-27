@@ -114,7 +114,7 @@ export function LandingNav() {
                   navigate('/auth?tab=signup');
                 }}
               >
-                Essai gratuit 14j
+                Essai 14j · Carte requise
                 <ArrowRight className="w-3 h-3" />
               </Button>
             </div>
