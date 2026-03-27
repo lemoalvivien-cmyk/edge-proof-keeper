@@ -416,7 +416,7 @@ export default function ExecutiveCockpit() {
               label="Temps Épargné"
               value={`${hoursSaved}h`}
               sub="d'analyse économisée"
-              trend={<Trend up label="IA autonome" />}
+              trend={<Trend up label="IA supervisée" />}
               accent="hsl(var(--neon-green, var(--success)))"
               bg="bg-success/5"
               detail={`Basé sur ${d_runs} analyse${d_runs > 1 ? 's' : ''} et ${d_done} action${d_done > 1 ? 's' : ''} effectuées`}
