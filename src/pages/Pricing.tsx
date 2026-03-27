@@ -74,7 +74,7 @@ const plans = [
       { text: "Account Manager dédié", available: false },
     ],
     cta: "Activer Command",
-    ctaSecondary: "Démarrer l'essai 14j gratuit",
+    ctaSecondary: "Essai 14j · Carte requise",
   },
   {
     id: "sovereign",
