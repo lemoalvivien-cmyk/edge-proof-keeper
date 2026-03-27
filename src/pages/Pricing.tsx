@@ -63,7 +63,7 @@ const plans = [
     perks: [
       { text: "Tout Sentinel inclus", available: true },
       { text: "6 Agents IA Swarm Intelligence complets", available: true },
-      { text: "Self-healing autonome · SLA < 4h", available: true },
+      { text: "Remédiation assistée · Objectif < 4h", available: true },
       { text: "OSINT & EASM Signals — surveillance continue", available: true },
       { text: "Evidence Vault cryptographique (SHA-256 Merkle Chain)", available: true },
       { text: "Predictive Causality Engine · 90j d'horizon", available: true },
