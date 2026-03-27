@@ -94,7 +94,7 @@ const plans = [
       { text: "Swarm Mode — supervision avancée 24/7", available: true },
       { text: "Déploiement on-premise (objectif roadmap 2026)", available: true },
       { text: "Agents IA personnalisés sur vos process", available: true },
-      { text: "SLA 99.99% — objectif contractuel sur devis", available: true },
+      { text: "SLA renforcé · Contractualisé sur devis Enterprise", available: true },
       { text: "Account Manager dédié CISO-level", available: true },
       { text: "CISO Board-level reports personnalisés", available: true },
       { text: "Intégration SIEM / SOC existant", available: true },
