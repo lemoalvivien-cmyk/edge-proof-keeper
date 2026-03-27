@@ -139,7 +139,7 @@ export function EvidenceSection() {
 
               <div className="space-y-2">
                 <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Dernières preuves archivées</div>
-                {liveProofs.map((p, i) => (
+                {demoProofs.map((p, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0 }}
