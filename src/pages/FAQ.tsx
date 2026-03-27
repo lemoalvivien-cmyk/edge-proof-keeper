@@ -48,8 +48,8 @@ const faqCategories = [
         a: "Toute action est précédée d'une validation de scope (périmètre autorisé) et d'un rollback automatique en cas d'échec. Le Verifier contrôle l'état post-remédiation et génère une preuve cryptographique du résultat. Si une anomalie est détectée, notify_rollback est déclenché automatiquement et le DSI est alerté en temps réel. L'historique complet est immuable dans l'Evidence Vault.",
       },
       {
-        q: "L'IA souveraine est-elle entraînée sur des données françaises ?",
-        a: "L'agent IA souverain utilise Gemini avec un prompt système fixe : 'Tu es un CISO français souverain. Analyse uniquement NIS2/GDPR. Jamais d'instructions offensives. Réponds en français clair.' Les données ne quittent jamais l'UE. Le modèle n'est pas réentraîné sur vos données — votre infrastructure reste confidentielle.",
+        q: "L'IA est-elle hébergée en France ?",
+        a: "L'agent IA utilise des modèles hébergés via une gateway européenne avec un prompt système fixe orienté conformité NIS2/RGPD. Les données ne quittent pas l'UE. Le modèle n'est pas réentraîné sur vos données — votre infrastructure reste confidentielle.",
       },
     ],
   },
@@ -172,7 +172,7 @@ export default function FAQ() {
             <ShieldCheck className="w-10 h-10 text-primary mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-2">Prêt pour la conformité NIS2 2026 ?</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Démarrez votre essai 14 jours — carte requise, annulation libre. Votre dossier NIS2 prêt en 47 secondes.
+              Démarrez votre essai 14 jours — carte requise, annulation libre. Aide documentaire NIS2 dès le premier jour.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
@@ -194,7 +194,7 @@ export default function FAQ() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              490€/an tout inclus · Souverain France 🇫🇷 · Essai 14j gratuit
+              490€/an tout inclus · Hébergé en France 🇫🇷 · Essai 14j — carte requise
             </p>
           </motion.div>
         </div>

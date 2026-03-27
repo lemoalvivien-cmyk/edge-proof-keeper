@@ -112,6 +112,13 @@ describe("Release Gate — productTruth.ts alignment", () => {
     expect(pt.FORBIDDEN_MARKETING_CLAIMS).toContain("SLA 99.99%");
     expect(pt.FORBIDDEN_MARKETING_CLAIMS).toContain("fully autonomous");
     expect(pt.FORBIDDEN_MARKETING_CLAIMS).toContain("live");
+    // New sovereignty/crypto forbidden claims
+    expect(pt.FORBIDDEN_MARKETING_CLAIMS).toContain("NIS2 Ready");
+    expect(pt.FORBIDDEN_MARKETING_CLAIMS).toContain("NIS2 compliant");
+    expect(pt.FORBIDDEN_MARKETING_CLAIMS).toContain("souveraineté totale");
+    expect(pt.FORBIDDEN_MARKETING_CLAIMS).toContain("hébergement souverain garanti");
+    expect(pt.FORBIDDEN_MARKETING_CLAIMS).toContain("LLM souverain");
+    expect(pt.FORBIDDEN_MARKETING_CLAIMS).toContain("skills autonomes");
   });
 
   it("should detect 'sans CB' as forbidden", () => {

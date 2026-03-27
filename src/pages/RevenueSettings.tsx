@@ -177,7 +177,7 @@ function SovereignActivationBlock({
         setPingDetail(`HTTP ${res.status} · ${ms}ms`);
         onConfirmed(ts);
         toast({
-          title: '✅ 100% SOUVERAIN EXTERNE activé',
+          title: '✅ EXTERNE CONFIRMÉ — activé',
           description: `Core API joignable en ${ms}ms — badge permanent sauvegardé en DB.`,
         });
       } else {
@@ -197,7 +197,7 @@ function SovereignActivationBlock({
       <div className="flex items-center gap-3 rounded-lg border border-success/30 bg-success/5 px-4 py-3">
         <ShieldCheck className="h-5 w-5 text-success shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-success">✓ 100% SOUVERAIN EXTERNE — Confirmé</p>
+          <p className="text-sm font-bold text-success">✓ EXTERNE CONFIRMÉ</p>
           <p className="text-xs text-muted-foreground font-mono">
             Ping validé le {new Date(confirmedAt).toLocaleString('fr-FR')} · Core API joignable
           </p>
@@ -220,7 +220,7 @@ function SovereignActivationBlock({
         <p className="text-sm font-semibold">Activer la souveraineté externe</p>
       </div>
       <p className="text-xs text-muted-foreground">
-        Sauvegardez d'abord l'URL Core API ci-dessus, puis cliquez pour pinguer et activer le badge permanent "100% SOUVERAIN EXTERNE".
+        Sauvegardez d'abord l'URL Core API ci-dessus, puis cliquez pour pinguer et activer le badge permanent "EXTERNE CONFIRMÉ".
       </p>
       {pingDetail && (
         <p className={`text-xs font-mono ${pingState === 'ok' ? 'text-success' : 'text-destructive'}`}>
@@ -237,7 +237,7 @@ function SovereignActivationBlock({
         {pingState === 'running'
           ? <><Loader2 className="h-4 w-4 animate-spin" />Ping en cours…</>
           : pingState === 'ok'
-          ? <><ShieldCheck className="h-4 w-4" />100% SOUVERAIN EXTERNE ✓</>
+          ? <><ShieldCheck className="h-4 w-4" />EXTERNE CONFIRMÉ ✓</>
           : <><Activity className="h-4 w-4" />Ping & Activer Souveraineté Externe<ArrowRight className="h-4 w-4" /></>
         }
       </Button>

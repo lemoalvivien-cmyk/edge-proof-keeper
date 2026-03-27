@@ -23,7 +23,7 @@ const STEPS = [
     agent: "Analyst Agent",
     icon: Brain,
     action: "Génère plan de remédiation priorisé + impact business",
-    detail: "LLM souverain analyse le contexte, estime l'impact RGPD/NIS2, génère 3 scénarios de remédiation par criticité. Brief DSI automatique.",
+    detail: "IA hébergée en France analyse le contexte, estime l'impact RGPD/NIS2, génère 3 scénarios de remédiation par criticité. Brief DSI automatique.",
     color: "text-accent",
     glow: "hsl(258 90% 66%)",
     glowAlpha: "hsl(258 90% 66% / 0.15)",
@@ -391,7 +391,7 @@ export function HowItWorksSection() {
                       <span className="w-1.5 h-1.5 rounded-full bg-accent" /> ISO 27001
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground/60">🇫🇷 100% Souverain</span>
+                  <span className="text-[10px] font-mono text-muted-foreground/60">🇫🇷 Hébergé en France</span>
                 </div>
               </div>
             </motion.div>

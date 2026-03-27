@@ -859,16 +859,16 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
   // Badge label: prod enforces OBLIGATOIRE wording
   const badgeLabel = isProd
     ? externalConfirmed
-      ? '✓ 100% SOUVERAIN EXTERNE OBLIGATOIRE'
+      ? '✓ EXTERNE CONFIRMÉ — OBLIGATOIRE'
       : prodFallbackBlocked
       ? '🔒 SOUVERAINETÉ EXTERNE REQUISE'
       : '⚡ EXTERNE OBLIGATOIRE (ping requis)'
     : externalConfirmed
-    ? `✓ 100% SOUVERAIN EXTERNE${dbConfirmedAt ? ' (persisté)' : ''}`
+    ? `✓ EXTERNE CONFIRMÉ${dbConfirmedAt ? ' (persisté)' : ''}`
     : coreConfigured
-    ? '⚡ SOUVERAIN EXTERNE (ping requis)'
+    ? '⚡ EXTERNE (ping requis)'
     : internalSovereign
-    ? '✓ 100% SOUVERAIN INTERNE (dev)'
+    ? '✓ INTERNE OPÉRATIONNEL (dev)'
     : '⚠ SOUVERAINETÉ PARTIELLE';
 
   return (
@@ -929,7 +929,7 @@ function SovereignBackendPanel({ orgId, demoDataLoaded }: { orgId?: string; demo
         </div>
         <CardDescription>
           {coreConfigured
-            ? `Core API externe configuré${externalConfirmed ? ' — ping OK · 100% souverain externe' : ' — cliquez Ping pour confirmer la connectivité'}`
+            ? `Core API externe configuré${externalConfirmed ? ' — ping OK · externe confirmé' : ' — cliquez Ping pour confirmer la connectivité'}`
             : isProd
             ? '🔒 PROD : fallback interne désactivé — configurez Core API URL dans /settings/revenue'
             : 'Moteur interne (Edge Functions) · Core API externe optionnel en dev'}

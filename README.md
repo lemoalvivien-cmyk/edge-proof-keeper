@@ -4,9 +4,9 @@
 > **6 agents détectent, analysent et proposent des remédiations avec supervision humaine. Preuves SHA-256 Merkle Chain immuables. Souverain France.**
 
 [![Version](https://img.shields.io/badge/version-2026.1.0-00ff9d?style=for-the-badge&logo=shield)](https://securit-e.com)
-[![France Souveraine](https://img.shields.io/badge/France-Souveraine_🇫🇷-003189?style=for-the-badge)](https://securit-e.com)
+[![Hébergé en France](https://img.shields.io/badge/France-Hébergé_🇫🇷-003189?style=for-the-badge)](https://securit-e.com)
 [![Crypto](https://img.shields.io/badge/Crypto-SHA--256_Merkle_Chain-8b5cf6?style=for-the-badge)](https://securit-e.com)
-[![NIS2 Ready](https://img.shields.io/badge/NIS2-Ready_2026-ef4444?style=for-the-badge)](https://securit-e.com)
+[![Support NIS2](https://img.shields.io/badge/NIS2-Support_documenté-ef4444?style=for-the-badge)](https://securit-e.com)
 
 ---
 
@@ -110,7 +110,7 @@ sequenceDiagram
     EA->>EX: SkillResponse { success: true, proof_hash }
     EX->>VL: Log evidence (T+42s)
     VL->>VL: SHA-256 Merkle Chain entry sealed
-    VL-->>DS: Proof pack — NIS2 compliant ✓ (T+47s)
+    VL-->>DS: Proof pack — NIS2 documenté ✓ (T+47s)
 ```
 
 ### Stack technique
@@ -155,7 +155,7 @@ graph LR
 |------|------|-----------|-------|
 | **Sentinel** | 490 €/an | Détection OSINT · Scout Agent · Alertes · NIS2 docs | ETI 50-200 pers. |
 | **Command** ⭐ | 6 900 €/an | 6 Agents IA supervisés · Remédiation assistée · OSINT/EASM · Evidence Vault SHA-256 | ETI/Grands comptes |
-| **Sovereign** | 29 900 €/an | On-prem · Souveraineté totale · Account Manager | OIV / CAC40 |
+| **Sovereign** | 29 900 €/an | On-prem · Souveraineté renforcée · Account Manager | OIV / CAC40 |
 
 ---
 
@@ -227,9 +227,9 @@ helm install securit-e-agent securit-e/edge-agent \
 
 ## 🛡 Sécurité & Souveraineté
 
-- **Hébergement :** Cloud FR souverain — données en France 🇫🇷
+- **Hébergement :** France (région EU-West Paris) — données en France 🇫🇷
 - **Cryptographie :** SHA-256 Merkle Chain pour la chaîne de preuves (Evidence Vault)
-- **Conformité :** NIS2 · RGPD · DORA · ISO 27001
+- **Conformité :** Aide documentaire NIS2 · RGPD · DORA · ISO 27001
 - **Audit :** Chaque action prouvée par la chaîne SHA-256, non répudiable
 - **SecNumCloud :** objectif roadmap Q2 2026 — certification non obtenue à ce jour
 

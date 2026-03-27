@@ -72,13 +72,22 @@ const FORBIDDEN = [
   { term: "100% des exigences.*NIS2", context: "couverture 100% non prouvée" },
   { term: "acceptés par les autorités", context: "ne pas garantir l'acceptation" },
   { term: "Proof Packs exportables sont acceptés", context: "garantie d'acceptation non prouvée" },
+  // Sovereignty overclaims
+  { term: "souveraineté totale", context: "claim absolu non défini — utiliser 'souveraineté renforcée'" },
+  { term: "100% souverain", context: "claim absolu — utiliser 'Hébergé en France'" },
+  { term: "hébergement souverain garanti", context: "reformuler — 'hébergé en France'" },
+  { term: "NIS2 compliant", context: "reformuler — 'Support NIS2 documenté'" },
+  { term: "NIS2 Ready", context: "claim ambigu — utiliser 'Support NIS2'" },
+  { term: "Cloud FR souverain", context: "reformuler — 'Hébergement France'" },
+  { term: "LLM souverain", context: "reformuler — 'IA hébergée en France'" },
+  { term: "skills autonomes", context: "reformuler — 'skills supervisés'" },
 ];
 
 // Files/dirs to skip entirely
 const SKIP = ["node_modules", ".git", "dist", "build", "release-gate.mjs", ".lock", "bun.lock"];
 
 // Test files deliberately contain forbidden strings in test assertions
-const SKIP_TEST_FILES = [".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx", "SPRINT", "VERIFICATION", "productTruth.ts"];
+const SKIP_TEST_FILES = [".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx", "SPRINT", "VERIFICATION", "productTruth.ts", "cryptoCapabilities.ts", "sovereigntyCapabilities.ts"];
 
 // These patterns are allowed even if they match (comments, docs explaining what's NOT implemented)
 const ALLOWED_CONTEXTS = [

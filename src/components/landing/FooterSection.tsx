@@ -131,7 +131,7 @@ export function FooterSection() {
                 Hébergé en France 🇫🇷
               </span>
               <span>SHA-256 · Merkle Chain</span>
-              <span className="label-badge label-badge-cyan text-[9px] py-0.5">NIS2 Ready</span>
+              <span className="label-badge label-badge-cyan text-[9px] py-0.5">Support NIS2</span>
             </div>
           </div>
         </div>
