@@ -35,7 +35,7 @@ const vaultFeatures = [
   },
 ];
 
-const liveProofs = [
+const demoProofs = [
   { id: "PK-XXX", action: "Port exposé — fermeture prouvée", algo: "SHA-256 Merkle Chain", ts: "Démo — données simulées" },
   { id: "PK-XXX", action: "CVE critique — patch vérifié", algo: "SHA-256 Merkle Chain", ts: "Démo — données simulées" },
   { id: "PK-XXX", action: "Rotation credentials — auditée", algo: "SHA-256 Merkle Chain", ts: "Démo — données simulées" },
