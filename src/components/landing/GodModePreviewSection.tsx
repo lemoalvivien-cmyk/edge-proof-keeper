@@ -94,10 +94,10 @@ function AgentsIATab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-mono text-muted-foreground">SWARM INTELLIGENCE — 6/6 AGENTS ACTIFS</span>
+        <span className="text-xs font-mono text-muted-foreground">AGENTS IA — 6/6 SUPERVISÉS</span>
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-          <span className="text-[10px] text-success font-mono">SWARM SUPERVISÉ</span>
+          <span className="text-[10px] text-success font-mono">SUPERVISÉ</span>
         </div>
       </div>
       <div className="grid md:grid-cols-2 gap-3">
