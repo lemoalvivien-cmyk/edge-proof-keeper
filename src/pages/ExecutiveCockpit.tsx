@@ -23,6 +23,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFindingCounts, useTopPriorityFindings } from '@/hooks/useFindings';
 import { useTaskCounts } from '@/hooks/useRemediation';
 import { useSubscription } from '@/hooks/useSubscription';
+import { ProvenanceBadge } from '@/components/ui/ProvenanceBadge';
+import { resolveProvenance } from '@/types/provenance';
+import { useSubscription } from '@/hooks/useSubscription';
 
 // ── Animated counter ──────────────────────────────────────────────────────────
 function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; suffix?: string; prefix?: string }) {
