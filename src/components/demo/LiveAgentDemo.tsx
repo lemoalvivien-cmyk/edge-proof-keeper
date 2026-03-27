@@ -188,13 +188,13 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
           toolRunId = seedJson.tool_run_id;
           updateStep('seed', {
             status: 'done',
-            logs: [
+            logs: tagLogs([
               `[T+0s] Scout EASM scan: api.client.fr`,
               `[T+800ms] CVE-2025-1337 — CVSS 9.1 — port 8443/tcp`,
               `[T+1.5s] Tool run created: ${toolRunId}`,
               `[T+2.1s] ${seedJson.findings_inserted} findings inserted to DB`,
               `[T+2.4s] Evidence chain: SHA-256 logged ✓`,
-            ],
+            ], 'simulated'),
             proof: `sha256:seed:${toolRunId?.slice(0, 16)}...`,
           });
           setVaultEntries(v => v + 1);
