@@ -65,7 +65,7 @@ const faqCategories = [
       },
       {
         q: "Où sont hébergées mes données ?",
-        a: "100% souverain France. Infrastructure hébergée en région EU-West (Paris), chiffrement AES-256 au repos et TLS 1.3 en transit. Aucune donnée traitée hors UE — ni analyse IA, ni stockage de logs. Hébergement France, conformité RGPD. Vos données n'alimentent aucun modèle tiers.",
+        a: "Hébergé en France. Infrastructure en région EU-West (Paris), chiffrement AES-256 au repos et TLS 1.3 en transit. Aucune donnée traitée hors UE — ni analyse IA, ni stockage de logs. Conformité RGPD native. Vos données n'alimentent aucun modèle tiers.",
       },
     ],
   },
