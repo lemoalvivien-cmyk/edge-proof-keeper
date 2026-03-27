@@ -155,7 +155,7 @@ graph LR
 |------|------|-----------|-------|
 | **Sentinel** | 490 €/an | Détection OSINT · Scout Agent · Alertes · NIS2 docs | ETI 50-200 pers. |
 | **Command** ⭐ | 6 900 €/an | 6 Agents IA supervisés · Remédiation assistée · OSINT/EASM · Evidence Vault SHA-256 | ETI/Grands comptes |
-| **Sovereign** | 29 900 €/an | On-prem · Souveraineté totale · Account Manager | OIV / CAC40 |
+| **Sovereign** | 29 900 €/an | On-prem · Souveraineté renforcée · Account Manager | OIV / CAC40 |
 
 ---
 
