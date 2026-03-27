@@ -218,9 +218,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    // All skills executed via this function are simulated — no real infra changes
+    const execution_mode = 'simulated';
+
     return new Response(JSON.stringify({
       success: true,
       skill,
+      execution_mode,
       duration_ms: durationMs,
       proof: { hash: proof.hash, merkle_root: proof.merkle_root, algorithm: proof.algorithm, timestamp: proofPayload.timestamp, vault_logged: !!organization_id },
       result,

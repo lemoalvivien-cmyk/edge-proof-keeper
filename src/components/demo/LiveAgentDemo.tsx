@@ -7,8 +7,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, CheckCircle2, AlertCircle, Loader2, Shield, Zap,
-  Terminal, Lock, Activity, Clock, Database, RefreshCw,
+  Terminal, Lock, Activity, Clock, Database, RefreshCw, AlertTriangle,
 } from 'lucide-react';
+import { EXECUTION_MODE_LABELS, tagLogs } from '@/types/execution';
+import type { ExecutionMode } from '@/types/execution';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -172,7 +174,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
       const orgId = organization?.id;
 
       // ── T+0s: Scout — seed-demo-run ────────────────────────────────────────
-      updateStep('seed', { status: 'running', logs: ['[T+0s] Scout EASM scan starting...', '[T+200ms] Connecting to OSINT feeds: Shodan, Censys...', '[T+800ms] Port scan: api.client.fr...', '[T+1200ms] CVE-2025-1337 matched on port 8443 (nginx 1.24.0)', '[T+1800ms] Signal created: { severity: CRITICAL, confidence: 0.94 }', '[T+2100ms] Evidence pre-proof: SHA-256 generated ✓'] });
+      updateStep('seed', { status: 'running', logs: tagLogs(['[T+0s] Scout EASM scan starting...', '[T+200ms] Connecting to OSINT feeds: Shodan, Censys...', '[T+800ms] Port scan: api.client.fr...', '[T+1200ms] CVE-2025-1337 matched on port 8443 (nginx 1.24.0)', '[T+1800ms] Signal created: { severity: CRITICAL, confidence: 0.94 }', '[T+2100ms] Evidence pre-proof: SHA-256 generated ✓'], 'simulated') });
 
       let toolRunId: string | null = null;
       if (orgId) {
@@ -186,22 +188,22 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
           toolRunId = seedJson.tool_run_id;
           updateStep('seed', {
             status: 'done',
-            logs: [
+            logs: tagLogs([
               `[T+0s] Scout EASM scan: api.client.fr`,
               `[T+800ms] CVE-2025-1337 — CVSS 9.1 — port 8443/tcp`,
               `[T+1.5s] Tool run created: ${toolRunId}`,
               `[T+2.1s] ${seedJson.findings_inserted} findings inserted to DB`,
               `[T+2.4s] Evidence chain: SHA-256 logged ✓`,
-            ],
+            ], 'simulated'),
             proof: `sha256:seed:${toolRunId?.slice(0, 16)}...`,
           });
           setVaultEntries(v => v + 1);
         } else {
-          updateStep('seed', { status: 'done', logs: ['[DEMO] Seed completed (no org context)', '[T+2s] Mock data ready ✓'], proof: `sha256:demo:${Date.now().toString(16)}` });
+          updateStep('seed', { status: 'done', logs: tagLogs(['[DEMO] Seed completed (no org context)', '[T+2s] Mock data ready ✓'], 'simulated'), proof: `sha256:demo:${Date.now().toString(16)}` });
           setVaultEntries(v => v + 1);
         }
       } else {
-        updateStep('seed', { status: 'done', logs: ['[DEMO] Scout scan completed', '[T+2s] Signal CVE-2025-1337 created ✓'], proof: `sha256:demo:${Date.now().toString(16)}` });
+        updateStep('seed', { status: 'done', logs: tagLogs(['[DEMO] Scout scan completed', '[T+2s] Signal CVE-2025-1337 created ✓'], 'simulated'), proof: `sha256:demo:${Date.now().toString(16)}` });
         setVaultEntries(v => v + 1);
       }
 
@@ -216,7 +218,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
 
         updateStep(step.id, {
           status: 'running',
-          logs: [`[T+${step.targetTime}s] ${step.agent} agent dispatching ${step.skill}...`],
+          logs: tagLogs([`[T+${step.targetTime}s] ${step.agent} agent dispatching ${step.skill}...`], 'simulated'),
         });
 
         try {
@@ -230,7 +232,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
 
           updateStep(step.id, {
             status: 'done',
-            logs: result.logs ?? [`[T+${step.targetTime}s] ${step.skill} executed in ${duration}ms ✓`],
+            logs: tagLogs(result.logs ?? [`[T+${step.targetTime}s] ${step.skill} executed in ${duration}ms ✓`], 'simulated'),
             proof: result.proof?.hash ? `sha256:${result.proof.hash.slice(0, 32)}...` : undefined,
             duration,
           });
@@ -238,12 +240,12 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
         } catch (err) {
           // Skills may fail without org context — show structured demo output
           const demoLogs = step.params.host
-            ? [`[T+${step.targetTime}s] ${step.skill}: executing on ${step.params.host}...`, `[T+${step.targetTime + 1}s] Action completed ✓`, `[T+${step.targetTime + 1}s] SHA-256 proof generated ✓`]
-            : [`[T+${step.targetTime}s] ${step.skill} completed ✓`];
+            ? [`[T+${step.targetTime}s] ${step.skill}: simulation on ${step.params.host}...`, `[T+${step.targetTime + 1}s] Action simulée ✓`, `[T+${step.targetTime + 1}s] SHA-256 proof (simulation) ✓`]
+            : [`[T+${step.targetTime}s] ${step.skill} simulé ✓`];
           updateStep(step.id, {
             status: 'done',
-            logs: demoLogs,
-            proof: `sha256:demo:${Date.now().toString(16)}`,
+            logs: tagLogs(demoLogs, 'simulated'),
+            proof: `sha256:simulation:${Date.now().toString(16)}`,
             duration: 400 + Math.floor(Math.random() * 300),
           });
           setVaultEntries(v => v + 1);
@@ -419,8 +421,8 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
                         <span className="text-[10px] text-muted-foreground font-mono">{state.duration}ms</span>
                       )}
                       {isDone && (
-                        <Badge variant="outline" className="text-[10px] text-success border-success/30 bg-success/10">
-                          ✓ EXÉCUTÉ
+                        <Badge variant="outline" className={`text-[10px] ${EXECUTION_MODE_LABELS.simulated.color} ${EXECUTION_MODE_LABELS.simulated.borderColor} ${EXECUTION_MODE_LABELS.simulated.bgColor}`}>
+                          ✓ {EXECUTION_MODE_LABELS.simulated.badge}
                         </Badge>
                       )}
                       {isRunning && (
@@ -484,15 +486,15 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
             className="rounded-xl border border-success/40 bg-success/5 p-5 space-y-3"
           >
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-success" />
-              <span className="font-bold text-success">Pipeline complète — 47 secondes ✓</span>
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <span className="font-bold text-yellow-600">Simulation complète — 47 secondes ✓</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
               {[
-                { label: 'Skills exécutés', value: '6/6', color: 'text-success' },
+                { label: 'Skills simulés', value: '6/6', color: 'text-yellow-600' },
                 { label: 'Preuves Vault', value: `${vaultEntries}`, color: 'text-primary' },
-                { label: 'Intervention humaine', value: '0', color: 'text-success' },
-                { label: 'Conformité NIS2', value: '✓', color: 'text-success' },
+                { label: 'Mode', value: 'SIMULATION', color: 'text-yellow-600' },
+                { label: 'Données', value: 'Fictives', color: 'text-yellow-600' },
               ].map((stat, i) => (
                 <div key={i} className="p-3 rounded-lg bg-background/60 border border-border/30">
                   <div className={`text-xl font-bold font-mono ${stat.color}`}>{stat.value}</div>
