@@ -75,13 +75,21 @@ function AnimatedScore({ target }: { target: number }) {
   return <span className={`font-mono ${color}`}>{current}</span>;
 }
 
-function LivePulse() {
+function DataModePill({ provenance }: { provenance: DataProvenance }) {
+  if (provenance === 'real') {
+    return (
+      <span className="relative flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-success">
+          <span className="absolute inline-flex w-2 h-2 rounded-full bg-success animate-ping opacity-75" />
+        </span>
+        <span className="text-[10px] font-mono text-success font-semibold">DONNÉES RÉELLES</span>
+      </span>
+    );
+  }
   return (
     <span className="relative flex items-center gap-1.5">
-      <span className="w-2 h-2 rounded-full bg-success">
-        <span className="absolute inline-flex w-2 h-2 rounded-full bg-success animate-ping opacity-75" />
-      </span>
-      <span className="text-[10px] font-mono text-success font-semibold">LIVE</span>
+      <span className="w-2 h-2 rounded-full bg-yellow-500" />
+      <span className="text-[10px] font-mono text-yellow-600 font-semibold">DONNÉES DÉMO</span>
     </span>
   );
 }
