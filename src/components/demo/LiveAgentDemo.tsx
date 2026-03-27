@@ -199,7 +199,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
           });
           setVaultEntries(v => v + 1);
         } else {
-          updateStep('seed', { status: 'done', logs: ['[DEMO] Seed completed (no org context)', '[T+2s] Mock data ready ✓'], proof: `sha256:demo:${Date.now().toString(16)}` });
+          updateStep('seed', { status: 'done', logs: tagLogs(['[DEMO] Seed completed (no org context)', '[T+2s] Mock data ready ✓'], 'simulated'), proof: `sha256:demo:${Date.now().toString(16)}` });
           setVaultEntries(v => v + 1);
         }
       } else {
