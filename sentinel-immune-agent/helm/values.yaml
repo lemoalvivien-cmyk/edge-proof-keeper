@@ -24,7 +24,7 @@ serviceAccount:
 # ── Pod annotations / labels ──────────────────────────────────────────────────
 podAnnotations:
   securit-e.io/version: "2026.1.0"
-  securit-e.io/pq-algorithm: "dilithium3"
+  securit-e.io/signing: "sha256-hmac"
 
 podLabels:
   app.kubernetes.io/component: edge-agent
