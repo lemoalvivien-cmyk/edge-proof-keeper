@@ -45,7 +45,7 @@ const plans = [
       { text: "RSSI Virtuel IA — brief CODIR", available: false },
     ],
     cta: "Activer Sentinel",
-    ctaSecondary: "Démarrer l'essai 14j gratuit",
+    ctaSecondary: "Essai 14j · Carte requise",
   },
   {
     id: "pro",
