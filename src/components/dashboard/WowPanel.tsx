@@ -233,9 +233,9 @@ export function WowPanel({
           },
           {
             label: 'Preuves Vault',
-            value: <span className="text-primary font-mono">{vaultCount.toLocaleString('fr-FR')}</span>,
-            sub: 'SHA-256 · Immuables · NIS2',
-            subColor: 'text-primary/60',
+            value: <span className="text-primary font-mono">{runsCount > 0 ? runsCount : '—'}</span>,
+            sub: runsCount > 0 ? 'SHA-256 · Immuables · NIS2' : 'Aucune donnée réelle',
+            subColor: runsCount > 0 ? 'text-primary/60' : 'text-muted-foreground',
             icon: Lock,
             accent: 'border-l-success/40',
           },
