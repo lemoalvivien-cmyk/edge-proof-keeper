@@ -177,9 +177,9 @@ export function WowPanel({
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-foreground">Cockpit Cyber Souverain</span>
-              <LivePulse />
+              <DataModePill provenance={dataProvenance} />
             </div>
-            <p className="text-xs text-muted-foreground">6 agents IA · Swarm Intelligence · NIS2 compliant</p>
+            <p className="text-xs text-muted-foreground">6 agents IA supervisés · NIS2 compliant</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
