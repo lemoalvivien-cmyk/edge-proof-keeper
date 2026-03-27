@@ -277,8 +277,9 @@ describe("Agent hardening — no permissive defaults", () => {
   // Use dynamic import to get node:fs in jsdom environment
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const readFile = async (p: string): Promise<string> => {
-    const fs: any = await (import("fs") as any);
-    return fs.readFileSync(p, "utf-8");
+    const mod = "f" + "s";
+    const fsModule: any = await import(/* @vite-ignore */ mod);
+    return fsModule.readFileSync(p, "utf-8");
   };
 
   it("Go agent must not have 'demo-tenant' as default TenantID", async () => {
