@@ -360,7 +360,7 @@ export function GodModePreviewSection() {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="dashboard"><DashboardLiveTab /></TabsContent>
+                  <TabsContent value="dashboard"><DashboardPreviewTab /></TabsContent>
                   <TabsContent value="agents"><AgentsIATab /></TabsContent>
                   <TabsContent value="remediation"><AutoRemediationTab /></TabsContent>
                   <TabsContent value="causality"><PredictiveCausalityTab /></TabsContent>
