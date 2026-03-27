@@ -166,7 +166,7 @@ export function HeroSection() {
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-xs font-semibold text-primary">
                   <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
-                  🇫🇷 100% Souverain France
+                  🇫🇷 Hébergé en France · Souverain
                 </div>
               </motion.div>
 
