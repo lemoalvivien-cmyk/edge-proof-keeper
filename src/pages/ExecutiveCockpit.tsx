@@ -11,7 +11,7 @@ import {
   Shield, AlertTriangle, CheckCircle2, TrendingUp, TrendingDown,
   Lock, FileText, Zap, ArrowRight, Activity, Target,
   BarChart3, Clock, Eye, Brain, ChevronRight, Download,
-  Loader2, RefreshCw, Sparkles, Building2, Gauge, ListTodo,
+  Loader2, RefreshCw, Sparkles, Building2, Gauge, ListTodo, Info,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
