@@ -1,7 +1,7 @@
 /**
- * SECURIT-E — LiveAgentDemo
- * 47-second real pipeline: seed → 6 skills → Evidence Vault
- * Real-time logs via Framer Motion + Supabase Realtime
+ * SECURIT-E — LiveAgentDemo (Simulation)
+ * 47-second simulated pipeline: seed → 6 skills → Evidence Vault
+ * Animated logs via Framer Motion — données simulées
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
