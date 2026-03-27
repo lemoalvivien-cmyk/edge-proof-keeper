@@ -220,7 +220,7 @@ function SovereignActivationBlock({
         <p className="text-sm font-semibold">Activer la souveraineté externe</p>
       </div>
       <p className="text-xs text-muted-foreground">
-        Sauvegardez d'abord l'URL Core API ci-dessus, puis cliquez pour pinguer et activer le badge permanent "100% SOUVERAIN EXTERNE".
+        Sauvegardez d'abord l'URL Core API ci-dessus, puis cliquez pour pinguer et activer le badge permanent "EXTERNE CONFIRMÉ".
       </p>
       {pingDetail && (
         <p className={`text-xs font-mono ${pingState === 'ok' ? 'text-success' : 'text-destructive'}`}>
