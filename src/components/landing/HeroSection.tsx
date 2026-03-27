@@ -256,7 +256,7 @@ export function HeroSection() {
                   </div>
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-success/10 border border-success/20">
                     <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                    <span className="text-[10px] font-mono text-success font-semibold">LIVE · 6 AGENTS ACTIFS</span>
+                    <span className="text-[10px] font-mono text-success font-semibold">SIMULATION · 6 AGENTS</span>
                   </div>
                 </div>
 

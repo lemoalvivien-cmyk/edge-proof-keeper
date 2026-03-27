@@ -158,7 +158,7 @@ export function LandingNav() {
                   Comment ça marche
                 </button>
                 <Link to="/demo" className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                  Démo live (47s)
+                  Démo interactive (47s)
                 </Link>
                 <Link to="/pricing" className="block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                   Tarifs

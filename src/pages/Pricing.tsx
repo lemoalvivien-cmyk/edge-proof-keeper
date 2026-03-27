@@ -346,7 +346,7 @@ const Pricing = () => {
                     <th className="text-left p-4 font-semibold text-muted-foreground">Solution</th>
                     <th className="text-center p-4 font-semibold text-muted-foreground">Coût annuel</th>
                     <th className="text-center p-4 font-semibold text-muted-foreground">Essai gratuit</th>
-                    <th className="text-center p-4 font-semibold text-muted-foreground">Remédiation auto</th>
+                    <th className="text-center p-4 font-semibold text-muted-foreground">Remédiation assistée</th>
                     <th className="text-center p-4 font-semibold text-muted-foreground">Souverain 🇫🇷</th>
                     <th className="text-center p-4 font-semibold text-muted-foreground">Support</th>
                   </tr>

@@ -77,7 +77,7 @@ const faqCategories = [
     questions: [
       {
         q: "Y a-t-il des frais cachés dans les plans ?",
-        a: "Non. Sentinel 490€/an : Evidence Vault SHA-256, rapports Direction+Technique, conformité NIS2/RGPD, hébergement France. Command 6 900€/an ajoute EASM/OSINT continu, remédiation assistée < 4h (cible), API dédiée. Sovereign 29 900€/an : on-premise, agents personnalisés, Account Manager CISO dédié. Essai 14j sans frais.",
+        a: "Non. Sentinel 490€/an : Evidence Vault SHA-256, rapports Direction+Technique, conformité NIS2/RGPD, hébergement France. Command 6 900€/an ajoute EASM/OSINT continu, remédiation assistée < 4h (cible), API dédiée. Sovereign 29 900€/an : on-premise, agents personnalisés, Account Manager CISO dédié. Essai 14j gratuit — carte requise, annulation libre.",
       },
       {
         q: "Puis-je tester avant de payer ?",

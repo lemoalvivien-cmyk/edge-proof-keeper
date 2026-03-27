@@ -202,7 +202,7 @@ export default function Auth() {
             <Shield className="w-7 h-7 text-primary" aria-hidden="true" />
           </motion.div>
           <h1 className="text-2xl font-bold text-foreground">SECURIT-E</h1>
-          <p className="text-sm text-muted-foreground mt-1">Cockpit de gouvernance cyber autonome</p>
+          <p className="text-sm text-muted-foreground mt-1">Centre de commandement cyber assisté par IA</p>
           {tab === 'signup' && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
