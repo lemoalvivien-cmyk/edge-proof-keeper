@@ -231,7 +231,7 @@ const Pricing = () => {
               Avec des preuves cryptographiques que votre RSSI ne peut pas générer seul.
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />14j gratuits</span>
+              <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />14j gratuits · Carte requise</span>
               <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />Paiement Stripe sécurisé</span>
               <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />Satisfait ou remboursé 30j</span>
               <span className="flex items-center gap-1.5 text-sm text-success font-medium"><Check className="w-4 h-4" />Données 🇫🇷</span>
