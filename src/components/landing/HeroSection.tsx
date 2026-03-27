@@ -197,7 +197,7 @@ export function HeroSection() {
                   }}
                 >
                   <Shield className="w-4 h-4" />
-                  Activer mon essai — 14j gratuit
+                  Essai 14j gratuit · Carte requise
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </Button>
 
