@@ -107,7 +107,7 @@ const plans = [
 
 /* ─── Competitor table ───────────────────────────────────────────── */
 const competitors = [
-  { name: "SECURIT-E Command", price: "6 900€ / an", self: true, trial: true, auto: true, sovereign: true, support: "Inclus" },
+  { name: "SECURIT-E Command", price: "6 900€ / an", self: true, trial: true, auto: true, sovereign: true, support: "Inclus" },  // "auto" = remédiation assistée
   { name: "RSSI interne", price: "≥ 120 000€ / an", self: false, trial: false, auto: false, sovereign: false, support: "1 personne" },
   { name: "Splunk / Tanium", price: "≥ 50 000€ / an", self: false, trial: false, auto: false, sovereign: false, support: "Payant" },
   { name: "Consulting cyber", price: "≥ 15 000€ / mission", self: false, trial: false, auto: false, sovereign: false, support: "Non continu" },
