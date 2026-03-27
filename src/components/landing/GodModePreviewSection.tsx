@@ -326,11 +326,11 @@ export function GodModePreviewSection() {
                   <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
                 </div>
                 <div className="flex-1 mx-4 px-3 py-0.5 rounded bg-background/50 text-[10px] font-mono text-muted-foreground">
-                  securit-e.com/dashboard — Armure Cyber · LIVE
+                  securit-e.com/dashboard — Armure Cyber · SIMULATION
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                  <span className="text-[10px] font-mono text-muted-foreground">6 AGENTS · AUTONOMOUS</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
+                  <span className="text-[10px] font-mono text-muted-foreground">6 AGENTS · SUPERVISÉ</span>
                 </div>
               </div>
 
