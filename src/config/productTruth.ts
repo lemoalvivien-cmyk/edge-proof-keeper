@@ -75,4 +75,10 @@ export const FORBIDDEN_MARKETING_CLAIMS = [
   "zéro intervention humaine",
   "hébergement certifié",
   "100% Souverain",
+  "NIS2 Ready",
+  "NIS2 compliant",
+  "hébergement souverain garanti",
+  "Cloud FR souverain",
+  "LLM souverain",
+  "skills autonomes",
 ] as const;
