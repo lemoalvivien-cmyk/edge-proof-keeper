@@ -197,7 +197,7 @@ function SovereignActivationBlock({
       <div className="flex items-center gap-3 rounded-lg border border-success/30 bg-success/5 px-4 py-3">
         <ShieldCheck className="h-5 w-5 text-success shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-success">✓ 100% SOUVERAIN EXTERNE — Confirmé</p>
+          <p className="text-sm font-bold text-success">✓ EXTERNE CONFIRMÉ</p>
           <p className="text-xs text-muted-foreground font-mono">
             Ping validé le {new Date(confirmedAt).toLocaleString('fr-FR')} · Core API joignable
           </p>
