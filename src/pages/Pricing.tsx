@@ -41,7 +41,7 @@ const plans = [
       { text: "Hébergement souverain 🇫🇷", available: true },
       { text: "Support email prioritaire", available: true },
       { text: "Agents IA Swarm Intelligence", available: false },
-      { text: "Self-healing autonome < 4h", available: false },
+      { text: "Remédiation assistée · Objectif < 4h", available: false },
       { text: "RSSI Virtuel IA — brief CODIR", available: false },
     ],
     cta: "Activer Sentinel",
