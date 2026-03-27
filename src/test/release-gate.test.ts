@@ -18,6 +18,9 @@ const FORBIDDEN_PATTERNS = [
   /"97\/100"/,
   /"99\/100"/,
   /"100\/100"/,
+  /\bDémo[^)]*\b[Ll]ive\b/,       // "Démo … Live" in simulation contexts
+  /\bSequence[^)]*\b[Ll]ive\b/i,   // "Séquence … Live"
+  /\bDEMO LIVE\b/,
 ];
 
 function containsForbiddenTerm(content: string): { found: boolean; term?: string } {
