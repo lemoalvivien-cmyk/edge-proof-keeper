@@ -108,7 +108,7 @@ export function EvidenceSection() {
               ))}
             </div>
 
-            {/* Right: live vault preview */}
+            {/* Right: simulated vault preview */}
             <motion.div
               initial={{ opacity: 0, x: 24 }}
               animate={isInView ? { opacity: 1, x: 0 } : {}}
