@@ -63,10 +63,11 @@ export async function swarmCollaborate(input: SwarmCollaborateInput): Promise<{
   const consensusScore = calculateConsensus(receivedSignals);
   const collectiveThreat = deriveCollectiveThreat(receivedSignals);
 
-  // Simulated active tenant count (production: from Redis SCARD swarm:active_tenants)
-  const activeTenantsCount = 500 + Math.floor(Math.random() * 200);
+  // Simulated tenant count — clearly labeled, no Math.random
+  // Production: from Redis SCARD swarm:active_tenants
+  const activeTenantsCount = 0; // No real swarm connected — honest zero
 
-  const apiCallSummary = `aes256gcm:encrypt(payload) → POST /swarm/signals → GET /swarm/intel?limit=50 [${activeTenantsCount} tenants]`;
+  const apiCallSummary = `[SIMULATION] aes256gcm:encrypt(payload) → POST /swarm/signals → GET /swarm/intel?limit=50 [aucun tenant réel connecté]`;
 
   return {
     published,

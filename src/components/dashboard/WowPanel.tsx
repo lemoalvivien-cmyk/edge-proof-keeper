@@ -13,6 +13,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ProvenanceBadge } from '@/components/ui/ProvenanceBadge';
+import { resolveProvenance } from '@/types/provenance';
+import type { DataProvenance } from '@/types/provenance';
 import { useNavigate } from 'react-router-dom';
 
 interface Threat {
@@ -72,13 +75,21 @@ function AnimatedScore({ target }: { target: number }) {
   return <span className={`font-mono ${color}`}>{current}</span>;
 }
 
-function LivePulse() {
+function DataModePill({ provenance }: { provenance: DataProvenance }) {
+  if (provenance === 'real') {
+    return (
+      <span className="relative flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-success">
+          <span className="absolute inline-flex w-2 h-2 rounded-full bg-success animate-ping opacity-75" />
+        </span>
+        <span className="text-[10px] font-mono text-success font-semibold">DONNÉES RÉELLES</span>
+      </span>
+    );
+  }
   return (
     <span className="relative flex items-center gap-1.5">
-      <span className="w-2 h-2 rounded-full bg-success">
-        <span className="absolute inline-flex w-2 h-2 rounded-full bg-success animate-ping opacity-75" />
-      </span>
-      <span className="text-[10px] font-mono text-success font-semibold">LIVE</span>
+      <span className="w-2 h-2 rounded-full bg-yellow-500" />
+      <span className="text-[10px] font-mono text-yellow-600 font-semibold">DONNÉES DÉMO</span>
     </span>
   );
 }
@@ -107,18 +118,12 @@ export function WowPanel({
   runsCount = 0,
 }: WowPanelProps) {
   const navigate = useNavigate();
+  const hasRealData = findingsCount > 0;
+  const dataProvenance = resolveProvenance(hasRealData);
   const [activeTab, setActiveTab] = useState<'threats' | 'timeline' | 'vault'>('threats');
-  const [vaultCount, setVaultCount] = useState(2841);
   const [cycleActive, setCycleActive] = useState(false);
   const [cycleProgress, setCycleProgress] = useState(0);
   const cycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-// Fix WowPanel: vault counter should not silently increment as if live
-  // Increment vault counter slowly — DEMO MODE only
-  useEffect(() => {
-    const t = setInterval(() => setVaultCount(v => v + 1), 30000); // 1 per 30s — clearly demo pace
-    return () => clearInterval(t);
-  }, []);
 
   // Build threats from real or demo data
   const threats: Threat[] = topFindings.length > 0
@@ -172,9 +177,9 @@ export function WowPanel({
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-foreground">Cockpit Cyber Souverain</span>
-              <LivePulse />
+              <DataModePill provenance={dataProvenance} />
             </div>
-            <p className="text-xs text-muted-foreground">6 agents IA · Swarm Intelligence · NIS2 compliant</p>
+            <p className="text-xs text-muted-foreground">6 agents IA supervisés · NIS2 compliant</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -185,7 +190,7 @@ export function WowPanel({
             onClick={() => navigate('/demo')}
           >
             <Play className="w-3 h-3 fill-current text-primary" />
-            Démo live
+            Simulation
           </Button>
           <Button
             size="sm"
@@ -228,9 +233,9 @@ export function WowPanel({
           },
           {
             label: 'Preuves Vault',
-            value: <span className="text-primary font-mono">{vaultCount.toLocaleString('fr-FR')}</span>,
-            sub: 'SHA-256 · Immuables · NIS2',
-            subColor: 'text-primary/60',
+            value: <span className="text-primary font-mono">{runsCount > 0 ? runsCount : '—'}</span>,
+            sub: runsCount > 0 ? 'SHA-256 · Immuables · NIS2' : 'Aucune donnée réelle',
+            subColor: runsCount > 0 ? 'text-primary/60' : 'text-muted-foreground',
             icon: Lock,
             accent: 'border-l-success/40',
           },
@@ -461,7 +466,7 @@ export function WowPanel({
                     <Lock className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-foreground">{vaultCount.toLocaleString('fr-FR')} preuves archivées</p>
+                    <p className="text-xs font-bold text-foreground">{runsCount > 0 ? `${runsCount} preuves archivées` : 'Aucune preuve — lancez une analyse'}</p>
                     <p className="text-[10px] text-muted-foreground font-mono">Chaîne immuable SHA-256 · Vault souverain</p>
                   </div>
                 </div>
@@ -528,12 +533,9 @@ export function WowPanel({
       <div className="px-5 py-3 border-t border-border/50 bg-secondary/10 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <Clock className="w-3.5 h-3.5" />
-          <span className="font-mono">Dernière analyse : il y a moins de 1h</span>
+          <span className="font-mono">{hasRealData ? 'Données réelles' : 'Données de démonstration'}</span>
           <span className="text-border">·</span>
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-            <span className="text-success font-semibold">6/6 agents actifs</span>
-          </span>
+          <ProvenanceBadge provenance={dataProvenance} source={hasRealData ? 'findings/tool_runs' : 'demo-data.ts'} />
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="ghost" className="h-7 px-3 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={() => navigate('/risks')}>

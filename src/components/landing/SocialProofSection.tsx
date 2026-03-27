@@ -3,10 +3,10 @@ import { useRef } from "react";
 import { ShieldCheck, Clock, Users, Cpu, Quote, TrendingUp, Star } from "lucide-react";
 
 const stats = [
-  { icon: Users, value: "12", label: "ETI françaises en accès prioritaire", color: "text-primary" },
+  { icon: Users, value: "Beta", label: "Accès prioritaire — beta fermée", color: "text-primary" },
   { icon: ShieldCheck, value: "Vault", label: "SHA-256 Merkle Chain — preuves archivées", color: "text-success" },
-  { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré lab)", color: "text-accent" },
-  { icon: TrendingUp, value: "ROI×", label: "Estimé vs coût moyen incident cyber France", color: "text-warning" },
+  { icon: Clock, value: "47s", label: "Cycle détection → preuve (mesuré en lab)", color: "text-accent" },
+  { icon: TrendingUp, value: "Estimé", label: "ROI basé sur coût moyen incident cyber France", color: "text-warning" },
 ];
 
 const testimonials = [
@@ -62,7 +62,7 @@ export function SocialProofSection() {
           >
             <div className="label-badge label-badge-cyan mx-auto w-fit">
               <Cpu className="w-3 h-3" />
-              Beta privée — résultats réels
+              Beta privée — témoignages reconstitués
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               Ce que disent les{" "}
@@ -70,7 +70,7 @@ export function SocialProofSection() {
               <br />en accès prioritaire
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              12 ETI françaises en beta fermée. Témoignages collectés avec accord explicite de publication.
+              Témoignages reconstitués à partir de retours beta. Les noms et entreprises ont été anonymisés.
             </p>
           </motion.div>
 

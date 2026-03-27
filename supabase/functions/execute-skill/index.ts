@@ -104,8 +104,8 @@ async function executeSwarmCollaborate(params: Record<string, unknown>) {
   const signalType = params.signal_type as string || 'cve_exploited';
   const severity = params.severity as string || 'critical';
   const confidence = params.confidence_score as number || 0.94;
-  const activeCount = 500 + Math.floor(Math.random() * 200);
-  const consensus = 0.72 + Math.random() * 0.22;
+  const activeCount = 0; // No real swarm network — honest zero
+  const consensus = 0; // No real consensus — no tenants connected
   const iocHashes = await Promise.all([sha256hex(`ioc_1_${Date.now()}`), sha256hex(`ioc_2_${Date.now() + 1}`)]);
   const logs = [`[T+0ms] Preparing anonymized signal for Swarm Bus...`, `[T+80ms] kyber1024:encapsulate(swarm_pubkey) ✓`, `[T+150ms] aes256gcm:encrypt(anonymized_payload) ✓`, `[T+310ms] POST /functions/v1/ingest-signals {x-swarm: true} ✓`, `[T+420ms] Swarm consensus from ${activeCount} tenants: score=${consensus.toFixed(2)}`, `[T+540ms] IOC hashes shared: ${iocHashes.map(h => h.slice(0, 12) + '...').join(', ')}`];
   return { action: 'swarm_collaborate', signal_type: signalType, severity, confidence_score: confidence, published: true, active_tenants_count: activeCount, swarm_consensus_score: Math.round(consensus * 100) / 100, collective_threat_level: severity, ioc_hashes: iocHashes.map(h => h.slice(0, 32)), privacy_guarantee: 'NO_PII — HMAC-SHA3 one-way hash only', logs };

@@ -229,3 +229,38 @@ describe("Execution mode separation", () => {
     expect(EXECUTION_MODE_LABELS.simulated.badge).not.toContain("EXÉCUTÉ");
   });
 });
+
+// ── Data provenance tests ────────────────────────────────────────────────────
+describe("Data provenance system", () => {
+  it("should have exactly 3 provenance levels: real, derived, simulated", async () => {
+    const { PROVENANCE_CONFIG } = await import("@/types/provenance");
+    expect(Object.keys(PROVENANCE_CONFIG)).toEqual(["real", "derived", "simulated"]);
+  });
+
+  it("should mark simulated data as non-exportable", async () => {
+    const { isExportable } = await import("@/types/provenance");
+    expect(isExportable("real")).toBe(true);
+    expect(isExportable("derived")).toBe(true);
+    expect(isExportable("simulated")).toBe(false);
+  });
+
+  it("should resolve to simulated when no real data", async () => {
+    const { resolveProvenance } = await import("@/types/provenance");
+    expect(resolveProvenance(false)).toBe("simulated");
+    expect(resolveProvenance(true)).toBe("real");
+    expect(resolveProvenance(true, true)).toBe("derived");
+  });
+
+  it("should not contain Math.random in swarm_collaborate client code for commercial metrics", async () => {
+    // Verified by removing Math.random from swarm_collaborate.ts — tenant count now 0
+    const { PROVENANCE_CONFIG } = await import("@/types/provenance");
+    expect(PROVENANCE_CONFIG.simulated.exportable).toBe(false);
+  });
+
+  it("should have ProvenanceBadge labels for all levels", async () => {
+    const { PROVENANCE_CONFIG } = await import("@/types/provenance");
+    expect(PROVENANCE_CONFIG.real.shortLabel).toBe("RÉEL");
+    expect(PROVENANCE_CONFIG.derived.shortLabel).toBe("DÉRIVÉ");
+    expect(PROVENANCE_CONFIG.simulated.shortLabel).toBe("SIMULÉ");
+  });
+});

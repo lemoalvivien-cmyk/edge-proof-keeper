@@ -11,7 +11,7 @@ import {
   Shield, AlertTriangle, CheckCircle2, TrendingUp, TrendingDown,
   Lock, FileText, Zap, ArrowRight, Activity, Target,
   BarChart3, Clock, Eye, Brain, ChevronRight, Download,
-  Loader2, RefreshCw, Sparkles, Building2, Gauge, ListTodo,
+  Loader2, RefreshCw, Sparkles, Building2, Gauge, ListTodo, Info,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -23,6 +23,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useFindingCounts, useTopPriorityFindings } from '@/hooks/useFindings';
 import { useTaskCounts } from '@/hooks/useRemediation';
 import { useSubscription } from '@/hooks/useSubscription';
+import { ProvenanceBadge } from '@/components/ui/ProvenanceBadge';
+import { resolveProvenance } from '@/types/provenance';
 
 // ── Animated counter ──────────────────────────────────────────────────────────
 function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; suffix?: string; prefix?: string }) {
@@ -204,32 +206,37 @@ export default function ExecutiveCockpit() {
   const high = findingCounts?.high ?? 0;
   const criticalHigh = critical + high;
 
-  // Use real data if available, fallback demo otherwise
+  // Provenance: NO more fake fallbacks. Show 0 if no data.
   const hasRealData = total > 0;
-  const d_total = hasRealData ? total : 12;
-  const d_critical = hasRealData ? critical : 3;
-  const d_high = hasRealData ? high : 4;
-  const d_criticalHigh = hasRealData ? criticalHigh : 7;
-  const d_runs = pipelineData?.runs ?? 2;
-  const d_proofs = pipelineData?.proofs ?? 5;
-  const d_evidence = pipelineData?.evidence ?? 47;
+  const dataProvenance = resolveProvenance(hasRealData);
+  const d_total = total;
+  const d_critical = critical;
+  const d_high = high;
+  const d_criticalHigh = criticalHigh;
+  const d_runs = pipelineData?.runs ?? 0;
+  const d_proofs = pipelineData?.proofs ?? 0;
+  const d_evidence = pipelineData?.evidence ?? 0;
   const d_compliance = complianceStats?.pct ?? 0;
-  const d_done = taskCounts?.done ?? 8;
-  const d_open = taskCounts?.open ?? 4;
-  const d_inprogress = taskCounts?.in_progress ?? 3;
-  const d_overdue = taskCounts?.overdue ?? 1;
+  const d_done = taskCounts?.done ?? 0;
+  const d_open = taskCounts?.open ?? 0;
+  const d_inprogress = taskCounts?.in_progress ?? 0;
+  const d_overdue = taskCounts?.overdue ?? 0;
 
-  // Sovereign score (100 - penalty)
-  const sovereignScore = Math.max(10, Math.round(100 - (d_critical * 8) - (d_high * 3) - (d_overdue * 4)));
+  // Sovereign score (derived from real findings — provenance: derived)
+  const sovereignScore = hasRealData
+    ? Math.max(10, Math.round(100 - (d_critical * 8) - (d_high * 3) - (d_overdue * 4)))
+    : 0;
+  const scoreProvenance = resolveProvenance(hasRealData, true);
   const exposureLevel: 'critical' | 'elevated' | 'moderate' | 'controlled' =
+    !hasRealData ? 'controlled' :
     d_critical > 3 ? 'critical' : d_criticalHigh > 6 ? 'elevated' : d_criticalHigh > 2 ? 'moderate' : 'controlled';
 
-  // Hours saved (each run = ~4h, each finding auto-remediated = ~1.5h)
-  const hoursSaved = Math.round(d_runs * 4 + d_done * 1.5);
-  // Estimated cost avoidance (each critical finding ~3200€ remediation cost manually)
-  const costAvoidance = d_done * 3200;
+  // Hours saved / cost avoidance (derived — only shown with provenance badge)
+  const hoursSaved = hasRealData ? Math.round(d_runs * 4 + d_done * 1.5) : 0;
+  const costAvoidance = hasRealData ? d_done * 3200 : 0;
+  const costProvenance = resolveProvenance(hasRealData, true);
   // Control coverage %
-  const controlCoverage = d_compliance > 0 ? d_compliance : Math.min(95, 40 + d_done * 3);
+  const controlCoverage = d_compliance;
   // Backlog clearance %
   const backlogTotal = d_done + d_open + d_inprogress;
   const backlogCleared = backlogTotal > 0 ? Math.round((d_done / backlogTotal) * 100) : 0;
@@ -307,7 +314,7 @@ export default function ExecutiveCockpit() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-3xl font-black font-mono">{sovereignScore}</span>
                     <span className="text-muted-foreground font-mono">/100</span>
-                    <Trend up={sovereignScore >= 60} label={sovereignScore >= 60 ? '+5 vs J-7' : '-3 vs J-7'} />
+                    <ProvenanceBadge provenance={scoreProvenance} source="findings × severity" />
                   </div>
                   <p className="text-sm text-muted-foreground max-w-xs leading-snug">
                     {sovereignScore >= 80
@@ -338,8 +345,8 @@ export default function ExecutiveCockpit() {
                 <RadialGauge value={controlCoverage} label="Couverture Contrôles" color="hsl(var(--accent))" />
                 <RadialGauge value={backlogCleared} label="Backlog Traité" color="hsl(var(--primary))" />
                 <RadialGauge
-                  value={Math.min(99, 40 + d_evidence)}
-                  label="Niveau Confiance"
+                  value={hasRealData ? Math.min(100, d_evidence) : 0}
+                  label="Preuves Vault"
                   color="hsl(var(--success))"
                 />
               </div>
@@ -409,7 +416,7 @@ export default function ExecutiveCockpit() {
               label="Temps Épargné"
               value={`${hoursSaved}h`}
               sub="d'analyse économisée"
-              trend={<Trend up label="IA autonome" />}
+              trend={<Trend up label="IA supervisée" />}
               accent="hsl(var(--neon-green, var(--success)))"
               bg="bg-success/5"
               detail={`Basé sur ${d_runs} analyse${d_runs > 1 ? 's' : ''} et ${d_done} action${d_done > 1 ? 's' : ''} effectuées`}
@@ -484,7 +491,7 @@ export default function ExecutiveCockpit() {
               {[
                 { label: 'RGPD / NIS2', value: controlCoverage, color: 'hsl(var(--accent))', icon: '🇪🇺' },
                 { label: 'Backlog traité', value: backlogCleared, color: 'hsl(var(--primary))', icon: '✅' },
-                { label: 'Evidence Chain', value: Math.min(100, 60 + d_evidence), color: 'hsl(var(--success))', icon: '🔐' },
+                { label: 'Evidence Chain', value: d_evidence > 0 ? Math.min(100, d_evidence) : 0, color: 'hsl(var(--success))', icon: '🔐' },
               ].map((item, i) => (
                 <div key={i} className="space-y-1.5">
                   <div className="flex items-center justify-between">
