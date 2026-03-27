@@ -61,7 +61,8 @@ export type TrackEventName =
   | 'trial_start'
   | 'trial_started'
   | 'demo_started'
-  | 'demo_completed';
+  | 'demo_completed'
+  | 'cta_sandbox_supervisee';
 
 export interface TrackEventOptions {
   source_page?: string;
