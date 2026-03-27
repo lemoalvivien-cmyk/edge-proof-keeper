@@ -161,8 +161,8 @@ const faqs = [
   { q: "L'essai gratuit demande-t-il une carte bancaire ?", a: "Oui. L'essai de 14 jours est piloté par Stripe avec saisie de carte. Vous n'êtes débité qu'à J+15, avec annulation libre à tout moment depuis votre espace." },
   { q: "Puis-je passer d'une offre à l'autre ?", a: "Oui, upgrade ou downgrade en quelques clics depuis les paramètres. Les données restent intégralement conservées." },
   { q: "Où sont hébergées mes données ?", a: "En France uniquement, sur infrastructure souveraine. Conformité RGPD native. Chiffrement AES-256 au repos, TLS 1.3 en transit." },
-  { q: "Le self-healing est-il vraiment autonome ?", a: "L'automatisation des corrections est déployée en Q2 2026. En attendant, les scripts sont générés et vérifiés par les agents — l'approbation humaine reste requise pour l'exécution." },
-  { q: "Comment fonctionne le support Enterprise ?", a: "Account Manager dédié + accès prioritaire à l'équipe engineering + SLA contractuels 99.99% + canaux privés Slack/Teams." },
+  { q: "La remédiation est-elle supervisée ?", a: "Oui. Les scripts de remédiation sont générés et vérifiés par les agents IA — l'approbation humaine Go/No-Go reste requise pour l'exécution. L'objectif de remédiation assistée < 4h est une cible selon offre." },
+  { q: "Comment fonctionne le support Enterprise ?", a: "Account Manager dédié + accès prioritaire à l'équipe engineering + SLA contractualisé sur devis + canaux privés Slack/Teams." },
 ];
 
 function FaqItem({ q, a }: { q: string; a: string }) {
