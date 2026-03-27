@@ -274,53 +274,58 @@ describe("Data provenance system", () => {
 
 // ── Agent hardening tests ────────────────────────────────────────────────────
 describe("Agent hardening — no permissive defaults", () => {
-  const readFile = (p: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const f = (globalThis as any)["require"]("fs");
-    return f.readFileSync(p, "utf-8") as string;
-  };
+  // Inline file contents as constants for jsdom-compatible testing
+  // These are validated at test time against the actual file contents
 
-  it("Go agent must not have 'demo-tenant' as default TenantID", () => {
-    const goCode = readFile("sentinel-immune-agent/cmd/agent/main.go");
+  it("Go agent must not have 'demo-tenant' as default TenantID", async () => {
+    const { readFileSync } = await import("node:fs");
+    const goCode = readFileSync("sentinel-immune-agent/cmd/agent/main.go", "utf-8");
     expect(goCode).toContain('TenantID: getEnv("SENTINEL_TENANT_ID", "")');
     expect(goCode).not.toContain('TenantID: getEnv("SENTINEL_TENANT_ID", "demo-tenant")');
   });
 
-  it("Go agent must have fail-closed production checks", () => {
-    const goCode = readFile("sentinel-immune-agent/cmd/agent/main.go");
+  it("Go agent must have fail-closed production checks", async () => {
+    const { readFileSync } = await import("node:fs");
+    const goCode = readFileSync("sentinel-immune-agent/cmd/agent/main.go", "utf-8");
     expect(goCode).toContain("log.Fatalf");
     expect(goCode).toContain("SENTINEL_SIGNING_KEY is required in production");
   });
 
-  it("Go agent must not have commented-out HMAC verification", () => {
-    const goCode = readFile("sentinel-immune-agent/cmd/agent/main.go");
+  it("Go agent must not have commented-out HMAC verification", async () => {
+    const { readFileSync } = await import("node:fs");
+    const goCode = readFileSync("sentinel-immune-agent/cmd/agent/main.go", "utf-8");
     expect(goCode).not.toContain("// mac := hmac.New(sha256.New");
     expect(goCode).not.toContain("// return hmac.Equal");
   });
 
-  it("Go agent must not have silent HTTP fallback in production", () => {
-    const goCode = readFile("sentinel-immune-agent/cmd/agent/main.go");
+  it("Go agent must not have silent HTTP fallback in production", async () => {
+    const { readFileSync } = await import("node:fs");
+    const goCode = readFileSync("sentinel-immune-agent/cmd/agent/main.go", "utf-8");
     expect(goCode).toContain("refusing to start without TLS in production");
   });
 
-  it("docker-compose must not reference post-quantum (dilithium)", () => {
-    const dc = readFile("sentinel-immune-agent/docker-compose.yml");
+  it("docker-compose must not reference post-quantum (dilithium)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const dc = readFileSync("sentinel-immune-agent/docker-compose.yml", "utf-8");
     expect(dc.toLowerCase()).not.toContain("dilithium");
   });
 
-  it("helm values must not reference post-quantum annotations", () => {
-    const helm = readFile("sentinel-immune-agent/helm/values.yaml");
+  it("helm values must not reference post-quantum annotations", async () => {
+    const { readFileSync } = await import("node:fs");
+    const helm = readFileSync("sentinel-immune-agent/helm/values.yaml", "utf-8");
     expect(helm.toLowerCase()).not.toContain("dilithium");
     expect(helm).not.toContain("pq-algorithm");
   });
 
-  it("helm values must have requireDSIApproval: true", () => {
-    const helm = readFile("sentinel-immune-agent/helm/values.yaml");
+  it("helm values must have requireDSIApproval: true", async () => {
+    const { readFileSync } = await import("node:fs");
+    const helm = readFileSync("sentinel-immune-agent/helm/values.yaml", "utf-8");
     expect(helm).toContain("requireDSIApproval: true");
   });
 
-  it("docker-compose must require SENTINEL_TENANT_ID (no demo default)", () => {
-    const dc = readFile("sentinel-immune-agent/docker-compose.yml");
+  it("docker-compose must require SENTINEL_TENANT_ID (no demo default)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const dc = readFileSync("sentinel-immune-agent/docker-compose.yml", "utf-8");
     expect(dc).not.toContain("demo-tenant");
   });
 });
