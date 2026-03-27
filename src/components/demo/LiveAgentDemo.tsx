@@ -321,7 +321,7 @@ export function LiveAgentDemo({ compact = false }: { compact?: boolean }) {
             Simulation Agents — Séquence 47s
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Pipeline de démonstration — simulation sécurisée · preuves SHA-256 réelles
+            Simulation sécurisée — données fictives · preuves SHA-256 de démonstration
           </p>
         </div>
         <div className="flex items-center gap-3">
