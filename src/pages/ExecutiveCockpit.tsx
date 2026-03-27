@@ -491,7 +491,7 @@ export default function ExecutiveCockpit() {
               {[
                 { label: 'RGPD / NIS2', value: controlCoverage, color: 'hsl(var(--accent))', icon: '🇪🇺' },
                 { label: 'Backlog traité', value: backlogCleared, color: 'hsl(var(--primary))', icon: '✅' },
-                { label: 'Evidence Chain', value: Math.min(100, 60 + d_evidence), color: 'hsl(var(--success))', icon: '🔐' },
+                { label: 'Evidence Chain', value: d_evidence > 0 ? Math.min(100, d_evidence) : 0, color: 'hsl(var(--success))', icon: '🔐' },
               ].map((item, i) => (
                 <div key={i} className="space-y-1.5">
                   <div className="flex items-center justify-between">
