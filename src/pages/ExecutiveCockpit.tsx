@@ -314,7 +314,7 @@ export default function ExecutiveCockpit() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-3xl font-black font-mono">{sovereignScore}</span>
                     <span className="text-muted-foreground font-mono">/100</span>
-                    <Trend up={sovereignScore >= 60} label={sovereignScore >= 60 ? '+5 vs J-7' : '-3 vs J-7'} />
+                    <ProvenanceBadge provenance={scoreProvenance} source="findings × severity" />
                   </div>
                   <p className="text-sm text-muted-foreground max-w-xs leading-snug">
                     {sovereignScore >= 80
