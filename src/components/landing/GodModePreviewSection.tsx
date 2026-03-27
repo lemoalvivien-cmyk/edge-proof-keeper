@@ -8,8 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-/* ── Dashboard Live Tab ── */
-function DashboardLiveTab() {
+/* ── Dashboard Preview Tab ── */
+function DashboardPreviewTab() {
   return (
     <div className="grid md:grid-cols-3 gap-4">
       {/* Score maturité */}
