@@ -13,6 +13,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ProvenanceBadge } from '@/components/ui/ProvenanceBadge';
+import { resolveProvenance } from '@/types/provenance';
+import type { DataProvenance } from '@/types/provenance';
 import { useNavigate } from 'react-router-dom';
 
 interface Threat {
