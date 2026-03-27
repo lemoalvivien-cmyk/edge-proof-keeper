@@ -227,9 +227,9 @@ helm install securit-e-agent securit-e/edge-agent \
 
 ## 🛡 Sécurité & Souveraineté
 
-- **Hébergement :** Cloud FR souverain — données en France 🇫🇷
+- **Hébergement :** France (région EU-West Paris) — données en France 🇫🇷
 - **Cryptographie :** SHA-256 Merkle Chain pour la chaîne de preuves (Evidence Vault)
-- **Conformité :** NIS2 · RGPD · DORA · ISO 27001
+- **Conformité :** Aide documentaire NIS2 · RGPD · DORA · ISO 27001
 - **Audit :** Chaque action prouvée par la chaîne SHA-256, non répudiable
 - **SecNumCloud :** objectif roadmap Q2 2026 — certification non obtenue à ce jour
 
